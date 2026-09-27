@@ -1,0 +1,799 @@
+/* ============================================================
+   TORRE v3 — css/style.css
+   Interface HTML/CSS sobre o canvas 3D (Three.js)
+   Tema escuro · fonte 'Trebuchet MS' · texto #e8ecf5
+   ============================================================ */
+
+:root {
+  --gold: #ffd54f;
+  --red: #ef5350;
+  --green: #66bb6a;
+  --muted: #8a93a6;
+  --panel: rgba(16, 20, 28, .88);
+  --border: rgba(255, 255, 255, .12);
+  --btn: #2a3040;
+  --btn-border: #3d4760;
+  --btn-hover: #36405a;
+  --accent: #3b6fd8;
+  --active: #c98a1a;
+}
+
+/* ---------- Base ---------- */
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #0b0f17;
+  color: #e8ecf5;
+  font-family: 'Trebuchet MS', sans-serif;
+}
+
+#view {
+  position: fixed;
+  inset: 0;
+}
+
+#view canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  z-index: 10;
+}
+
+/* Elementos interativos recebem ponteiro */
+.panel,
+.screen,
+.btn,
+button,
+input,
+select,
+.card {
+  pointer-events: auto;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---------- Painéis e telas ---------- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .45);
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(5, 8, 14, .45);
+}
+
+h1.title {
+  font-size: 64px;
+  letter-spacing: 8px;
+  color: var(--gold);
+  text-shadow: 0 4px 18px rgba(0, 0, 0, .6), 0 0 30px rgba(255, 213, 79, .25);
+  margin: 0;
+}
+
+h2 {
+  color: var(--gold);
+  font-size: 22px;
+  margin: 0 0 6px;
+}
+
+div.title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+/* ---------- Botões ---------- */
+.btn,
+button {
+  background: var(--btn);
+  border: 1px solid var(--btn-border);
+  color: #e8ecf5;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.btn:hover:not(:disabled),
+button:hover:not(:disabled) {
+  background: var(--btn-hover);
+}
+
+.btn.small {
+  padding: 4px 9px;
+  font-size: 14px;
+}
+
+.btn.primary {
+  background: var(--accent);
+  min-width: 220px;
+  font-size: 18px;
+}
+
+.btn.active {
+  background: var(--active);
+  color: #111;
+}
+
+.btn:disabled,
+button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+/* ---------- Cartões (mapas) ---------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  max-width: 900px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 110px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+
+.card:hover:not(.locked) {
+  background: var(--btn-hover);
+  border-color: var(--btn-border);
+}
+
+.card.locked {
+  opacity: .5;
+  cursor: default;
+}
+
+.stars {
+  color: var(--gold);
+  font-size: 20px;
+  letter-spacing: 2px;
+}
+
+/* ---------- Utilitários ---------- */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.icon.big {
+  width: 64px;
+  height: 64px;
+}
+
+.hpbar {
+  height: 10px;
+  background: #333;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.hpbar > i {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  transition: width .1s;
+}
+
+/* ---------- Barra de cima ---------- */
+#topbar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  /* fundo escuro: sobre mapas claros (neve, areia) os números sumiam */
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .45);
+  pointer-events: auto;
+}
+
+.chip {
+  background: rgba(0, 0, 0, .35);
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.chip.gold {
+  font-size: 28px;
+  color: var(--gold);
+  border: 1px solid rgba(255, 213, 79, .35);
+}
+
+.chip.lives {
+  color: #ff8a80;
+  font-size: 22px;
+}
+
+.chip.wave {
+  font-size: 16px;
+}
+
+.chip.wave small {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  font-weight: normal;
+}
+
+.chip.score,
+.chip.cap {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.chip.gold.up {
+  animation: flashUp .4s;
+}
+
+.chip.gold.down {
+  animation: flashDown .4s;
+}
+
+@keyframes flashUp {
+  0% { background: rgba(102, 187, 106, .45); }
+  100% { background: rgba(255, 255, 255, .06); }
+}
+
+@keyframes flashDown {
+  0% { background: rgba(239, 83, 80, .45); }
+  100% { background: rgba(255, 255, 255, .06); }
+}
+
+#topbar .group {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Barra de construção ---------- */
+#buildbar {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px;
+}
+
+#buildgold {
+  align-self: center;
+  font-size: 20px;
+  color: var(--gold);
+  font-weight: bold;
+}
+
+.buildcard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 92px;
+  padding: 6px 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+
+.buildcard:hover:not(.locked) {
+  background: var(--btn-hover);
+}
+
+.bname {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.price {
+  color: var(--gold);
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.need {
+  font-size: 12px;
+  color: var(--red);
+  min-height: 14px;
+}
+
+.key {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.buildcard.poor .price {
+  color: var(--red);
+}
+
+.buildcard.active {
+  border: 2px solid var(--active);
+  background: #3a3320;
+}
+
+.buildcard.locked {
+  filter: grayscale(1);
+  opacity: .5;
+  cursor: default;
+}
+
+/* ---------- Painel da torre / inimigo ---------- */
+#towerpanel,
+#enemypanel {
+  position: absolute;
+  right: 8px;
+  top: 74px;
+  width: 300px;
+  max-height: calc(100vh - 170px);
+  overflow: auto;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tp-head {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 8px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2b3550, #1c2233);
+  border: 1px solid #4a5a80;
+}
+
+button.tp-head:hover:not(:disabled) {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.tp-name {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.pips {
+  color: var(--gold);
+  letter-spacing: 2px;
+  font-size: 15px;
+}
+
+.tp-lvl {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tp-up {
+  text-align: right;
+}
+
+.tp-up .lbl {
+  font-size: 12px;
+}
+
+.tp-up .price {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--gold);
+}
+
+.tp-up .need {
+  font-size: 12px;
+  color: var(--red);
+}
+
+.tp-head.poor .price,
+.addon.poor .price {
+  color: var(--red);
+}
+
+.tp-head.locked .need,
+.tp-head.maxed .lbl {
+  color: var(--muted);
+}
+
+.tp-head:disabled {
+  opacity: 1;
+}
+
+.tp-addons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.addon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 8px;
+  min-height: 96px;
+  font-size: 13px;
+  background: var(--btn);
+  border: 1px solid var(--btn-border);
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+}
+
+.addon .aname {
+  font-weight: bold;
+}
+
+.addon .price {
+  color: var(--gold);
+}
+
+.addon .need {
+  font-size: 11px;
+}
+
+.addon.ready {
+  border: 1px solid var(--green);
+}
+
+.addon.ready:hover {
+  border-color: var(--gold);
+}
+
+.addon.owned {
+  border: 2px solid var(--green);
+  background: rgba(102, 187, 106, .15);
+  cursor: default;
+}
+
+.addon.owned .need {
+  color: var(--green);
+}
+
+.addon.poor .need {
+  color: var(--red);
+}
+
+.addon.locked {
+  filter: grayscale(1);
+  opacity: .55;
+  cursor: default;
+}
+
+.addon.locked .need {
+  color: var(--muted);
+}
+
+.addon:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.tp-stats {
+  font-size: 12px;
+  color: #c5cbd8;
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
+}
+
+.tp-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+/* ---------- Prévia da próxima onda ---------- */
+#preview {
+  position: absolute;
+  left: 8px;
+  bottom: 10px;
+  font-size: 14px;
+  max-width: 360px;
+}
+
+.prev {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.previtem {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.previtem .icon {
+  width: 32px;
+  height: 32px;
+}
+
+/* ---------- Toast / aviso ---------- */
+#toast {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 30px;
+  font-weight: bold;
+  color: var(--gold);
+  text-shadow: 0 2px 8px #000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ---------- Faixa de pausa ---------- */
+#pausebar {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--active);
+  color: #111;
+  padding: 4px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+/* ---------- Menu do jogo (☰) ---------- */
+#gamemenu .panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 240px;
+}
+
+/* ---------- Ajuda ---------- */
+.help-panel {
+  max-width: 760px;
+  max-height: 80vh;
+  overflow: auto;
+  line-height: 1.5;
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 900px) {
+  .chip.gold {
+    font-size: 22px;
+  }
+
+  #towerpanel,
+  #enemypanel {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    top: auto;
+    bottom: 130px;
+    max-height: 45vh;
+  }
+}
+
+@media (max-width: 700px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ---------- painel da torre: armas, selos de dano e requisitos ---------- */
+.tp-weapons { display: flex; flex-direction: column; gap: 6px; }
+.weapon {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  grid-template-areas: "icon name target" "icon badges target" "icon stats stats";
+  column-gap: 8px;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .04);
+}
+.weapon .icon { grid-area: icon; }
+.weapon .wname { grid-area: name; font-weight: bold; }
+.weapon .badges { grid-area: badges; }
+.weapon .wstats { grid-area: stats; font-size: 12px; color: #c5cbd8; }
+.weapon .btn { grid-area: target; }
+.badges { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
+.badge {
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .1);
+  cursor: help;
+}
+.badge.b-phys { background: rgba(176, 190, 197, .25); }
+.badge.b-magic { background: rgba(179, 136, 255, .3); }
+.badge.b-air { background: rgba(79, 195, 247, .25); }
+.badge.b-splash { background: rgba(255, 112, 67, .3); }
+.badge.b-slow { background: rgba(129, 212, 250, .3); }
+.badge.b-dot { background: rgba(124, 179, 66, .3); }
+.badge.b-chain { background: rgba(0, 229, 255, .25); }
+ul.reqs { list-style: none; margin: 2px 0 0; padding: 0; font-size: 12px; text-align: left; }
+ul.reqs li { line-height: 1.35; white-space: nowrap; }
+.tp-head.ready { border-color: var(--green); }
+/* cartão bloqueado: o ícone fica cinza, mas os requisitos (✓/✗) continuam legíveis */
+.addon.locked { filter: none; opacity: 1; }
+.addon.locked .icon, .addon.locked .aname, .addon.locked .badges { filter: grayscale(1); opacity: .5; }
+
+/* barras de vida sobre chefes, elites e inimigos grandes (posicionadas por transform) */
+#bars { position: absolute; inset: 0; pointer-events: none; }
+.ebar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 6px;
+  background: rgba(0, 0, 0, .65);
+  border: 1px solid rgba(0, 0, 0, .8);
+  border-radius: 3px;
+  will-change: transform;
+}
+.ebar > i { display: block; height: 100%; background: var(--green); border-radius: 2px; }
+.ebar.elite > i { background: #ffb300; }
+.ebar.boss { height: 9px; border-color: #ff8a80; }
+.ebar.boss > i { background: var(--red); }
+.ebar .ename { display: none; }
+.ebar.boss .ename {
+  display: block;
+  position: absolute;
+  bottom: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  font: bold 12px 'Trebuchet MS', sans-serif;
+  color: #ffcdd2;
+  text-shadow: 0 1px 3px #000;
+  white-space: nowrap;
+}
+
+/* ---------- painel da torre v2: um card por arma (cabeça = arma principal + upgrade) ---------- */
+.tp-card { border-left: 4px solid; border-radius: 10px; background: rgba(255, 255, 255, .04); overflow: hidden; }
+.tp-card .tp-head { grid-template-columns: 64px 1fr; border-radius: 0; border-width: 0 0 1px 0; }
+.tp-info { display: flex; flex-direction: column; gap: 1px; }
+.tp-lvl { font-size: 12px; color: #c5cbd8; }
+.wbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 5px 8px; font-size: 12px; }
+.wbar .wstats { flex: 1; color: #c5cbd8; white-space: nowrap; }
+.wbar .btn.small { padding: 2px 7px; font-size: 12px; }
+/* requisitos: mesma cor para todos; a diferença é só o ✓ ou o ✗ */
+ul.reqs li, ul.reqs li.ok, ul.reqs li.no { color: #c5cbd8; }
+/* addons: pronto (normal), libera nesta fase (cinza claro, com requisitos), outra fase (escuro, sem clique), instalado (card da arma) */
+.addon { border-left-width: 1px; }
+.addon.ready { border-color: var(--green); }
+/* indisponível agora (falta ouro, encaixe ou onda): escuro, tracejado e com cadeado; os requisitos ✓/✗ dizem o que falta */
+.addon, .tp-head { position: relative; }
+.addon.later { background: #1b1f27; border: 1px dashed #4a5160; cursor: not-allowed; }
+.addon.later .icon, .addon.later .aname, .addon.later .badges { filter: grayscale(1); opacity: .5; }
+.addon.later:disabled { opacity: 1; }
+.addon.later::after, .tp-head.later::after { content: '🔒'; position: absolute; top: 4px; right: 6px; font-size: 14px; }
+.addon.ready, .tp-head.ready { box-shadow: 0 0 0 1px var(--green), 0 0 10px rgba(76, 175, 80, .35); }
+/* ouro no topo do painel da torre, à vista enquanto se escolhe upgrade e addons */
+#towerpanel > * { flex-shrink: 0; } /* painel com rolagem: os cards não encolhem (cortava os requisitos) */
+.tp-gold { position: sticky; top: 0; z-index: 1; font-weight: 700; font-size: 16px; color: #ffd54f; background: rgba(12, 14, 19, .92); padding: 4px 8px; border-radius: 6px; }
+/* indisponível nesta fase: quase preto, borda tracejada, ícone em silhueta, cadeado */
+.addon.off { background: #0c0e13; border: 1px dashed #2c313b; cursor: not-allowed; pointer-events: auto; }
+.addon.off .icon { filter: brightness(0); opacity: .6; }
+.addon.off .aname { color: #4a5160; }
+.addon.off .off-note { font-size: 12px; color: #5d6474; }
+.addon.off .off-note::before { content: '🔒 '; }
+/* cabeça de upgrade indisponível: escura, com cadeado (o ✓/✗ diz o que falta) */
+.tp-head.later { background: #1b1f27; border: 1px dashed #4a5160; cursor: not-allowed; }
+.tp-head.later .icon, .tp-head.later .tp-name, .tp-head.later .pips { filter: grayscale(1); opacity: .55; }
+.tp-head.maxed { background: linear-gradient(135deg, #3b3320, #1c2233); }
+.addon.owned { border-left: 4px solid; background: rgba(255, 255, 255, .06); }
+.addon.owned .wbar { padding: 4px 0 0; justify-content: center; }
+.tp-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tp-dps { font-size: 12px; color: #c5cbd8; }
+
+/* ---------- balões de voz das torres e dos chefes (etapa D1) ---------- */
+#voices { position: absolute; inset: 0; pointer-events: none; }
+.voice {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .94);
+  color: #1b1f27;
+  font: bold 13px 'Trebuchet MS', sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .45);
+  will-change: transform;
+}
+.voice::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  margin-left: -6px;
+  border: 6px solid transparent;
+  border-bottom: 0;
+  border-top-color: rgba(255, 255, 255, .94);
+}
+.voice.req { pointer-events: auto; cursor: pointer; background: #ffe082; border: 2px solid #ff8f00; }
+.voice.req::after { border-top-color: #ff8f00; }
+.voice.req:hover { background: #ffd54f; }
+.voice.emo { font-size: 22px; padding: 1px 6px; background: rgba(255, 255, 255, .85); }
+
+/* ---------- celular (etapa D4): barra de construção cabe na largura, prévia e ouro duplicado somem ---------- */
+@media (max-width: 700px) {
+  #topbar { gap: 6px; padding: 5px 6px; }
+  .chip { font-size: 14px; padding: 3px 8px; }
+  .chip.gold { font-size: 20px; }
+  .chip.lives { font-size: 16px; }
+  #topbar .btn.small { padding: 3px 7px; font-size: 13px; }
+  #buildbar { left: 6px; right: 6px; transform: none; justify-content: center; gap: 6px; padding: 6px; }
+  #buildgold, #preview { display: none; }
+  .buildcard { min-width: 0; flex: 1; padding: 4px; }
+  .buildcard .icon { width: 30px; height: 30px; }
+  #towerpanel, #enemypanel { bottom: 132px; max-height: 48vh; }
+  .voice { font-size: 11px; }
+}
+
+/* ---------- famílias de dano (v4) ---------- */
+.badge.b-f-kin { background: rgba(176, 190, 197, .25); }
+.badge.b-f-ele { background: rgba(255, 112, 67, .3); }
+.badge.b-f-chem { background: rgba(124, 179, 66, .3); }
+.badge.b-f-mag { background: rgba(179, 136, 255, .3); }
+.row.res .v { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.resv { font-size: 12px; padding: 1px 4px; border-radius: 4px; background: rgba(255, 255, 255, .06); }
+.resv.weak { background: rgba(102, 187, 106, .3); }
+.resv.strong { background: rgba(239, 83, 80, .3); }

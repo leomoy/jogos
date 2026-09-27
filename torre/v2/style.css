@@ -1,0 +1,7 @@
+html, body { margin: 0; height: 100%; background: #0d1017; overflow: hidden; }
+#game { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+/* O canvas 3D (Three.js) fica em position:absolute;z-index:0, anexado direto ao body (ver world.js).
+   Um elemento posicionado pinta acima de conteúdo estático mesmo com z-index:0 (CSS stacking rules) — então o
+   canvas do Phaser (estático, dentro de #game) precisa virar ele mesmo um elemento posicionado com z-index maior,
+   senão o 3D cobre a interface por cima. */
+#game canvas { image-rendering: auto; position: relative; z-index: 1; }

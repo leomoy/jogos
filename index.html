@@ -15,15 +15,27 @@
   .jogo p { margin: 0 0 12px; opacity: .8; }
   a.btn { display: inline-block; background: var(--acc); color: #fff; text-decoration: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; }
   small { opacity: .6; }
+  ul.versoes { list-style: none; padding: 0; margin: 16px 0 0; }
+  ul.versoes li { padding: 10px 0; border-top: 1px solid var(--line); }
+  ul.versoes a { color: var(--acc); text-decoration: none; }
+  ul.versoes span { opacity: .75; font-size: .92rem; }
 </style>
 </head>
 <body>
 <main>
   <h1>Jogos</h1>
   <div class="jogo">
-    <h2>Torre — A Grande Guerra contra o Vazio</h2>
-    <p>Tower defense 3D: 1916 contra a Horda do Vazio. Funciona no celular e no PC.</p>
-    <a class="btn" href="torre/torre-6.6.4.html">Jogar 6.6.4</a> <small>versão de teste · todos os mapas liberados</small>
+    <h2>Torre — tower defense</h2>
+    <p>A evolução do jogo, versão por versão (a 6 é a atual). Funciona no celular e no PC.</p>
+    <a class="btn" href="torre/v6/torre-6.6.4.html">Jogar a versão atual (6.6.4)</a>
+    <ul class="versoes">
+    <li><a href="torre/v6/torre-6.6.4.html"><b>6.6 — A Grande Guerra contra o Vazio</b></a><br><span>1916 contra a Horda do Vazio: torres de frente e retaguarda, bloqueios, inimigos que atacam torres, modelos e efeitos novos, relatório da partida. Em desenvolvimento.</span></li>
+    <li><a href="torre/v5/Torres-v5.html"><b>5 — Um arquivo, celular e PC</b></a><br><span>O jogo inteiro num só arquivo, com toque e layout para celular.</span></li>
+    <li><a href="torre/v4/index.html"><b>4 — Jogabilidade</b></a><br><span>Famílias de dano e resistências, addons novos (antiaéreo, ácido, piche, minas), estrada que alarga e afunila.</span></li>
+    <li><a href="torre/v3/index.html"><b>3 — Visual e Escala</b></a><br><span>Visual PBR, câmera livre, estrada larga, torres-base com addons, vozes das torres e dos chefes.</span></li>
+    <li><a href="torre/v2/index.html"><b>2 — 3D e Horda</b></a><br><span>Primeira versão em 3D (Three.js): 3–4× mais inimigos e tiros na tela.</span></li>
+    <li><a href="torre/v1/index.html"><b>1 — O começo</b></a><br><span>2D (Phaser): 10 mapas, 10 torres, 20 inimigos.</span></li>
+    </ul>
   </div>
 </main>
 </body>
