@@ -962,6 +962,25 @@ canvas,
     top: 108px;
   }
 }
+
+/* 16. Mapinhas (caverna...) — dentro deles a luz é sempre a mesma (sem botões do ciclo) e a troca de mapa escurece e clareia */
+.em-sub .hud-ciclo {
+  display: none;
+}
+
+#veu {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 60;
+}
+
+#veu.escuro {
+  opacity: 1;
+}
 </style>
 <script type="importmap">{
   "imports": {
@@ -1365,10 +1384,10 @@ var init_smoke = __esm({
 });
 
 // js/main.js
-import * as THREE8 from "three";
+import * as THREE9 from "three";
 
 // js/data.js
-var VERSION = "0.6.4";
+var VERSION = "0.6.5";
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
 var CORES_GATO = {
@@ -3609,7 +3628,7 @@ function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar }) {
 }
 
 // js/map.js
-import * as THREE7 from "three";
+import * as THREE8 from "three";
 
 // js/world.js
 function mulberry32(seed) {
@@ -3785,7 +3804,7 @@ function criarMundo(seed = 12345) {
     return r.d < r.hw + m;
   };
   const desimpedido = (x, z, m = 0.9) => Math.hypot(x, z) > 4.5 && distTrilha(x, z) > m && (Math.max(Math.abs(x), Math.abs(z)) > 59 || !nearRio(x, z, 1.2 + m));
-  const TIPOS = ["pino", "frondosa", "betula"];
+  const TIPOS2 = ["pino", "frondosa", "betula"];
   const TR = { pino: 0.34, frondosa: 0.5, betula: 0.3 };
   const RP = { pino: 1.5, frondosa: 2.1, betula: 1.4 };
   for (let n = 0; n < 9e3 && inst.pino.length + inst.frondosa.length + inst.betula.length < 420; n++) {
@@ -3794,7 +3813,7 @@ function criarMundo(seed = 12345) {
     const borda = ss(46, 55, e);
     if (rand() > Math.max(dens * 0.85, borda)) continue;
     if (!desimpedido(x, z, 1.1)) continue;
-    let tipo = TIPOS[Math.floor(rand() * 3)];
+    let tipo = TIPOS2[Math.floor(rand() * 3)];
     if (dens > 0.5 && rand() < 0.4) tipo = "pino";
     const s = (borda > 0.4 ? rr(1.25, 1.95) : rr(0.85, 1.45)) * 0.68;
     const rp = RP[tipo] * s * (borda > 0.4 ? 1.05 : 0.8);
@@ -3878,6 +3897,47 @@ function criarMundo(seed = 12345) {
     if (!desimpedido(x, z, 0.5) && rand() < 0.9) continue;
     put("grama", x, z, { s: rr(0.6, 1.2), sy: rr(0.8, 1.4), tint: tint(0.2), afunda: 0.02 });
   }
+  const cavernas = [];
+  function colocarCavernas() {
+    const rc = mulberry32(seed + 555);
+    const R = 2.4;
+    for (let n = 0; n < 6e3 && cavernas.length < 3; n++) {
+      const x = (rc() * 2 - 1) * 46;
+      const z = (rc() * 2 - 1) * 46;
+      if (Math.hypot(x, z) < 16) continue;
+      let tooClose = false;
+      for (const c of cavernas) {
+        if (Math.hypot(x - c.x, z - c.z) < 38) {
+          tooClose = true;
+          break;
+        }
+      }
+      if (tooClose) continue;
+      if (!desimpedido(x, z, 4.2)) continue;
+      if (!livre(x, z, 4)) continue;
+      const h = altura(x, z);
+      if (h < 0.9) continue;
+      const deltas = [[3, 0], [-3, 0], [0, 3], [0, -3]];
+      let varia = false;
+      for (const [dx, dz] of deltas) {
+        if (Math.abs(altura(x + dx, z + dz) - h) >= 0.7) {
+          varia = true;
+          break;
+        }
+      }
+      if (varia) continue;
+      const dir = (rc() - 0.5) * 0.8;
+      const sx = Math.sin(dir);
+      const sz = Math.cos(dir);
+      const bx = x + sx * R;
+      const bz = z + sz * R;
+      if (!desimpedido(bx, bz, 1.2)) continue;
+      if (!livre(bx + sx * 1.8, bz + sz * 1.8, 1.2)) continue;
+      addCol({ x, z, r: R * 0.9, rp: R + 0.6, tipo: "caverna" });
+      cavernas.push({ id: "c" + (cavernas.length + 1), x, z, y: h, R, dir, bx, bz, fx: bx + sx * 1.8, fz: bz + sz * 1.8 });
+    }
+  }
+  colocarCavernas();
   function porChunk(lista) {
     const m = /* @__PURE__ */ new Map();
     for (const it of lista) {
@@ -3886,7 +3946,7 @@ function criarMundo(seed = 12345) {
     }
     return [...m.values()];
   }
-  return { seed, LIMITE: META, altura, distRio, distTrilha, rio, trilhas, travessias, rochasAgua, colisores: cols, troncos, inst, porChunk };
+  return { seed, LIMITE: META, altura, distRio, distTrilha, rio, trilhas, travessias, rochasAgua, colisores: cols, troncos, cavernas, inst, porChunk };
 }
 
 // js/fisica.js
@@ -3905,9 +3965,9 @@ var cilindro = (w, x, z, r, yBaixo, yTopo) => w.createCollider(RAPIER.ColliderDe
 var caixa = (w, x, z, rot, hx, hz, yBaixo, yTopo) => w.createCollider(RAPIER.ColliderDesc.cuboid(hx, (yTopo - yBaixo) / 2, hz).setTranslation(x, (yTopo + yBaixo) / 2, z).setRotation({ x: 0, y: Math.sin(rot / 2), z: 0, w: Math.cos(rot / 2) }));
 function criarFisica(mundo, x0 = 0, z0 = 0) {
   const w = new RAPIER.World({ x: 0, y: -GRAV, z: 0 });
-  const N = LADO / RES, h = new Float32Array((N + 1) * (N + 1));
-  for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) h[i + j * (N + 1)] = mundo.altura(-LADO / 2 + j * RES, -LADO / 2 + i * RES);
-  w.createCollider(RAPIER.ColliderDesc.heightfield(N, N, h, { x: LADO, y: 1, z: LADO }));
+  const N2 = LADO / RES, h = new Float32Array((N2 + 1) * (N2 + 1));
+  for (let j = 0; j <= N2; j++) for (let i = 0; i <= N2; i++) h[i + j * (N2 + 1)] = mundo.altura(-LADO / 2 + j * RES, -LADO / 2 + i * RES);
+  w.createCollider(RAPIER.ColliderDesc.heightfield(N2, N2, h, { x: LADO, y: 1, z: LADO }));
   const bloqueiam = /* @__PURE__ */ new Set(), bloco = (c) => (bloqueiam.add(c.handle), c);
   for (const c of mundo.colisores) {
     if (c.tipo === "tronco") continue;
@@ -3937,6 +3997,9 @@ function criarFisica(mundo, x0 = 0, z0 = 0) {
     }
   }
   w.step();
+  return criarGato(w, mundo, x0, z0, bloqueiam);
+}
+function criarGato(w, mundo, x0, z0, bloqueiam = /* @__PURE__ */ new Set()) {
   const col = w.createCollider(corpo());
   const forma = new RAPIER.RoundCylinder(0.2, 0.25, 0.05);
   function acharLivre(x02, z02) {
@@ -3993,7 +4056,7 @@ function criarFisica(mundo, x0 = 0, z0 = 0) {
       f._a.x = b.x;
       f._a.y = b.y;
       f._a.z = b.z;
-      const lim = mundo.LIMITE - 2.5;
+      const lim = mundo.LIMITE - (mundo.margem ?? 2.5);
       b.x = Math.max(-lim, Math.min(lim, b.x + m.x));
       b.z = Math.max(-lim, Math.min(lim, b.z + m.z));
       b.y += m.y;
@@ -4050,7 +4113,7 @@ function criarCanvas(n) {
   const g = c.getContext("2d");
   return { c, g };
 }
-function criarTexturaTerreno(THREE9, mundo, tam = 1024) {
+function criarTexturaTerreno(THREE10, mundo, tam = 1024) {
   const { c: canvas, g: ctx } = criarCanvas(tam);
   const k = tam / TERRENO;
   const rnd = mulberry32(777);
@@ -4153,15 +4216,15 @@ function criarTexturaTerreno(THREE9, mundo, tam = 1024) {
     ctx.fillStyle = i % 2 === 0 ? "rgba(255,255,200,0.12)" : "rgba(30,70,20,0.16)";
     ctx.fillRect(x, y, tamP, tamP);
   }
-  const texture = new THREE9.CanvasTexture(canvas);
-  texture.colorSpace = THREE9.SRGBColorSpace;
+  const texture = new THREE10.CanvasTexture(canvas);
+  texture.colorSpace = THREE10.SRGBColorSpace;
   texture.anisotropy = 4;
-  texture.wrapS = THREE9.ClampToEdgeWrapping;
-  texture.wrapT = THREE9.ClampToEdgeWrapping;
+  texture.wrapS = THREE10.ClampToEdgeWrapping;
+  texture.wrapT = THREE10.ClampToEdgeWrapping;
   texture.needsUpdate = true;
   return { canvas, texture };
 }
-function criarTexturaDetalhe(THREE9) {
+function criarTexturaDetalhe(THREE10) {
   const n = 256;
   const { c: canvas, g: ctx } = criarCanvas(n);
   const rnd = mulberry32(1234);
@@ -4202,14 +4265,14 @@ function criarTexturaDetalhe(THREE9) {
       ctx.stroke();
     }
   }
-  const texture = new THREE9.CanvasTexture(canvas);
-  texture.wrapS = THREE9.RepeatWrapping;
-  texture.wrapT = THREE9.RepeatWrapping;
-  texture.colorSpace = THREE9.NoColorSpace;
+  const texture = new THREE10.CanvasTexture(canvas);
+  texture.wrapS = THREE10.RepeatWrapping;
+  texture.wrapT = THREE10.RepeatWrapping;
+  texture.colorSpace = THREE10.NoColorSpace;
   texture.needsUpdate = true;
   return texture;
 }
-function criarTexturaRuido(THREE9) {
+function criarTexturaRuido(THREE10) {
   const n = 128;
   const { c: canvas, g: ctx } = criarCanvas(n);
   const img = ctx.createImageData(n, n);
@@ -4270,11 +4333,11 @@ function criarTexturaRuido(THREE9) {
     }
   }
   ctx.putImageData(img, 0, 0);
-  const texture = new THREE9.CanvasTexture(canvas);
-  texture.wrapS = THREE9.RepeatWrapping;
-  texture.wrapT = THREE9.RepeatWrapping;
-  texture.colorSpace = THREE9.NoColorSpace;
-  texture.minFilter = THREE9.LinearMipmapLinearFilter;
+  const texture = new THREE10.CanvasTexture(canvas);
+  texture.wrapS = THREE10.RepeatWrapping;
+  texture.wrapT = THREE10.RepeatWrapping;
+  texture.colorSpace = THREE10.NoColorSpace;
+  texture.minFilter = THREE10.LinearMipmapLinearFilter;
   texture.needsUpdate = true;
   return texture;
 }
@@ -4570,18 +4633,18 @@ function descobertoDeBase64(texto, limite) {
   return r;
 }
 function revelar(mapa, x, z, raio) {
-  const LIM = mapa.mundo.LIMITE;
-  const L = 2 * LIM;
+  const LIM2 = mapa.mundo.LIMITE;
+  const L = 2 * LIM2;
   const raio2 = raio * raio;
-  const x0 = Math.max(0, Math.floor(x - raio + LIM));
-  const x1 = Math.min(L - 1, Math.ceil(x + raio + LIM));
-  const z0 = Math.max(0, Math.floor(z - raio + LIM));
-  const z1 = Math.min(L - 1, Math.ceil(z + raio + LIM));
+  const x0 = Math.max(0, Math.floor(x - raio + LIM2));
+  const x1 = Math.min(L - 1, Math.ceil(x + raio + LIM2));
+  const z0 = Math.max(0, Math.floor(z - raio + LIM2));
+  const z1 = Math.min(L - 1, Math.ceil(z + raio + LIM2));
   let mudou = false;
   for (let iz = z0; iz <= z1; iz++) {
     for (let ix = x0; ix <= x1; ix++) {
-      const cx = ix + 0.5 - LIM;
-      const cz = iz + 0.5 - LIM;
+      const cx = ix + 0.5 - LIM2;
+      const cz = iz + 0.5 - LIM2;
       const dx = cx - x;
       const dz = cz - z;
       if (dx * dx + dz * dz <= raio2) {
@@ -4617,8 +4680,8 @@ function desenharNevoa(ctx, mapa, W) {
     ctx.drawImage(entrada.canvas, 0, 0);
     return;
   }
-  const LIM = mapa.mundo.LIMITE;
-  const L = 2 * LIM;
+  const LIM2 = mapa.mundo.LIMITE;
+  const L = 2 * LIM2;
   const P = 2;
   const size = L + 2 * P;
   const mascara = document.createElement("canvas");
@@ -4731,6 +4794,19 @@ function arbustoProximo(mapa, x, z, raio = RAIO_ACAO) {
   }
   return melhor;
 }
+function entradaProxima(mapa, x, z) {
+  if (!mapa || !mapa.entradas || !mapa.entradas.length) return null;
+  let melhor = null;
+  let melhorDist = Infinity;
+  for (const ent of mapa.entradas) {
+    const d = Math.hypot(ent.x - x, ent.z - z);
+    if (d < ent.raio && d < melhorDist) {
+      melhor = ent;
+      melhorDist = d;
+    }
+  }
+  return melhor;
+}
 function acaoContextual(mapa) {
   if (!mapa || !mapa.cat) return null;
   const e = est(mapa);
@@ -4739,6 +4815,10 @@ function acaoContextual(mapa) {
   const presas = presasProximas(mapa, gp, RAIO_ACAO);
   if (presas && presas.length) {
     return { id: "bote", icone: "\u{1F43E}", rotulo: "Bote", alvo: presas[0] };
+  }
+  const ent = entradaProxima(mapa, gp.x, gp.z);
+  if (ent) {
+    return { id: "entrar", icone: ent.icone, rotulo: ent.rotulo, alvo: ent };
   }
   const arb = arbustoProximo(mapa, gp.x, gp.z);
   if (arb) {
@@ -4760,6 +4840,8 @@ function usarAcao(mapa) {
   } else if (a.id === "esconder") {
     e.arbusto = a.alvo;
     e.modo = "indo";
+  } else if (a.id === "entrar") {
+    if (mapa.aoEntrar) mapa.aoEntrar(a.alvo);
   }
 }
 function sairDoEsconderijo(mapa) {
@@ -4903,7 +4985,7 @@ function lerpAngle(a, b, t) {
   return a + d * t;
 }
 function criarAnimais(mapa, salvos) {
-  const mundo = mapa.mundo, fis = mapa.fis, pts = mundo.rio.pts, LIM = mundo.LIMITE;
+  const mundo = mapa.mundo, fis = mapa.fis, pts = mundo.rio.pts, LIM2 = mundo.LIMITE;
   const R = mulberry32((mundo.seed ^ 1779033703) >>> 0);
   const rr = (a, b) => a + (b - a) * R();
   const gp = mapa.gatoGroup.position;
@@ -5014,7 +5096,7 @@ function criarAnimais(mapa, salvos) {
       mobs.push(novoMob("jacare", q.x, q.z, { zx: q.x, zz: q.z, zr: 3 }));
     }
   }
-  function restaurar(lista) {
+  function restaurar2(lista) {
     for (const s of lista) {
       if (!s || !ESPECIES[s.tipo] || !Number.isFinite(s.x) || !Number.isFinite(s.z)) continue;
       const m = novoMob(s.tipo, s.x, s.z, { rot: Number.isFinite(s.rot) ? s.rot : 0 });
@@ -5025,7 +5107,7 @@ function criarAnimais(mapa, salvos) {
     }
   }
   const okSalvos = Array.isArray(salvos) && salvos.length > 0;
-  if (okSalvos) restaurar(salvos);
+  if (okSalvos) restaurar2(salvos);
   if (!mobs.length) criarNovos();
   for (const m of mobs) {
     m.y = alturaDe(m);
@@ -5077,7 +5159,7 @@ function criarAnimais(mapa, salvos) {
     return true;
   }
   function transitavel(m, x, z, aguaOk) {
-    if (Math.abs(x) >= LIM - 3 || Math.abs(z) >= LIM - 3) return false;
+    if (Math.abs(x) >= LIM2 - 3 || Math.abs(z) >= LIM2 - 3) return false;
     if (!semColisor(x, z, ESPECIES[m.tipo].raio)) return false;
     if (!aguaOk && !longeDoRio(x, z, 0.5)) return false;
     return true;
@@ -5546,6 +5628,918 @@ function criarAnimais(mapa, salvos) {
   return { mobs, info, atualizar, presas, bote, estado, descartar, visao, mover, posRio };
 }
 
+// js/caverna.js
+var caverna_exports = {};
+__export(caverna_exports, {
+  ALTURA: () => ALTURA,
+  LIM: () => LIM,
+  N: () => N,
+  RAIO_REVELA: () => RAIO_REVELA,
+  cabe: () => cabe,
+  colisoresParedes: () => colisoresParedes,
+  criar: () => criar,
+  criarBocas: () => criarBocas,
+  criarBrilhos: () => criarBrilhos,
+  criarRochas: () => criarRochas,
+  desenharPlanta: () => desenharPlanta,
+  eChao: () => eChao,
+  geoCogumeloLuz: () => geoCogumeloLuz,
+  geoCristal: () => geoCristal,
+  geoParedes: () => geoParedes,
+  gerarPlanta: () => gerarPlanta,
+  gerarPontos: () => gerarPontos,
+  texturaBrilho: () => texturaBrilho,
+  texturaPedra: () => texturaPedra,
+  texturaPoca: () => texturaPoca
+});
+import * as THREE7 from "three";
+import { mergeGeometries as mergeGeometries2 } from "three/addons/utils/BufferGeometryUtils.js";
+var N = 30;
+var LIM = 15;
+var ALTURA = 1.7;
+var RAIO_REVELA = 5;
+var COR_FUNDO = 659234;
+function eChao(p, x, z) {
+  const i = Math.floor(x + LIM), j = Math.floor(z + LIM);
+  return i >= 0 && j >= 0 && i < p.N && j < p.N && p.chao[j * p.N + i] === 1;
+}
+function cabe(p, x, z, rad) {
+  if (!eChao(p, x, z)) return false;
+  for (let k = 0; k < 12; k++) if (!eChao(p, x + Math.cos(k * Math.PI / 6) * rad, z + Math.sin(k * Math.PI / 6) * rad)) return false;
+  return true;
+}
+function gerarPlanta(seed) {
+  const rc = mulberry32(seed * 7919 + 13);
+  const chao = new Uint8Array(N * N);
+  const cavaDisco = (cx, cz, r) => {
+    const minI = Math.max(0, Math.floor(cx - r));
+    const maxI = Math.min(N - 1, Math.ceil(cx + r));
+    const minJ = Math.max(0, Math.floor(cz - r));
+    const maxJ = Math.min(N - 1, Math.ceil(cz + r));
+    for (let i = minI; i <= maxI; i++) {
+      for (let j = minJ; j <= maxJ; j++) {
+        const dx = i + 0.5 - cx;
+        const dz = j + 0.5 - cz;
+        if (dx * dx + dz * dz < r * r) chao[j * N + i] = 1;
+      }
+    }
+  };
+  const cavaSala = (cx, cz, r) => {
+    const f1 = rc() * 6.28;
+    const f2 = rc() * 6.28;
+    const minI = Math.max(0, Math.floor(cx - r * 1.4));
+    const maxI = Math.min(N - 1, Math.ceil(cx + r * 1.4));
+    const minJ = Math.max(0, Math.floor(cz - r * 1.4));
+    const maxJ = Math.min(N - 1, Math.ceil(cz + r * 1.4));
+    for (let i = minI; i <= maxI; i++) {
+      for (let j = minJ; j <= maxJ; j++) {
+        const dx = i + 0.5 - cx;
+        const dz = j + 0.5 - cz;
+        const dist = Math.hypot(dx, dz);
+        if (dist < 1e-3) {
+          chao[j * N + i] = 1;
+          continue;
+        }
+        const ang = Math.atan2(dz, dx);
+        const rLocal = r * (1 + 0.22 * Math.sin(3 * ang + f1) + 0.15 * Math.sin(5 * ang + f2));
+        if (dist < rLocal) chao[j * N + i] = 1;
+      }
+    }
+  };
+  const mx = 12 + Math.floor(rc() * 7);
+  for (let cz = 23; cz <= 29.5; cz += 0.5) cavaDisco(mx + 0.5, cz, 1.6);
+  const salas = [];
+  cavaSala(mx + 0.5, 20, 3.6);
+  salas.push({ cx: mx + 0.5, cz: 20, r: 3.6 });
+  let tentativas = 0;
+  while (salas.length < 6 && tentativas < 600) {
+    tentativas++;
+    const cx = 4.5 + rc() * 21;
+    const cz = 3.5 + rc() * 12;
+    const r = 2.3 + rc() * 1.1;
+    let ok = true;
+    for (const s of salas) {
+      if (Math.hypot(cx - s.cx, cz - s.cz) <= r + s.r + 3.4) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) {
+      cavaSala(cx, cz, r);
+      salas.push({ cx, cz, r });
+    }
+  }
+  const cavaCorredor = (a, b) => {
+    let x = a.cx, z = a.cz;
+    let ang = 0;
+    for (let step = 0; step < 400; step++) {
+      const dx = b.cx - x;
+      const dz = b.cz - z;
+      const dist = Math.hypot(dx, dz);
+      if (dist < 0.8) break;
+      const targetAng = Math.atan2(dz, dx);
+      let diff = targetAng - ang;
+      while (diff > Math.PI) diff -= 2 * Math.PI;
+      while (diff < -Math.PI) diff += 2 * Math.PI;
+      ang += (rc() - 0.5) * 0.6;
+      if (ang > 0.9) ang = 0.9;
+      if (ang < -0.9) ang = -0.9;
+      if (dist < 4) ang *= 0.5;
+      const moveAng = targetAng + ang;
+      x += Math.cos(moveAng) * 0.6;
+      z += Math.sin(moveAng) * 0.6;
+      cavaDisco(x, z, 1.05);
+    }
+  };
+  for (let i = 1; i < salas.length; i++) {
+    let minDist = Infinity;
+    let nearest = 0;
+    for (let j = 0; j < i; j++) {
+      const d = Math.hypot(salas[i].cx - salas[j].cx, salas[i].cz - salas[j].cz);
+      if (d < minDist) {
+        minDist = d;
+        nearest = j;
+      }
+    }
+    cavaCorredor(salas[i], salas[nearest]);
+  }
+  const ligados = /* @__PURE__ */ new Set();
+  for (let i = 1; i < salas.length; i++) {
+    let minDist = Infinity;
+    let nearest = 0;
+    for (let j = 0; j < i; j++) {
+      const d = Math.hypot(salas[i].cx - salas[j].cx, salas[i].cz - salas[j].cz);
+      if (d < minDist) {
+        minDist = d;
+        nearest = j;
+      }
+    }
+    ligados.add(`${Math.min(i, nearest)}-${Math.max(i, nearest)}`);
+  }
+  let lacos = 0;
+  let tentLacos = 0;
+  while (lacos < 2 && tentLacos < 50) {
+    tentLacos++;
+    const a = Math.floor(rc() * salas.length);
+    const b = Math.floor(rc() * salas.length);
+    if (a === b) continue;
+    const key = `${Math.min(a, b)}-${Math.max(a, b)}`;
+    if (ligados.has(key)) continue;
+    if (Math.hypot(salas[a].cx - salas[b].cx, salas[a].cz - salas[b].cz) >= 16) continue;
+    cavaCorredor(salas[a], salas[b]);
+    ligados.add(key);
+    lacos++;
+  }
+  const becos = [];
+  for (let b = 0; b < 3; b++) {
+    let tent = 0;
+    while (tent < 60) {
+      tent++;
+      const i = 3 + Math.floor(rc() * (N - 6));
+      const j = 3 + Math.floor(rc() * (N - 6));
+      if (!chao[j * N + i]) continue;
+      let ok = true;
+      for (const s of salas) {
+        if (Math.hypot(i + 0.5 - s.cx, j + 0.5 - s.cz) < 5) {
+          ok = false;
+          break;
+        }
+      }
+      if (!ok) continue;
+      const ang = rc() * 6.28;
+      const comp = 4 + rc() * 2;
+      const fx = i + 0.5 + Math.cos(ang) * comp;
+      const fz = j + 0.5 + Math.sin(ang) * comp;
+      if (fx < 4 || fx > N - 5 || fz < 4 || fz > N - 5) continue;
+      const fi = Math.floor(fx);
+      const fj = Math.floor(fz);
+      if (fi < 0 || fi >= N || fj < 0 || fj >= N) continue;
+      if (chao[fj * N + fi] !== 0) continue;
+      for (let t = 0; t <= comp; t += 0.5) {
+        const px = i + 0.5 + Math.cos(ang) * t;
+        const pz = j + 0.5 + Math.sin(ang) * t;
+        cavaDisco(px, pz, 1.05);
+      }
+      cavaDisco(fx, fz, 1.8);
+      becos.push({ x: fx - LIM, z: fz - LIM });
+      break;
+    }
+  }
+  for (let pass = 0; pass < 2; pass++) {
+    const nova = new Uint8Array(N * N);
+    for (let i = 0; i < N; i++) {
+      for (let j = 0; j < N; j++) {
+        let count = 0;
+        for (let di = -1; di <= 1; di++) {
+          for (let dj = -1; dj <= 1; dj++) {
+            if (di === 0 && dj === 0) continue;
+            const ni = i + di;
+            const nj = j + dj;
+            if (ni >= 0 && ni < N && nj >= 0 && nj < N) {
+              if (chao[nj * N + ni]) count++;
+            }
+          }
+        }
+        if (count >= 6) nova[j * N + i] = 1;
+        else if (count <= 2) nova[j * N + i] = 0;
+        else nova[j * N + i] = chao[j * N + i];
+      }
+    }
+    chao.set(nova);
+  }
+  for (let cz = 23; cz <= 29.5; cz += 0.5) cavaDisco(mx + 0.5, cz, 1.6);
+  for (let k = 0; k < N; k++) {
+    chao[k] = 0;
+    chao[k * N] = 0;
+    chao[k * N + N - 1] = 0;
+    chao[(N - 1) * N + k] = k >= mx - 1 && k <= mx + 1 ? 1 : 0;
+  }
+  const visited = new Uint8Array(N * N);
+  const queue = [25 * N + mx];
+  visited[25 * N + mx] = 1;
+  while (queue.length) {
+    const idx = queue.shift();
+    const j = Math.floor(idx / N);
+    const i = idx % N;
+    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    for (const [di, dj] of dirs) {
+      const ni = i + di;
+      const nj = j + dj;
+      if (ni >= 0 && ni < N && nj >= 0 && nj < N) {
+        const nidx = nj * N + ni;
+        if (!visited[nidx] && chao[nidx]) {
+          visited[nidx] = 1;
+          queue.push(nidx);
+        }
+      }
+    }
+  }
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      if (chao[j * N + i] && !visited[j * N + i]) chao[j * N + i] = 0;
+    }
+  }
+  return {
+    N,
+    chao,
+    salas: salas.map((s) => ({ x: s.cx - LIM, z: s.cz - LIM, r: s.r })),
+    becos,
+    entrada: { x: mx + 0.5 - LIM, z: 25.5 - LIM, rot: Math.PI },
+    saida: { x: mx + 0.5 - LIM, z: LIM - 1.4, raio: 2.2 },
+    cogumelos: [],
+    cristais: [],
+    poca: null,
+    rochas: [],
+    pedras: [],
+    lajes: []
+  };
+}
+function gerarPontos(planta, seed) {
+  const rc = mulberry32(seed * 104729 + 7);
+  const salas = planta.salas.slice(1);
+  if (!salas.length) return planta;
+  const sorteio = (sala, frac, rad, tent = 30) => {
+    for (let i = 0; i < tent; i++) {
+      const a = rc() * 6.283, k = 0.4 + 0.6 * rc();
+      const x = sala.x + Math.cos(a) * sala.r * frac * k;
+      const z = sala.z + Math.sin(a) * sala.r * frac * k;
+      if (cabe(planta, x, z, rad)) return { x, z };
+    }
+    return null;
+  };
+  const longe = (x, z, d) => {
+    const itens = [...planta.cogumelos, ...planta.cristais, ...planta.rochas, ...planta.lajes];
+    if (planta.poca) itens.push({ x: planta.poca.x, z: planta.poca.z });
+    return itens.every((it) => Math.hypot(x - it.x, z - it.z) > d);
+  };
+  const coresCog = [8388564, 10217471, 16751591, 12910463];
+  const coresCris = [12880895, 7332095, 16747472];
+  for (const sala of salas) {
+    const anc = sorteio(sala, 0.55, 0.8);
+    if (anc) {
+      const n = 3 + Math.floor(rc() * 3);
+      for (let i = 0; i < n; i++) {
+        const x = anc.x + (rc() - 0.5) * 1.4;
+        const z = anc.z + (rc() - 0.5) * 1.4;
+        if (eChao(planta, x, z)) {
+          planta.cogumelos.push({ x, z, s: 1.6 + rc() * 1.4, cor: coresCog[Math.floor(rc() * 4)] });
+        }
+      }
+    }
+  }
+  for (const beco of planta.becos) {
+    const n = 4 + Math.floor(rc() * 2);
+    for (let i = 0; i < n; i++) {
+      const x = beco.x + (rc() - 0.5) * 1.6;
+      const z = beco.z + (rc() - 0.5) * 1.6;
+      if (eChao(planta, x, z)) {
+        planta.cristais.push({ x, z, s: 1 + rc() * 1.2, cor: coresCris[Math.floor(rc() * 3)] });
+      }
+    }
+  }
+  const idx1 = 1;
+  const idx2 = Math.floor(salas.length / 2);
+  const salasCris = new Set([idx1, idx2].filter((i) => i < salas.length));
+  for (const i of salasCris) {
+    const sala = salas[i];
+    const anc = sorteio(sala, 0.5, 0.8);
+    if (anc) {
+      for (let j = 0; j < 3; j++) {
+        const x = anc.x + (rc() - 0.5) * 1.4;
+        const z = anc.z + (rc() - 0.5) * 1.4;
+        if (eChao(planta, x, z)) {
+          planta.cristais.push({ x, z, s: 1 + rc() * 1.2, cor: coresCris[Math.floor(rc() * 3)] });
+        }
+      }
+    }
+  }
+  const salaPoca = salas.reduce((a, b) => a.r > b.r ? a : b, salas[0]);
+  const pPoca = sorteio(salaPoca, 0.3, 1.5, 40);
+  if (pPoca) {
+    planta.poca = { x: pPoca.x, z: pPoca.z, rx: 1.3 + rc() * 0.4, rz: 0.9 + rc() * 0.3, rot: rc() * 3.14 };
+  } else {
+    planta.poca = null;
+  }
+  let nRochas = 0;
+  for (const sala of salas) {
+    if (nRochas >= 4) break;
+    for (let t = 0; t < 20; t++) {
+      const p = sorteio(sala, 0.4, 1.1, 60);
+      if (p && longe(p.x, p.z, 1)) {
+        planta.rochas.push({ x: p.x, z: p.z, s: 0.75 + rc() * 0.2, sy: 0.9 + rc() * 0.2 });
+        nRochas++;
+        break;
+      }
+    }
+  }
+  let pLajes = null;
+  for (const sala of [...salas].reverse()) for (let t = 0; t < 20 && !pLajes; t++) {
+    const q = sorteio(sala, 0.6, 1.3, 60);
+    if (q && longe(q.x, q.z, 1)) pLajes = q;
+  }
+  if (pLajes) {
+    planta.lajes.push({ x: pLajes.x, z: pLajes.z, hx: 1.1, hz: 0.9, h: 0.3 });
+    planta.lajes.push({ x: pLajes.x + 0.25, z: pLajes.z, hx: 0.6, hz: 0.5, h: 0.6 });
+  }
+  for (let i = 0; i < 200 && planta.pedras.length < 10; i++) {
+    const x = -13 + rc() * 26;
+    const z = -13 + rc() * 26;
+    if (cabe(planta, x, z, 0.6) && longe(x, z, 3) && !(Math.abs(x - planta.entrada.x) < 2.5 && z > 7)) {
+      planta.pedras.push({ x, z, s: 0.25 + rc() * 0.45, sy: 0.6 + rc() * 0.4 });
+    }
+  }
+  return planta;
+}
+function colisoresParedes(planta) {
+  const chao = planta.chao;
+  const boxes = [];
+  for (let j = 0; j < N; j++) {
+    let i = 0;
+    while (i < N) {
+      if (chao[j * N + i] === 0) {
+        let hasFloor = false;
+        for (let dj = -1; dj <= 1 && !hasFloor; dj++) {
+          for (let di = -1; di <= 1 && !hasFloor; di++) {
+            const nj = j + dj;
+            const ni = i + di;
+            if (nj >= 0 && nj < N && ni >= 0 && ni < N && chao[nj * N + ni] === 1) {
+              hasFloor = true;
+            }
+          }
+        }
+        if (hasFloor) {
+          let i1 = i;
+          while (i1 + 1 < N && chao[j * N + i1 + 1] === 0) {
+            let hasFloorNext = false;
+            for (let dj = -1; dj <= 1 && !hasFloorNext; dj++) {
+              for (let di = -1; di <= 1 && !hasFloorNext; di++) {
+                const nj = j + dj;
+                const ni = i1 + 1 + di;
+                if (nj >= 0 && nj < N && ni >= 0 && ni < N && chao[nj * N + ni] === 1) {
+                  hasFloorNext = true;
+                }
+              }
+            }
+            if (hasFloorNext) i1++;
+            else break;
+          }
+          boxes.push({
+            cx: (i + i1 + 1) / 2 - LIM,
+            cz: j + 0.5 - LIM,
+            hx: (i1 - i + 1) / 2,
+            hz: 0.5
+          });
+          i = i1 + 1;
+        } else {
+          i++;
+        }
+      } else {
+        i++;
+      }
+    }
+  }
+  return boxes;
+}
+function texturaPedra(seed, tipo) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  const rnd = mulberry32(seed * 31 + 5);
+  const base = tipo === "chao" ? "#8b8782" : "#9b8f84";
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, 256, 256);
+  const offsets = [-256, 0, 256];
+  for (let i = 0; i < 420; i++) {
+    const x = rnd() * 256;
+    const y = rnd() * 256;
+    const r = 6 + rnd() * 28;
+    const isLight = rnd() < 0.5;
+    const color = isLight ? "rgba(255,255,255,0.13)" : "rgba(20,16,30,0.20)";
+    for (const dx of offsets) {
+      for (const dy of offsets) {
+        const cx = x + dx;
+        const cy = y + dy;
+        const grad2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        grad2.addColorStop(0, color);
+        grad2.addColorStop(1, isLight ? "rgba(255,255,255,0)" : "rgba(20,16,30,0)");
+        ctx.fillStyle = grad2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  ctx.strokeStyle = "rgba(25,20,35,0.45)";
+  ctx.lineWidth = 1.2;
+  for (let i = 0; i < 16; i++) {
+    const x = rnd() * 256, y = rnd() * 256;
+    let angle = rnd() * Math.PI * 2;
+    const pts = [[0, 0]];
+    for (let s = 0, n = 5 + Math.floor(rnd() * 5); s < n; s++) {
+      const len = 6 + rnd() * 10, [px, py] = pts[pts.length - 1];
+      angle += (rnd() - 0.5) * 1.2;
+      pts.push([px + Math.cos(angle) * len, py + Math.sin(angle) * len]);
+    }
+    for (const dx of offsets) for (const dy of offsets) {
+      ctx.beginPath();
+      pts.forEach(([px, py], k) => k ? ctx.lineTo(x + dx + px, y + dy + py) : ctx.moveTo(x + dx, y + dy));
+      ctx.stroke();
+    }
+  }
+  const tex = new THREE7.CanvasTexture(canvas);
+  tex.wrapS = THREE7.RepeatWrapping;
+  tex.wrapT = THREE7.RepeatWrapping;
+  tex.colorSpace = THREE7.SRGBColorSpace;
+  tex.anisotropy = 4;
+  return tex;
+}
+function geoParedes(planta) {
+  const N2 = planta.N;
+  const h = (a, b, c) => {
+    const s = Math.sin(a * 12.9898 + b * 78.233 + c * 37.719) * 43758.5453;
+    return s - Math.floor(s);
+  };
+  const pos = [], cor = [], uv = [];
+  const tri = (a, b, c, nx, ny, nz) => {
+    const ab = [b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]];
+    const ac = [c.p[0] - a.p[0], c.p[1] - a.p[1], c.p[2] - a.p[2]];
+    const n = [ab[1] * ac[2] - ab[2] * ac[1], ab[2] * ac[0] - ab[0] * ac[2], ab[0] * ac[1] - ab[1] * ac[0]];
+    if (n[0] * nx + n[1] * ny + n[2] * nz < 0) {
+      const t = b;
+      b = c;
+      c = t;
+    }
+    [a, b, c].forEach((v) => {
+      pos.push(...v.p);
+      cor.push(...v.c);
+      uv.push(...v.uv);
+    });
+  };
+  const T2 = (i, j) => {
+    const ox = (h(i, j, 2) - 0.5) * 0.36, oz = (h(i, j, 3) - 0.5) * 0.36;
+    const hc = ALTURA * (0.75 + 0.5 * h(i, j, 1));
+    return [i - LIM + ox, hc, j - LIM + oz];
+  };
+  const B = (i, j) => [i - LIM, 0, j - LIM];
+  for (let j = 0; j < N2; j++) {
+    for (let i = 0; i < N2; i++) {
+      if (planta.chao[j * N2 + i] !== 0) continue;
+      const t00 = T2(i, j), t10 = T2(i + 1, j), t11 = T2(i + 1, j + 1), t01 = T2(i, j + 1);
+      const b00 = B(i, j), b10 = B(i + 1, j), b11 = B(i + 1, j + 1), b01 = B(i, j + 1);
+      const ct = [0.6, 0.57, 0.68].map((v) => v * (0.85 + 0.3 * h(i, j, 4)));
+      const mkTop = (p) => ({ p, c: ct, uv: [p[0] * 0.35, p[2] * 0.35] });
+      tri(mkTop(t00), mkTop(t10), mkTop(t11), 0, 1, 0);
+      tri(mkTop(t00), mkTop(t11), mkTop(t01), 0, 1, 0);
+      const cl = [0.62, 0.57, 0.55].map((v) => v * (0.85 + 0.3 * h(i, j, 5)));
+      const cb = cl.map((v) => v * 0.55);
+      const mkSide = (pt, isTop) => ({ p: pt, c: isTop ? cl : cb, uv: [pt[0] * 0.35, pt[1] * 0.35] });
+      const mkSideX = (pt, isTop) => ({ p: pt, c: isTop ? cl : cb, uv: [pt[2] * 0.35, pt[1] * 0.35] });
+      if (j + 1 < N2 && planta.chao[(j + 1) * N2 + i] === 1) {
+        tri(mkSide(b01, false), mkSide(b11, false), mkSide(t11, true), 0, 0, 1);
+        tri(mkSide(b01, false), mkSide(t11, true), mkSide(t01, true), 0, 0, 1);
+      }
+      if (j - 1 >= 0 && planta.chao[(j - 1) * N2 + i] === 1) {
+        tri(mkSide(b10, false), mkSide(b00, false), mkSide(t00, true), 0, 0, -1);
+        tri(mkSide(b10, false), mkSide(t00, true), mkSide(t10, true), 0, 0, -1);
+      }
+      if (i + 1 < N2 && planta.chao[j * N2 + i + 1] === 1) {
+        tri(mkSideX(b10, false), mkSideX(b11, false), mkSideX(t11, true), 1, 0, 0);
+        tri(mkSideX(b10, false), mkSideX(t11, true), mkSideX(t10, true), 1, 0, 0);
+      }
+      if (i - 1 >= 0 && planta.chao[j * N2 + i - 1] === 1) {
+        tri(mkSideX(b01, false), mkSideX(b00, false), mkSideX(t00, true), -1, 0, 0);
+        tri(mkSideX(b01, false), mkSideX(t00, true), mkSideX(t01, true), -1, 0, 0);
+      }
+    }
+  }
+  const g = new THREE7.BufferGeometry();
+  g.setAttribute("position", new THREE7.Float32BufferAttribute(pos, 3));
+  g.setAttribute("color", new THREE7.Float32BufferAttribute(cor, 3));
+  g.setAttribute("uv", new THREE7.Float32BufferAttribute(uv, 2));
+  g.computeVertexNormals();
+  return g;
+}
+function geoCogumeloLuz() {
+  const talo = new THREE7.CylinderGeometry(0.03, 0.04, 0.13, 6).translate(0, 0.065, 0);
+  const chapeu = new THREE7.SphereGeometry(0.11, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.75, 1).translate(0, 0.12, 0);
+  return mergeGeometries2([talo, chapeu]);
+}
+function geoCristal() {
+  const main = new THREE7.ConeGeometry(0.1, 0.62, 5).translate(0, 0.31, 0);
+  const side1 = new THREE7.ConeGeometry(0.07, 0.4, 5).rotateZ(0.5).translate(0.09, 0.19, 0);
+  const side2 = new THREE7.ConeGeometry(0.06, 0.34, 5).rotateZ(-0.6).translate(-0.08, 0.16, 0.03);
+  return mergeGeometries2([main, side1, side2]);
+}
+function texturaBrilho() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gradient.addColorStop(0, "rgba(255,255,255,1)");
+  gradient.addColorStop(0.35, "rgba(255,255,255,0.45)");
+  gradient.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 64, 64);
+  const texture = new THREE7.CanvasTexture(canvas);
+  texture.colorSpace = THREE7.SRGBColorSpace;
+  return texture;
+}
+function texturaPoca() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  const grad2 = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad2.addColorStop(0, "#8fdcf0");
+  grad2.addColorStop(0.55, "#2c6f95");
+  grad2.addColorStop(1, "#0d2038");
+  ctx.fillStyle = grad2;
+  ctx.fillRect(0, 0, 128, 128);
+  ctx.strokeStyle = "rgba(255,255,255,0.22)";
+  ctx.lineWidth = 1.5;
+  [18, 30, 42].forEach((r) => {
+    ctx.beginPath();
+    ctx.arc(64, 64, r, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.beginPath();
+  ctx.ellipse(50, 46, 10, 2.5, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.beginPath();
+  ctx.ellipse(80, 72, 6, 2, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalCompositeOperation = "destination-in";
+  const gradBorda = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gradBorda.addColorStop(0, "rgba(0,0,0,1)");
+  gradBorda.addColorStop(0.8, "rgba(0,0,0,1)");
+  gradBorda.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = gradBorda;
+  ctx.fillRect(0, 0, 128, 128);
+  const texture = new THREE7.CanvasTexture(canvas);
+  texture.colorSpace = THREE7.SRGBColorSpace;
+  return texture;
+}
+function criarBrilhos(planta, seed) {
+  const rnd = mulberry32(seed + 3);
+  const grupo = new THREE7.Group();
+  const m4 = new THREE7.Matrix4(), q = new THREE7.Quaternion(), yAxis = new THREE7.Vector3(0, 1, 0), pos = new THREE7.Vector3(), esc = new THREE7.Vector3(), cor = new THREE7.Color();
+  const instanciar = (geo, mat, lista, y, escala) => {
+    if (!lista.length) return null;
+    const im = new THREE7.InstancedMesh(geo, mat, lista.length);
+    lista.forEach((item, i) => {
+      q.setFromAxisAngle(yAxis, rnd() * 6.283);
+      pos.set(item.x, y, item.z);
+      esc.setScalar(escala(item));
+      im.setMatrixAt(i, m4.compose(pos, q, esc));
+      im.setColorAt(i, cor.set(item.cor));
+    });
+    im.frustumCulled = false;
+    grupo.add(im);
+    return im;
+  };
+  instanciar(geoCogumeloLuz(), materialBrilho(), planta.cogumelos, 0, (it) => it.s);
+  instanciar(geoCristal(), materialBrilho(), planta.cristais, 0, (it) => it.s);
+  const matBrilho = new THREE7.MeshBasicMaterial({ map: texturaBrilho(), transparent: true, depthWrite: false, blending: THREE7.AdditiveBlending, opacity: 0.32, toneMapped: false });
+  const geoPlano = new THREE7.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  instanciar(geoPlano, matBrilho, [...planta.cogumelos, ...planta.cristais], 0.04, (it) => 1.6 + 0.9 * it.s);
+  const boca = new THREE7.Mesh(geoPlano, new THREE7.MeshBasicMaterial({ map: texturaBrilho(), color: 16769184, transparent: true, depthWrite: false, blending: THREE7.AdditiveBlending }));
+  boca.position.set(planta.saida.x, 0.05, LIM - 0.4);
+  boca.scale.set(9, 1, 9);
+  grupo.add(boca);
+  const fora = new THREE7.Mesh(new THREE7.PlaneGeometry(7, 4).rotateX(-Math.PI / 2), new THREE7.MeshBasicMaterial({ color: 16774358 }));
+  fora.position.set(planta.saida.x, 0.02, LIM + 2.2);
+  grupo.add(fora);
+  let pm = null;
+  if (planta.poca) {
+    const poca = planta.poca;
+    pm = new THREE7.Mesh(new THREE7.CircleGeometry(1, 32).rotateX(-Math.PI / 2), new THREE7.MeshBasicMaterial({ map: texturaPoca(), transparent: true, depthWrite: false }));
+    pm.position.set(poca.x, 0.03, poca.z);
+    pm.rotation.y = poca.rot;
+    pm.scale.set(poca.rx, 1, poca.rz);
+    grupo.add(pm);
+  }
+  const atualizar = (t) => {
+    matBrilho.opacity = 0.3 + 0.06 * Math.sin(t * 2);
+    if (pm) {
+      const poca = planta.poca;
+      pm.material.opacity = 0.88 + 0.1 * Math.sin(t * 1.7);
+      pm.scale.set(poca.rx * (1 + 0.02 * Math.sin(t * 1.3)), 1, poca.rz * (1 + 0.02 * Math.cos(t * 1.1)));
+    }
+  };
+  return { grupo, atualizar };
+}
+function criarRochas(planta) {
+  const rnd = mulberry32(7);
+  const grupo = new THREE7.Group();
+  const instanciar = (geo, lista, dy) => {
+    if (!lista || lista.length === 0) return;
+    const im = new THREE7.InstancedMesh(geo, new THREE7.MeshLambertMaterial({ vertexColors: true }), lista.length);
+    const m = new THREE7.Matrix4();
+    const q = new THREE7.Quaternion();
+    const p = new THREE7.Vector3();
+    const s = new THREE7.Vector3();
+    for (let i = 0; i < lista.length; i++) {
+      const item = lista[i];
+      p.set(item.x, dy * item.s, item.z);
+      q.setFromAxisAngle(new THREE7.Vector3(0, 1, 0), rnd() * 6.283);
+      s.set(item.s, item.s * item.sy, item.s);
+      m.compose(p, q, s);
+      im.setMatrixAt(i, m);
+    }
+    im.frustumCulled = false;
+    grupo.add(im);
+  };
+  instanciar(geoRocha(), planta.rochas, -0.25);
+  instanciar(geoPedra(), planta.pedras, -0.05);
+  if (planta.lajes) {
+    for (const laje of planta.lajes) {
+      const mesh = new THREE7.Mesh(
+        new THREE7.BoxGeometry(2 * laje.hx, laje.h, 2 * laje.hz),
+        new THREE7.MeshLambertMaterial({ map: texturaPedra(11, "parede"), color: 12103876 })
+      );
+      mesh.position.set(laje.x, laje.h / 2, laje.z);
+      grupo.add(mesh);
+    }
+  }
+  return grupo;
+}
+function desenharPlanta(ctx, W, planta) {
+  const e = W / N;
+  const px = (x) => (x + LIM) * e;
+  const py = (z) => (z + LIM) * e;
+  ctx.fillStyle = "#0b1024";
+  ctx.fillRect(0, 0, W, W);
+  const pequeno = document.createElement("canvas");
+  pequeno.width = N;
+  pequeno.height = N;
+  const pctx = pequeno.getContext("2d");
+  const img = pctx.createImageData(N, N);
+  const d = img.data;
+  for (let z = 0; z < N; z++) {
+    for (let x = 0; x < N; x++) {
+      const i = z * N + x;
+      const c = planta.chao[i];
+      let r, g, b;
+      if (c === 1) {
+        r = 150;
+        g = 142;
+        b = 158;
+      } else {
+        const viz = x > 0 && planta.chao[i - 1] === 1 || x < N - 1 && planta.chao[i + 1] === 1 || z > 0 && planta.chao[i - N] === 1 || z < N - 1 && planta.chao[i + N] === 1;
+        if (viz) {
+          r = 58;
+          g = 60;
+          b = 92;
+        } else {
+          r = 22;
+          g = 28;
+          b = 50;
+        }
+      }
+      d[i * 4] = r;
+      d[i * 4 + 1] = g;
+      d[i * 4 + 2] = b;
+      d[i * 4 + 3] = 255;
+    }
+  }
+  pctx.putImageData(img, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(pequeno, 0, 0, W, W);
+  const rCog = Math.max(1.5, 0.3 * e);
+  ctx.fillStyle = "#7fffd4";
+  for (const c of planta.cogumelos) {
+    ctx.beginPath();
+    ctx.arc(px(c.x), py(c.z), rCog, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const rCris = Math.max(2, 0.4 * e);
+  ctx.fillStyle = "#c48bff";
+  for (const c of planta.cristais) {
+    ctx.beginPath();
+    ctx.arc(px(c.x), py(c.z), rCris, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  if (planta.poca) {
+    const p = planta.poca;
+    ctx.fillStyle = "#4fb3d9";
+    ctx.beginPath();
+    ctx.ellipse(px(p.x), py(p.z), p.rx * e, p.rz * e, p.rot, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = "#ffe9a8";
+  ctx.fillRect(px(planta.saida.x) - 1.5 * e, W - 0.7 * e, 3 * e, 0.7 * e);
+}
+function criarBocas(cavernas) {
+  const g = new THREE7.Group();
+  g.name = "bocas";
+  const geoR = geoRocha();
+  const matRocha = new THREE7.MeshLambertMaterial({ vertexColors: true });
+  const clamp3 = (v) => Math.min(1, Math.max(0, v));
+  for (const c of cavernas) {
+    const sx = Math.sin(c.dir), sz = Math.cos(c.dir);
+    const geo = new THREE7.IcosahedronGeometry(1, 4);
+    const pos = geo.attributes.position;
+    const col = new Float32Array(pos.count * 3);
+    const k = c.x * 0.13;
+    const cBase = new THREE7.Color("#6f695f");
+    const cTop = new THREE7.Color("#b9b2a4");
+    const cGrass = new THREE7.Color("#6c9145");
+    for (let i = 0; i < pos.count; i++) {
+      const dx = pos.getX(i), dy = pos.getY(i), dz = pos.getZ(i);
+      const n = Math.sin(dx * 5.1 + k) * Math.sin(dz * 4.3 + k * 1.7) * 0.5 + Math.sin(dy * 6.2 + k * 0.6) * 0.5;
+      const h = Math.hypot(dx, dz);
+      const cosA = h > 1e-4 ? (dx * sx + dz * sz) / h : 0;
+      const calm = clamp3((0.85 - cosA) / 0.25);
+      const nx = dx * c.R * 1.05 * (1 + 0.09 * n * calm);
+      const ny = dy * 3.4 * (1 + 0.06 * n * calm);
+      const nz = dz * c.R * 1.05 * (1 + 0.09 * n * calm);
+      pos.setXYZ(i, nx, ny, nz);
+      const t = clamp3((ny + 0.4) / 3.2);
+      const color = cBase.clone().lerp(cTop, t);
+      if (t > 0.55 && n > 0.05) color.lerp(cGrass, 0.55);
+      const mult = 0.92 + 0.16 * Math.abs(Math.sin(dx * 91.7 + dy * 47.3 + dz * 23.1));
+      col[i * 3] = color.r * mult;
+      col[i * 3 + 1] = color.g * mult;
+      col[i * 3 + 2] = color.b * mult;
+    }
+    geo.setAttribute("color", new THREE7.BufferAttribute(col, 3));
+    geo.computeVertexNormals();
+    const morro = new THREE7.Mesh(geo, new THREE7.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+    morro.position.set(c.x, c.y - 0.4, c.z);
+    morro.castShadow = morro.receiveShadow = true;
+    g.add(morro);
+    const rh = c.R * 1.05 * Math.sqrt(1 - Math.pow(0.85 / 3.4, 2));
+    const bx = c.x + sx * (rh + 0.05), bz = c.z + sz * (rh + 0.05), by = c.y + 0.45;
+    const arco = new THREE7.Mesh(new THREE7.TorusGeometry(0.95, 0.3, 8, 18, Math.PI), new THREE7.MeshLambertMaterial({ color: 9077880, flatShading: true }));
+    arco.position.set(bx, by, bz);
+    arco.rotation.y = c.dir;
+    arco.castShadow = true;
+    g.add(arco);
+    const escuro = new THREE7.Mesh(new THREE7.CircleGeometry(0.95, 24).scale(1, 1.15, 1), new THREE7.MeshBasicMaterial({ color: 263434 }));
+    escuro.position.set(c.x + sx * (rh + 0.03), by, c.z + sz * (rh + 0.03));
+    escuro.rotation.y = c.dir;
+    g.add(escuro);
+    const px = Math.cos(c.dir), pz = -Math.sin(c.dir);
+    for (const lado of [-1, 1]) {
+      const bloco = new THREE7.Mesh(geoR, matRocha);
+      bloco.position.set(c.x + sx * rh + px * lado * 1.35, c.y - 0.15, c.z + sz * rh + pz * lado * 1.35);
+      bloco.scale.setScalar(0.6);
+      bloco.rotation.y = lado + 1;
+      bloco.castShadow = true;
+      g.add(bloco);
+    }
+    const rnd = mulberry32(Math.round(c.x * 100 + c.z));
+    for (let i = 0; i < 5; i++) {
+      const a = i / 5 * 2 * Math.PI + rnd() * 0.6;
+      let diff = a - c.dir;
+      while (diff > Math.PI) diff -= 2 * Math.PI;
+      while (diff < -Math.PI) diff += 2 * Math.PI;
+      if (Math.abs(diff) < 0.7) continue;
+      const pedra = new THREE7.Mesh(geoR, matRocha);
+      pedra.position.set(c.x + Math.sin(a) * c.R * 1.15, c.y - 0.2, c.z + Math.cos(a) * c.R * 1.15);
+      pedra.scale.setScalar(0.5 + rnd() * 0.5);
+      pedra.rotation.y = rnd() * 6.283;
+      pedra.castShadow = true;
+      g.add(pedra);
+    }
+  }
+  return g;
+}
+function materialBrilho() {
+  const mat = new THREE7.MeshLambertMaterial({ toneMapped: false });
+  mat.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n  totalEmissiveRadiance = diffuseColor.rgb * 0.8;");
+  };
+  return mat;
+}
+function materialParedes(mapa, uGato) {
+  const mat = new THREE7.MeshLambertMaterial({ map: mapa, vertexColors: true, transparent: true });
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uGato = uGato;
+    sh.vertexShader = "varying vec3 vMundo;\n" + sh.vertexShader.replace("#include <project_vertex>", "#include <project_vertex>\n  vMundo = (modelMatrix * vec4(transformed, 1.0)).xyz;");
+    sh.fragmentShader = "uniform vec3 uGato;\nvarying vec3 vMundo;\n" + sh.fragmentShader.replace("#include <map_fragment>", `#include <map_fragment>
+  {
+    vec3 d = uGato - cameraPosition; float L = length(d); vec3 dir = d / L;
+    vec3 pv = vMundo - cameraPosition; float t = dot(pv, dir);
+    float dist = length(pv - dir * t);
+    float perto = 1.0 - smoothstep(0.45, 1.15, dist);          // perto da linha c\xE2mera -> gato
+    float antes = 1.0 - smoothstep(L - 1.2, L - 0.4, t);     // e entre a c\xE2mera e o gato
+    diffuseColor.a *= 1.0 - 0.92 * perto * antes;
+  }`);
+  };
+  return mat;
+}
+function criar(scene2, seed, salvo) {
+  const planta = gerarPlanta(seed);
+  gerarPontos(planta, seed);
+  const grupo = new THREE7.Group();
+  grupo.name = "caverna";
+  const uGato = { value: new THREE7.Vector3() };
+  const texChao = texturaPedra(seed, "chao");
+  texChao.repeat.set(14, 14);
+  const texParede = texturaPedra(seed + 1, "parede");
+  const chao = new THREE7.Mesh(new THREE7.PlaneGeometry(N + 4, N + 8).rotateX(-Math.PI / 2), new THREE7.MeshLambertMaterial({ map: texChao }));
+  chao.position.set(0, 0, 2);
+  grupo.add(chao);
+  grupo.add(new THREE7.Mesh(geoParedes(planta), materialParedes(texParede, uGato)));
+  const brilhos = criarBrilhos(planta, seed);
+  grupo.add(brilhos.grupo, criarRochas(planta));
+  const hemi = new THREE7.HemisphereLight(8361696, 2830162, 0.75);
+  const luzGato = new THREE7.PointLight(16768168, 6, 8, 1.5);
+  grupo.add(hemi, luzGato);
+  const w = new RAPIER.World({ x: 0, y: -GRAV, z: 0 });
+  w.createCollider(RAPIER.ColliderDesc.cuboid(LIM + 3, 0.5, LIM + 3).setTranslation(0, -0.5, 0));
+  for (const b of colisoresParedes(planta)) caixa(w, b.cx, b.cz, 0, b.hx, b.hz, -1, 4);
+  caixa(w, 0, LIM + 0.6, 0, LIM + 2, 0.6, -1, 4);
+  for (const r of planta.rochas) cilindro(w, r.x, r.z, r.s * 0.85, -1, r.s * (1.16 * r.sy - 0.25));
+  for (const r of planta.pedras) if (r.s >= 0.4) cilindro(w, r.x, r.z, r.s * 0.5, -1, 0.63 * r.s * r.sy - 0.05);
+  for (const l of planta.lajes) caixa(w, l.x, l.z, 0, l.hx, l.hz, -1, l.h);
+  w.step();
+  const fis = criarGato(w, { altura: () => 0, LIMITE: LIM, margem: 0.4 }, planta.entrada.x, planta.entrada.z);
+  const nevoa = { mundo: { LIMITE: LIM }, descoberto: descobertoDeBase64(salvo && salvo.descoberto, LIM), nevoaVersao: 0 };
+  revelar(nevoa, planta.entrada.x, planta.entrada.z, RAIO_REVELA);
+  let tRev = 0;
+  return {
+    grupo,
+    fisica: fis,
+    limites: LIM,
+    planta,
+    entradaSaida: { entrada: planta.entrada, saida: planta.saida },
+    fundo: new THREE7.Color(COR_FUNDO),
+    nevoa: new THREE7.Fog(COR_FUNDO, 14, 34),
+    descoberto: nevoa.descoberto,
+    get nevoaVersao() {
+      return nevoa.nevoaVersao;
+    },
+    atualizar(dt, t) {
+      luzGato.position.set(fis.x, fis.y + 1.6, fis.z + 0.5);
+      uGato.value.set(fis.x, fis.y + 0.4, fis.z);
+      brilhos.atualizar(t);
+      tRev += dt;
+      if (tRev >= 0.2) {
+        tRev = 0;
+        revelar(nevoa, fis.x, fis.z, RAIO_REVELA);
+      }
+    },
+    estado: () => ({ descoberto: descobertoParaBase64(nevoa.descoberto) }),
+    desenharCapa: (ctx, W) => desenharPlanta(ctx, W, planta),
+    descartar() {
+      fis.descartar();
+      grupo.traverse((o) => {
+        if (o.geometry) o.geometry.dispose();
+        for (const mt of [].concat(o.material || [])) {
+          for (const k in mt) if (mt[k] && mt[k].isTexture) mt[k].dispose();
+          mt.dispose();
+        }
+      });
+    }
+  };
+}
+
 // js/map.js
 function lerpAngle2(a, b, t) {
   let diff = b - a;
@@ -5553,7 +6547,7 @@ function lerpAngle2(a, b, t) {
   while (diff < -Math.PI) diff += Math.PI * 2;
   return a + diff * t;
 }
-var SOL_OFFSET = new THREE7.Vector3(-13, 19, 4);
+var SOL_OFFSET = new THREE8.Vector3(-13, 19, 4);
 var CICLO_SEG = 1.5;
 var CICLOS = {
   dia: { sol: 16773341, solInt: 2.7, solPos: [-13, 19, 4], hemiCeu: 16773600, hemiSolo: 7178828, hemiInt: 1.15, fundo: 12575743, nevoa: 12575743, nevoaPerto: 40, nevoaLonge: 105, aguaCeu: 12575743, aguaProf: 2060170, aguaRaso: 6275268 },
@@ -5562,27 +6556,27 @@ var CICLOS = {
 };
 function estadoDoCiclo(def) {
   return {
-    sol: new THREE7.Color(def.sol),
+    sol: new THREE8.Color(def.sol),
     solInt: def.solInt,
-    solPos: new THREE7.Vector3(...def.solPos),
-    hemiCeu: new THREE7.Color(def.hemiCeu),
-    hemiSolo: new THREE7.Color(def.hemiSolo),
+    solPos: new THREE8.Vector3(...def.solPos),
+    hemiCeu: new THREE8.Color(def.hemiCeu),
+    hemiSolo: new THREE8.Color(def.hemiSolo),
     hemiInt: def.hemiInt,
-    fundo: new THREE7.Color(def.fundo),
-    nevoa: new THREE7.Color(def.nevoa),
+    fundo: new THREE8.Color(def.fundo),
+    nevoa: new THREE8.Color(def.nevoa),
     nevoaPerto: def.nevoaPerto,
     nevoaLonge: def.nevoaLonge,
-    aguaCeu: new THREE7.Color(def.aguaCeu),
-    aguaProf: new THREE7.Color(def.aguaProf),
-    aguaRaso: new THREE7.Color(def.aguaRaso)
+    aguaCeu: new THREE8.Color(def.aguaCeu),
+    aguaProf: new THREE8.Color(def.aguaProf),
+    aguaRaso: new THREE8.Color(def.aguaRaso)
   };
 }
 function misturarEstado(de, para, k, saida) {
   for (const chave in para) {
     const v = para[chave];
-    if (v instanceof THREE7.Color) {
+    if (v instanceof THREE8.Color) {
       saida[chave].lerpColors(de[chave], para[chave], k);
-    } else if (v instanceof THREE7.Vector3) {
+    } else if (v instanceof THREE8.Vector3) {
       saida[chave].lerpVectors(de[chave], para[chave], k);
     } else {
       saida[chave] = de[chave] + (para[chave] - de[chave]) * k;
@@ -5638,7 +6632,7 @@ function atualizarCiclo(mapa, scene2, dt) {
 var INCLINA_MAX = 0.35;
 var COM_SOMBRA = /* @__PURE__ */ new Set(["pino", "frondosa", "betula", "arbusto", "rocha", "tronco"]);
 function tiposDeInstancia() {
-  const liso = () => new THREE7.MeshLambertMaterial({ vertexColors: true });
+  const liso = () => new THREE8.MeshLambertMaterial({ vertexColors: true });
   return {
     pino: [geoPinho(), materialVento({ amp: 0.16, H: 5.6 })],
     frondosa: [geoFrondosa(), materialVento({ amp: 0.14, H: 5.4 })],
@@ -5656,14 +6650,14 @@ function criarMapa(scene2, gato, salvo) {
   const ok = salvo && typeof salvo === "object" && Number.isFinite(salvo.x) && Number.isFinite(salvo.z);
   const seed = salvo && Number.isFinite(salvo.seed) ? salvo.seed : 12345;
   const mundo = criarMundo(seed);
-  const grupo = new THREE7.Group();
+  const grupo = new THREE8.Group();
   grupo.name = "mapa";
   scene2.add(grupo);
-  scene2.fog = new THREE7.Fog(CICLOS.dia.nevoa, CICLOS.dia.nevoaPerto, CICLOS.dia.nevoaLonge);
-  scene2.background = new THREE7.Color(CICLOS.dia.fundo);
-  const hemi = new THREE7.HemisphereLight(CICLOS.dia.hemiCeu, CICLOS.dia.hemiSolo, CICLOS.dia.hemiInt);
+  scene2.fog = new THREE8.Fog(CICLOS.dia.nevoa, CICLOS.dia.nevoaPerto, CICLOS.dia.nevoaLonge);
+  scene2.background = new THREE8.Color(CICLOS.dia.fundo);
+  const hemi = new THREE8.HemisphereLight(CICLOS.dia.hemiCeu, CICLOS.dia.hemiSolo, CICLOS.dia.hemiInt);
   grupo.add(hemi);
-  const sol = new THREE7.DirectionalLight(CICLOS.dia.sol, CICLOS.dia.solInt);
+  const sol = new THREE8.DirectionalLight(CICLOS.dia.sol, CICLOS.dia.solInt);
   const pequeno = matchMedia("(pointer: coarse)").matches;
   sol.castShadow = true;
   sol.shadow.mapSize.set(pequeno ? 1024 : 2048, pequeno ? 1024 : 2048);
@@ -5673,15 +6667,20 @@ function criarMapa(scene2, gato, salvo) {
   sol.shadow.camera.far = 80;
   grupo.add(sol, sol.target);
   const mapa = { grupo, mundo, seed, camY: 0, pitch: 0, arbInst: /* @__PURE__ */ new Map(), agachado: false, LIMITE: mundo.LIMITE, cat: null, sol, hemi, solOffset: SOL_OFFSET.clone(), raioSombra: 0, ciclo: "dia", scene: scene2, descoberto: descobertoDeBase64(salvo && salvo.descoberto, mundo.LIMITE), nevoaVersao: 0 };
-  const tex = criarTexturaTerreno(THREE7, mundo, 1024);
+  mapa.fog = scene2.fog;
+  mapa.sub = null;
+  mapa.cavernas = salvo && salvo.cavernas && typeof salvo.cavernas === "object" && !Array.isArray(salvo.cavernas) ? JSON.parse(JSON.stringify(salvo.cavernas)) : {};
+  mapa.entradas = mundo.cavernas.map((c) => ({ tipo: "caverna", id: c.id, x: c.bx, z: c.bz, raio: 2.2, icone: "\u{1F573}\uFE0F", rotulo: "Entrar", fora: { x: c.fx, z: c.fz, rot: c.dir } }));
+  grupo.add(criarBocas(mundo.cavernas));
+  const tex = criarTexturaTerreno(THREE8, mundo, 1024);
   mapa.texCanvas = tex.canvas;
-  const detalhe = criarTexturaDetalhe(THREE7);
-  const g = new THREE7.PlaneGeometry(TERRENO, TERRENO, 120, 120);
+  const detalhe = criarTexturaDetalhe(THREE8);
+  const g = new THREE8.PlaneGeometry(TERRENO, TERRENO, 120, 120);
   g.rotateX(-Math.PI / 2);
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) p.setY(i, mundo.altura(p.getX(i), p.getZ(i)));
   g.computeVertexNormals();
-  const matT = new THREE7.MeshLambertMaterial({ map: tex.texture });
+  const matT = new THREE8.MeshLambertMaterial({ map: tex.texture });
   matT.onBeforeCompile = (sh) => {
     sh.uniforms.tDet = { value: detalhe };
     sh.fragmentShader = "uniform sampler2D tDet;\n" + sh.fragmentShader.replace(
@@ -5689,20 +6688,20 @@ function criarMapa(scene2, gato, salvo) {
       "#include <map_fragment>\n  diffuseColor.rgb *= 0.6 + 0.6 * texture2D(tDet, vMapUv * 30.0).r;"
     );
   };
-  const terreno = new THREE7.Mesh(g, matT);
+  const terreno = new THREE8.Mesh(g, matT);
   terreno.receiveShadow = true;
   grupo.add(terreno);
-  const anel = new THREE7.Shape([new THREE7.Vector2(-450, -450), new THREE7.Vector2(450, -450), new THREE7.Vector2(450, 450), new THREE7.Vector2(-450, 450)]);
+  const anel = new THREE8.Shape([new THREE8.Vector2(-450, -450), new THREE8.Vector2(450, -450), new THREE8.Vector2(450, 450), new THREE8.Vector2(-450, 450)]);
   const h = TERRENO / 2 - 0.3;
-  anel.holes.push(new THREE7.Path([new THREE7.Vector2(-h, -h), new THREE7.Vector2(-h, h), new THREE7.Vector2(h, h), new THREE7.Vector2(h, -h)]));
-  const fora = new THREE7.Mesh(new THREE7.ShapeGeometry(anel).rotateX(-Math.PI / 2), new THREE7.MeshLambertMaterial({ color: 6262078 }));
+  anel.holes.push(new THREE8.Path([new THREE8.Vector2(-h, -h), new THREE8.Vector2(-h, h), new THREE8.Vector2(h, h), new THREE8.Vector2(h, -h)]));
+  const fora = new THREE8.Mesh(new THREE8.ShapeGeometry(anel).rotateX(-Math.PI / 2), new THREE8.MeshLambertMaterial({ color: 6262078 }));
   fora.position.y = 0.4;
   grupo.add(fora);
-  const cor = new THREE7.Color(), m4 = new THREE7.Matrix4(), q = new THREE7.Quaternion(), yAxis = new THREE7.Vector3(0, 1, 0);
-  const pos = new THREE7.Vector3(), esc = new THREE7.Vector3();
+  const cor = new THREE8.Color(), m4 = new THREE8.Matrix4(), q = new THREE8.Quaternion(), yAxis = new THREE8.Vector3(0, 1, 0);
+  const pos = new THREE8.Vector3(), esc = new THREE8.Vector3();
   for (const [tipo, [geo, mat]] of Object.entries(tiposDeInstancia())) {
     for (const lista of mundo.porChunk(mundo.inst[tipo])) {
-      const im = new THREE7.InstancedMesh(geo, mat, lista.length);
+      const im = new THREE8.InstancedMesh(geo, mat, lista.length);
       lista.forEach((it, i) => {
         pos.set(it.x, it.y, it.z);
         q.setFromAxisAngle(yAxis, it.rot);
@@ -5719,18 +6718,18 @@ function criarMapa(scene2, gato, salvo) {
       grupo.add(im);
     }
   }
-  mapa.agua = criarAgua(mundo, criarTexturaRuido(THREE7), SOL_OFFSET);
+  mapa.agua = criarAgua(mundo, criarTexturaRuido(THREE8), SOL_OFFSET);
   grupo.add(mapa.agua);
   const tr = mundo.travessias.find((t) => t.tipo === "tronco");
-  const troncoPonte = new THREE7.Mesh(geoTronco(), new THREE7.MeshLambertMaterial({ vertexColors: true }));
+  const troncoPonte = new THREE8.Mesh(geoTronco(), new THREE8.MeshLambertMaterial({ vertexColors: true }));
   troncoPonte.scale.set(1.35, 1.35, tr.comp / 3.6);
   troncoPonte.position.set(tr.cx, tr.y - 0.6 * 1.35, tr.cz);
   troncoPonte.rotation.y = tr.rot;
   troncoPonte.castShadow = troncoPonte.receiveShadow = true;
   grupo.add(troncoPonte);
-  const asa = new THREE7.BufferGeometry();
-  asa.setAttribute("position", new THREE7.Float32BufferAttribute([0, 0, 0, 0.11, 0, 0.07, 0.11, 0, -0.06, 0, 0, 0, -0.11, 0, -0.06, -0.11, 0, 0.07], 3));
-  const bor = new THREE7.InstancedMesh(asa, new THREE7.MeshBasicMaterial({ side: THREE7.DoubleSide }), 8);
+  const asa = new THREE8.BufferGeometry();
+  asa.setAttribute("position", new THREE8.Float32BufferAttribute([0, 0, 0, 0.11, 0, 0.07, 0.11, 0, -0.06, 0, 0, 0, -0.11, 0, -0.06, -0.11, 0, 0.07], 3));
+  const bor = new THREE8.InstancedMesh(asa, new THREE8.MeshBasicMaterial({ side: THREE8.DoubleSide }), 8);
   const rb = mulberry32(99);
   mapa.borboletas = Array.from({ length: 8 }, (_, i) => {
     const f = mundo.inst.flor[Math.floor(rb() * mundo.inst.flor.length)];
@@ -5740,7 +6739,7 @@ function criarMapa(scene2, gato, salvo) {
   bor.frustumCulled = false;
   mapa.bor = bor;
   grupo.add(bor);
-  const gatoGroup = new THREE7.Group();
+  const gatoGroup = new THREE8.Group();
   gatoGroup.name = "gatoGroup";
   const x0 = ok ? salvo.x : 0, z0 = ok ? salvo.z : 0;
   const fis = criarFisica(mundo, x0, z0);
@@ -5764,10 +6763,15 @@ function criarMapa(scene2, gato, salvo) {
     // presas do Bote (ratos e peixes, ver animais.js)
     presasProximas: (pos2, raio) => presasProximas(mapa, pos2, raio),
     // o que o save guarda (main.js acrescenta o zoom)
-    estadoMundo: () => ({ v: 1, seed, x: gatoGroup.position.x, z: gatoGroup.position.z, rot: gatoGroup.rotation.y, agachado: mapa.agachado, ciclo: mapa.ciclo, mobs: mapa.animais ? mapa.animais.estado() : [], descoberto: descobertoParaBase64(mapa.descoberto) }),
+    // dentro de um mapinha o mapa grande guarda o gato do lado de fora da entrada (sub.entrada.fora) e o mapinha em `sub`
+    estadoMundo() {
+      const s = mapa.sub, fora2 = s && s.entrada.fora;
+      if (s) mapa[s.campo][s.id] = s.inst.estado();
+      return { v: 1, seed, x: fora2 ? fora2.x : gatoGroup.position.x, z: fora2 ? fora2.z : gatoGroup.position.z, rot: fora2 ? fora2.rot : gatoGroup.rotation.y, agachado: mapa.agachado, ciclo: mapa.ciclo, mobs: mapa.animais ? mapa.animais.estado() : [], descoberto: descobertoParaBase64(mapa.descoberto), cavernas: mapa.cavernas, sub: s ? s.estadoSub() : null };
+    },
     // sombra do sol: quanto mais longe a câmera, maior a área coberta
     ajustarZoom(dist) {
-      const r = THREE7.MathUtils.clamp(dist * 1.15 + 5, 10, 24);
+      const r = THREE8.MathUtils.clamp(dist * 1.15 + 5, 10, 24);
       if (Math.abs(r - mapa.raioSombra) < 0.4) return;
       const c = sol.shadow.camera;
       c.left = -r;
@@ -5796,7 +6800,7 @@ function criarMapa(scene2, gato, salvo) {
   iniciarCiclo(mapa, scene2, salvo && salvo.ciclo);
   revelar(mapa, gatoGroup.position.x, gatoGroup.position.z, mapa.ciclo === "noite" ? RAIO_NOITE : RAIO_DIA);
   mapa.setCiclo = (id) => setCiclo(mapa, scene2, id);
-  loadCat(THREE7, gato).then((cat) => {
+  loadCat(THREE8, gato).then((cat) => {
     if (mapa.descartado) {
       cat.dispose();
       return;
@@ -5818,44 +6822,53 @@ function inclinarGato(mapa, dt) {
   mapa.pitch += (alvo - mapa.pitch) * Math.min(1, dt * 8);
   g.rotation.x = -mapa.pitch;
 }
-var _m = new THREE7.Matrix4();
-var _q = new THREE7.Quaternion();
-var _p = new THREE7.Vector3();
-var _s = new THREE7.Vector3();
-var _y = new THREE7.Vector3(0, 1, 0);
+var _m = new THREE8.Matrix4();
+var _q = new THREE8.Quaternion();
+var _p = new THREE8.Vector3();
+var _s = new THREE8.Vector3();
+var _y = new THREE8.Vector3(0, 1, 0);
+function moverGato(mapa, dt, input) {
+  let dx = input ? input.dx || 0 : 0;
+  let dy = input ? input.dy || 0 : 0;
+  const a = atualizarAcao(mapa, dt, dx, dy);
+  dx = a.dx;
+  dy = a.dy;
+  const agachado = !!(input && input.agachado);
+  mapa.agachado = agachado;
+  const correndo = !a.conduzido && !agachado && !!(input && input.correndo);
+  mapa.correndo = correndo && Math.hypot(dx, dy) > 0.05;
+  const gp = mapa.gatoGroup.position;
+  const len = Math.min(1, Math.hypot(dx, dy));
+  if (dx !== 0 || dy !== 0) {
+    const alvo = Math.atan2(dx, dy);
+    mapa.gatoGroup.rotation.y = lerpAngle2(mapa.gatoGroup.rotation.y, alvo, Math.min(1, dt * 12));
+  }
+  const vel = mapa.cat ? mapa.cat.velocidade() : agachado ? 0.6 : correndo && len > 0.75 ? 2.2 : 1.2;
+  const tem = dx !== 0 || dy !== 0;
+  const fis = mapa.fis;
+  if (Math.abs(gp.x - fis.x) > 1e-3 || Math.abs(gp.z - fis.z) > 1e-3) {
+    fis.teleportar(gp.x, gp.z);
+    gp.y = fis.y;
+  }
+  const noChaoAntes = fis.noChao;
+  fis.atualizar(dt, tem ? dx / len * vel : 0, tem ? dy / len * vel : 0, tem);
+  gp.x = fis.x;
+  gp.z = fis.z;
+  gp.y = fis.noChao && noChaoAntes ? gp.y + (fis.y - gp.y) * Math.min(1, dt * 25) : fis.y;
+  inclinarGato(mapa, dt);
+  mapa.camY += (gp.y - mapa.camY) * Math.min(1, dt * 10);
+  if (mapa.cat) {
+    mapa.cat.setAgachado(agachado);
+    mapa.cat.setMove(len > 0.05 ? correndo ? len : 0.5 * Math.max(0.6, len) : 0);
+    mapa.cat.update(dt);
+  }
+}
 function atualizarMapa(mapa, dt, input, tempoSegundos) {
   try {
     VENTO.value = tempoSegundos;
     atualizarCiclo(mapa, mapa.scene, dt);
-    let dx = input ? input.dx || 0 : 0;
-    let dy = input ? input.dy || 0 : 0;
-    const a = atualizarAcao(mapa, dt, dx, dy);
-    dx = a.dx;
-    dy = a.dy;
-    const agachado = !!(input && input.agachado);
-    mapa.agachado = agachado;
-    const correndo = !a.conduzido && !agachado && !!(input && input.correndo);
-    mapa.correndo = correndo && Math.hypot(dx, dy) > 0.05;
+    moverGato(mapa, dt, input);
     const gp = mapa.gatoGroup.position;
-    const len = Math.min(1, Math.hypot(dx, dy));
-    if (dx !== 0 || dy !== 0) {
-      const alvo = Math.atan2(dx, dy);
-      mapa.gatoGroup.rotation.y = lerpAngle2(mapa.gatoGroup.rotation.y, alvo, Math.min(1, dt * 12));
-    }
-    const vel = mapa.cat ? mapa.cat.velocidade() : agachado ? 0.6 : correndo && len > 0.75 ? 2.2 : 1.2;
-    const tem = dx !== 0 || dy !== 0;
-    const fis = mapa.fis;
-    if (Math.abs(gp.x - fis.x) > 1e-3 || Math.abs(gp.z - fis.z) > 1e-3) {
-      fis.teleportar(gp.x, gp.z);
-      gp.y = fis.y;
-    }
-    const noChaoAntes = fis.noChao;
-    fis.atualizar(dt, tem ? dx / len * vel : 0, tem ? dy / len * vel : 0, tem);
-    gp.x = fis.x;
-    gp.z = fis.z;
-    gp.y = fis.noChao && noChaoAntes ? gp.y + (fis.y - gp.y) * Math.min(1, dt * 25) : fis.y;
-    inclinarGato(mapa, dt);
-    mapa.camY += (gp.y - mapa.camY) * Math.min(1, dt * 10);
     const passoS = 2 * mapa.raioSombra / mapa.sol.shadow.mapSize.x;
     _p.set(Math.round(gp.x / passoS) * passoS, gp.y, Math.round(gp.z / passoS) * passoS);
     mapa.sol.target.position.copy(_p);
@@ -5863,19 +6876,14 @@ function atualizarMapa(mapa, dt, input, tempoSegundos) {
     if (mapa.animais) mapa.animais.atualizar(dt, tempoSegundos);
     const t = tempoSegundos;
     mapa.borboletas.forEach((b, i) => {
-      const a2 = t * b.w + b.ph, x = b.x + Math.cos(a2) * b.r, z = b.z + Math.sin(a2 * 1.3) * b.r;
+      const a = t * b.w + b.ph, x = b.x + Math.cos(a) * b.r, z = b.z + Math.sin(a * 1.3) * b.r;
       const yy = mapa.mundo.altura(x, z) + 0.7 + Math.sin(t * 2 + i) * 0.25;
       _p.set(x, yy, z);
-      _q.setFromAxisAngle(_y, Math.atan2(-Math.sin(a2), Math.cos(a2 * 1.3) * 1.3));
+      _q.setFromAxisAngle(_y, Math.atan2(-Math.sin(a), Math.cos(a * 1.3) * 1.3));
       _s.set(0.35 + 0.65 * Math.abs(Math.sin(t * 17 + i * 2)), 1, 1);
       mapa.bor.setMatrixAt(i, _m.compose(_p, _q, _s));
     });
     mapa.bor.instanceMatrix.needsUpdate = true;
-    if (mapa.cat) {
-      mapa.cat.setAgachado(agachado);
-      mapa.cat.setMove(len > 0.05 ? correndo ? len : 0.5 * Math.max(0.6, len) : 0);
-      mapa.cat.update(dt);
-    }
     atualizarNevoa(mapa, dt);
     return { x: gp.x, z: gp.z };
   } catch (e) {
@@ -5989,6 +6997,10 @@ function criarCapaEstatica(mapa, W) {
   canvas.width = W;
   canvas.height = W;
   const ctx = canvas.getContext("2d");
+  if (mapa.desenharCapa) {
+    mapa.desenharCapa(ctx, W);
+    return canvas;
+  }
   const LIMITE = mapa.mundo.LIMITE;
   const e = W / (2 * LIMITE);
   const px = (x) => (x + LIMITE) * e;
@@ -6047,6 +7059,16 @@ function criarCapaEstatica(mapa, W) {
         ctx.fill();
       }
     }
+  }
+  for (const c of mapa.mundo.cavernas || []) {
+    ctx.fillStyle = "#5a534b";
+    ctx.beginPath();
+    ctx.arc(px(c.x), py(c.z), Math.max(3, c.R * e), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#0a0a12";
+    ctx.beginPath();
+    ctx.arc(px(c.bx), py(c.bz), Math.max(1.6, 0.45 * c.R * e), 0, Math.PI * 2);
+    ctx.fill();
   }
   return canvas;
 }
@@ -6115,33 +7137,125 @@ function criarMapaCompleto({ container, mapa, aoFechar }) {
   return { elemento, atualizar, destruir };
 }
 
+// js/submapa.js
+var TIPOS = { caverna: { campo: "cavernas", modulo: caverna_exports } };
+var numero = (id) => parseInt(String(id).replace(/\D/g, ""), 10) || 1;
+var semente = (seedMundo, id) => (seedMundo * 31 + numero(id) * 7919 >>> 0) % 1000003;
+function entrar(mapa, entrada, restaurar2) {
+  if (mapa.sub) return mapa.sub;
+  const T2 = TIPOS[entrada.tipo], scene2 = mapa.scene;
+  const inst = T2.modulo.criar(scene2, semente(mapa.seed, entrada.id), mapa[T2.campo][entrada.id]);
+  scene2.add(inst.grupo);
+  mapa.grupo.visible = false;
+  scene2.fog = inst.nevoa;
+  scene2.background = inst.fundo;
+  const g = mapa.gatoGroup, fis = inst.fisica, es = inst.entradaSaida;
+  const volta = restaurar2 && Number.isFinite(restaurar2.x) && Number.isFinite(restaurar2.z);
+  if (volta) fis.teleportar(restaurar2.x, restaurar2.z);
+  g.position.set(fis.x, fis.y, fis.z);
+  g.rotation.set(0, volta && Number.isFinite(restaurar2.rot) ? restaurar2.rot : es.entrada.rot, 0);
+  const sub = {
+    sub: true,
+    tipo: entrada.tipo,
+    id: entrada.id,
+    campo: T2.campo,
+    entrada,
+    inst,
+    scene: scene2,
+    gatoGroup: g,
+    fis,
+    camY: fis.y,
+    pitch: 0,
+    agachado: false,
+    correndo: false,
+    ciclo: "dia",
+    mundo: { LIMITE: inst.limites, altura: () => 0 },
+    // chão plano: os degraus e pedras são colisores
+    get cat() {
+      return mapa.cat;
+    },
+    // o mesmo gato
+    descoberto: inst.descoberto,
+    get nevoaVersao() {
+      return inst.nevoaVersao;
+    },
+    ajustarZoom() {
+    },
+    desenharCapa: (ctx, W) => inst.desenharCapa(ctx, W),
+    // planta 2D (criarCapaEstatica usa em vez do terreno)
+    acao(id) {
+      if (id === "pular" && !fis.pular()) return;
+      if (mapa.cat) mapa.cat.play(id);
+    },
+    acaoContextual() {
+      const s = es.saida;
+      return mapa.cat && Math.hypot(g.position.x - s.x, g.position.z - s.z) < s.raio ? { id: "sair", icone: "\u2600\uFE0F", rotulo: "Sair" } : null;
+    },
+    usarAcao() {
+      if (sub.acaoContextual() && mapa.aoSair) mapa.aoSair(sub);
+    },
+    atualizar(dt, input, t) {
+      try {
+        moverGato(sub, dt, input);
+        inst.atualizar(dt, t);
+      } catch (e) {
+        console.error("submapa", e);
+      }
+    },
+    estadoSub: () => ({ tipo: entrada.tipo, id: entrada.id, x: g.position.x, z: g.position.z, rot: g.rotation.y })
+  };
+  mapa.sub = sub;
+  return sub;
+}
+function sair(mapa) {
+  const sub = mapa.sub;
+  if (!sub) return;
+  const scene2 = mapa.scene, f = sub.entrada.fora, fis = mapa.fis, g = mapa.gatoGroup;
+  mapa[sub.campo][sub.id] = sub.inst.estado();
+  scene2.remove(sub.inst.grupo);
+  sub.inst.descartar();
+  mapa.sub = null;
+  mapa.grupo.visible = true;
+  scene2.fog = mapa.fog;
+  scene2.background = mapa.fundo;
+  fis.teleportar(f.x, f.z);
+  g.position.set(fis.x, fis.y, fis.z);
+  g.rotation.set(0, f.rot, 0);
+  mapa.pitch = 0;
+  mapa.camY = fis.y;
+}
+function restaurar(mapa, salvoSub) {
+  const e = salvoSub && mapa.entradas.find((q) => q.tipo === salvoSub.tipo && q.id === salvoSub.id);
+  return e ? entrar(mapa, e, salvoSub) : null;
+}
+
 // js/main.js
 document.title = "Avel\xE3, o gatinho sobrevivente \u2014 v" + VERSION;
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {
 });
-var CEU = new THREE8.Color(12575743);
+var CEU = new THREE9.Color(12575743);
 var renderer;
 var scene;
 var camera;
 try {
-  renderer = new THREE8.WebGLRenderer({ antialias: true, alpha: true });
+  renderer = new THREE9.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0, 0);
-  renderer.outputColorSpace = THREE8.SRGBColorSpace;
-  renderer.toneMapping = THREE8.ACESFilmicToneMapping;
+  renderer.outputColorSpace = THREE9.SRGBColorSpace;
+  renderer.toneMapping = THREE9.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE8.PCFShadowMap;
+  renderer.shadowMap.type = THREE9.PCFShadowMap;
   const view = document.getElementById("view");
   if (view) view.appendChild(renderer.domElement);
 } catch (e) {
   renderer = null;
 }
-scene = new THREE8.Scene();
+scene = new THREE9.Scene();
 scene.background = CEU;
-var hemiEstudio = new THREE8.HemisphereLight(16773600, 13215114, 1.1);
+var hemiEstudio = new THREE9.HemisphereLight(16773600, 13215114, 1.1);
 scene.add(hemiEstudio);
-var luzChave = new THREE8.DirectionalLight(16773341, 2.4);
+var luzChave = new THREE9.DirectionalLight(16773341, 2.4);
 luzChave.position.set(2.2, 3.5, 2.6);
 luzChave.castShadow = true;
 luzChave.shadow.mapSize.set(2048, 2048);
@@ -6155,17 +7269,17 @@ luzChave.shadow.camera.bottom = -1.5;
 luzChave.shadow.camera.near = 0.5;
 luzChave.shadow.camera.far = 12;
 scene.add(luzChave);
-var luzContorno = new THREE8.DirectionalLight(14674175, 1.6);
+var luzContorno = new THREE9.DirectionalLight(14674175, 1.6);
 luzContorno.position.set(-2, 2.2, -3);
 scene.add(luzContorno);
-var luzPreenchimento = new THREE8.DirectionalLight(16769743, 0.5);
+var luzPreenchimento = new THREE9.DirectionalLight(16769743, 0.5);
 luzPreenchimento.position.set(-3, 1, 2);
 scene.add(luzPreenchimento);
 function luzesDoMapa(noMapa) {
   hemiEstudio.visible = luzChave.visible = luzPreenchimento.visible = !noMapa;
   luzContorno.intensity = noMapa ? 0.7 : 1.6;
 }
-camera = new THREE8.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+camera = new THREE9.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(0, 0.6, 6.8);
 camera.lookAt(0, -1.15, 0);
 window.addEventListener("resize", () => {
@@ -6218,6 +7332,46 @@ window.addEventListener("pagehide", aoSairDaPagina);
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") aoSairDaPagina();
 });
+var trocando = false;
+var alvoAtivo = () => mapaAtual && (mapaAtual.sub || mapaAtual);
+function aoMudarSub() {
+  capaMini = null;
+  fecharMapaCompleto();
+  const dentro = !!(mapaAtual && mapaAtual.sub);
+  document.body.classList.toggle("em-sub", dentro);
+  luzContorno.intensity = dentro ? 0.3 : 0.7;
+  if (inputAtual && alvoAtivo()) inputAtual.definirAcao(alvoAtivo().acaoContextual());
+  salvarMundoAgora();
+}
+function trocarSub(fn) {
+  if (trocando || telaAtual !== "mapa") return;
+  trocando = true;
+  let veu = document.getElementById("veu");
+  if (!veu) {
+    veu = document.createElement("div");
+    veu.id = "veu";
+    document.body.appendChild(veu);
+  }
+  veu.classList.add("escuro");
+  setTimeout(() => {
+    if (!mapaAtual) {
+      trocando = false;
+      return;
+    }
+    try {
+      fn();
+      aoMudarSub();
+    } catch (e) {
+      console.error("trocarSub", e);
+    }
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      veu.classList.remove("escuro");
+      setTimeout(() => {
+        trocando = false;
+      }, 200);
+    }));
+  }, 200);
+}
 function desmontarMapa() {
   salvarMundoAgora();
   idGatoMapa = null;
@@ -6234,9 +7388,11 @@ function desmontarMapa() {
     zoomAtual = null;
   }
   capaMini = null;
-  document.body.classList.remove("em-mapa");
+  document.body.classList.remove("em-mapa", "em-sub");
+  trocando = false;
   if (mapaAtual && scene) {
     try {
+      if (mapaAtual.sub) sair(mapaAtual);
       mapaAtual.descartado = true;
       mapaAtual.descartar();
       if (mapaAtual.cat) mapaAtual.cat.dispose();
@@ -6334,6 +7490,16 @@ function irPara(nome, opcoes) {
       } catch (e) {
       }
     }
+    const mapaNovo = mapaAtual;
+    mapaNovo.aoEntrar = (entrada) => trocarSub(() => entrar(mapaNovo, entrada));
+    mapaNovo.aoSair = () => trocarSub(() => sair(mapaNovo));
+    if (salvo && salvo.sub) {
+      try {
+        if (restaurar(mapaNovo, salvo.sub)) aoMudarSub();
+      } catch (e) {
+        console.error("restaurar", e);
+      }
+    }
     const hud = document.createElement("div");
     hud.id = "hud";
     const nomeEl = document.createElement("div");
@@ -6386,10 +7552,10 @@ function irPara(nome, opcoes) {
     uiRoot.appendChild(hud);
     inputAtual = criarInput(uiRoot, { agachado: !!salvo?.agachado });
     inputAtual.onPular(() => {
-      if (mapaAtual) mapaAtual.acao("pular");
+      if (alvoAtivo() && !trocando) alvoAtivo().acao("pular");
     });
     inputAtual.onAcao(() => {
-      if (mapaAtual) mapaAtual.usarAcao();
+      if (alvoAtivo() && !trocando) alvoAtivo().usarAcao();
     });
     telaAtual = "mapa";
   }
@@ -6461,7 +7627,7 @@ function abrirMapaCompleto() {
   if (mapaCompleto || !mapaAtual) return;
   pausado = true;
   salvarMundoAgora();
-  mapaCompleto = criarMapaCompleto({ container: uiRoot, mapa: mapaAtual, aoFechar: fecharMapaCompleto });
+  mapaCompleto = criarMapaCompleto({ container: uiRoot, mapa: alvoAtivo(), aoFechar: fecharMapaCompleto });
 }
 function fecharMapaCompleto() {
   if (!mapaCompleto) return;
@@ -6518,9 +7684,9 @@ function configurarRenderCriador() {
     camAlvo.lerp(dados.alvo, 0.15);
     camAltura += (dados.altura - camAltura) * 0.15;
   }
-  const fovRad = THREE8.MathUtils.degToRad(camera.fov);
+  const fovRad = THREE9.MathUtils.degToRad(camera.fov);
   const dist = camAltura / (2 * Math.tan(fovRad / 2));
-  const direcao = new THREE8.Vector3(0, 0.35, 1).normalize();
+  const direcao = new THREE9.Vector3(0, 0.35, 1).normalize();
   camera.position.copy(camAlvo).addScaledVector(direcao, dist);
   camera.lookAt(camAlvo);
 }
@@ -6533,14 +7699,15 @@ function restaurarRenderNormal() {
 }
 var ultimoTempo = 0;
 function desenharMinimapa() {
-  if (!mapaAtual) return;
+  const alvo = alvoAtivo();
+  if (!alvo) return;
   const canvas = document.getElementById("minimapa");
   const ctx = canvas && canvas.getContext("2d");
   if (!ctx) return;
-  if (!capaMini) capaMini = criarCapaEstatica(mapaAtual, canvas.width);
+  if (!capaMini) capaMini = criarCapaEstatica(alvo, canvas.width);
   ctx.drawImage(capaMini, 0, 0);
-  desenharNevoa(ctx, mapaAtual, canvas.width);
-  desenharGato(ctx, mapaAtual, canvas.width);
+  desenharNevoa(ctx, alvo, canvas.width);
+  desenharGato(ctx, alvo, canvas.width);
 }
 if (renderer) {
   renderer.setAnimationLoop((tempoMs) => {
@@ -6566,19 +7733,23 @@ if (renderer) {
       restaurarRenderNormal();
     }
     if (telaAtual === "mapa" && !pausado && mapaAtual) {
-      const estado = inputAtual ? inputAtual.estado() : { dx: 0, dy: 0, correndo: false };
+      const alvo = alvoAtivo();
+      const estado = inputAtual && !trocando ? inputAtual.estado() : { dx: 0, dy: 0, correndo: false };
       try {
-        atualizarMapa(mapaAtual, dt, estado, tempoSegundos);
+        if (!trocando) {
+          if (mapaAtual.sub) mapaAtual.sub.atualizar(dt, estado, tempoSegundos);
+          else atualizarMapa(mapaAtual, dt, estado, tempoSegundos);
+        }
       } catch (e) {
       }
-      if (camera && mapaAtual.gatoGroup) {
-        const g = mapaAtual.gatoGroup.position;
+      if (camera && alvo.gatoGroup) {
+        const g = alvo.gatoGroup.position;
         if (zoomAtual) distCam += (zoomAtual.get() - distCam) * Math.min(1, dt * 10);
-        mapaAtual.ajustarZoom(distCam);
-        camera.position.set(g.x, mapaAtual.camY + 0.3 + 0.8 * distCam, g.z + 0.6 * distCam);
-        camera.lookAt(g.x, mapaAtual.camY + 0.3, g.z);
+        alvo.ajustarZoom(distCam);
+        camera.position.set(g.x, alvo.camY + 0.3 + 0.8 * distCam, g.z + 0.6 * distCam);
+        camera.lookAt(g.x, alvo.camY + 0.3, g.z);
       }
-      if (inputAtual && mapaAtual) inputAtual.definirAcao(mapaAtual.acaoContextual());
+      if (inputAtual && !trocando) inputAtual.definirAcao(alvo.acaoContextual());
       tempoSalvar += dt;
       if (tempoSalvar >= 5) salvarMundoAgora();
       desenharMinimapa();
@@ -6606,6 +7777,13 @@ window.GATINHO = {
   get mapa() {
     return mapaAtual;
   },
+  get sub() {
+    return mapaAtual ? mapaAtual.sub : null;
+  },
+  // mapinha aberto (caverna...) ou null
+  get trocando() {
+    return trocando;
+  },
   salvarMundo: salvarMundoAgora,
   mover(dx, dy, correndo, agachado) {
     ultimoInput = { dx: dx || 0, dy: dy || 0, correndo: !!correndo, agachado: !!agachado };
@@ -6631,8 +7809,9 @@ window.GATINHO = {
     if (!mapaAtual) return null;
     const t = typeof performance !== "undefined" && performance.now ? performance.now() / 1e3 : Date.now() / 1e3;
     try {
-      atualizarMapa(mapaAtual, dt, ultimoInput, t);
-      if (inputAtual) inputAtual.definirAcao(mapaAtual.acaoContextual());
+      if (mapaAtual.sub) mapaAtual.sub.atualizar(dt, ultimoInput, t);
+      else atualizarMapa(mapaAtual, dt, ultimoInput, t);
+      if (inputAtual) inputAtual.definirAcao(alvoAtivo().acaoContextual());
     } catch (e) {
     }
     return mapaAtual ? { x: mapaAtual.gatoGroup.position.x, z: mapaAtual.gatoGroup.position.z } : null;
