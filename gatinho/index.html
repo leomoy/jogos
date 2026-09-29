@@ -1368,7 +1368,7 @@ var init_smoke = __esm({
 import * as THREE7 from "three";
 
 // js/data.js
-var VERSION = "0.6.2";
+var VERSION = "0.6.3";
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
 var CORES_GATO = {
@@ -4535,6 +4535,166 @@ function criarAgua(mundo, texRuido, sol) {
   return mesh;
 }
 
+// js/nevoa.js
+var RAIO_DIA = 9;
+var RAIO_NOITE = 6;
+var PERIODO = 0.2;
+function criarDescoberto(limite) {
+  return new Uint8Array(Math.ceil(2 * limite * (2 * limite) / 8));
+}
+function descobertoParaBase64(bits) {
+  const binaryString = Array.from(bits, (b) => String.fromCharCode(b)).join("");
+  return btoa(binaryString);
+}
+function descobertoDeBase64(texto, limite) {
+  const r = criarDescoberto(limite);
+  if (typeof texto === "string") {
+    try {
+      const decodificado = atob(texto);
+      if (decodificado.length === r.length) {
+        for (let i = 0; i < r.length; i++) {
+          r[i] = decodificado.charCodeAt(i);
+        }
+      }
+    } catch (e) {
+    }
+  }
+  return r;
+}
+function revelar(mapa, x, z, raio) {
+  const LIM = mapa.mundo.LIMITE;
+  const L = 2 * LIM;
+  const raio2 = raio * raio;
+  const x0 = Math.max(0, Math.floor(x - raio + LIM));
+  const x1 = Math.min(L - 1, Math.ceil(x + raio + LIM));
+  const z0 = Math.max(0, Math.floor(z - raio + LIM));
+  const z1 = Math.min(L - 1, Math.ceil(z + raio + LIM));
+  let mudou = false;
+  for (let iz = z0; iz <= z1; iz++) {
+    for (let ix = x0; ix <= x1; ix++) {
+      const cx = ix + 0.5 - LIM;
+      const cz = iz + 0.5 - LIM;
+      const dx = cx - x;
+      const dz = cz - z;
+      if (dx * dx + dz * dz <= raio2) {
+        const i = iz * L + ix;
+        const byte = i >> 3;
+        const bit = 1 << (i & 7);
+        if (!(mapa.descoberto[byte] & bit)) {
+          mapa.descoberto[byte] |= bit;
+          mudou = true;
+        }
+      }
+    }
+  }
+  if (mudou) {
+    mapa.nevoaVersao = (mapa.nevoaVersao || 0) + 1;
+  }
+  return mudou;
+}
+function atualizarNevoa(mapa, dt) {
+  mapa.nevoaT = (mapa.nevoaT || 0) + dt;
+  if (mapa.nevoaT >= PERIODO) {
+    mapa.nevoaT = 0;
+    const p = mapa.gatoGroup.position;
+    const raio = mapa.ciclo === "noite" ? RAIO_NOITE : RAIO_DIA;
+    revelar(mapa, p.x, p.z, raio);
+  }
+}
+function desenharNevoa(ctx, mapa, W) {
+  if (!mapa.nevoaCache) mapa.nevoaCache = /* @__PURE__ */ new Map();
+  const v = mapa.nevoaVersao || 0;
+  const entrada = mapa.nevoaCache.get(W);
+  if (entrada && entrada.v === v) {
+    ctx.drawImage(entrada.canvas, 0, 0);
+    return;
+  }
+  const LIM = mapa.mundo.LIMITE;
+  const L = 2 * LIM;
+  const P = 2;
+  const size = L + 2 * P;
+  const mascara = document.createElement("canvas");
+  mascara.width = size;
+  mascara.height = size;
+  const mctx = mascara.getContext("2d");
+  const imgData = mctx.createImageData(size, size);
+  const data = imgData.data;
+  for (let pz = 0; pz < size; pz++) {
+    for (let px = 0; px < size; px++) {
+      const ix = Math.max(0, Math.min(px - P, L - 1));
+      const iz = Math.max(0, Math.min(pz - P, L - 1));
+      const i = iz * L + ix;
+      const byteIdx = i >> 3;
+      const bitMask = 1 << (i & 7);
+      const descoberto = (mapa.descoberto[byteIdx] & bitMask) !== 0;
+      const idx = (pz * size + px) * 4;
+      if (!descoberto) {
+        data[idx] = 255;
+        data[idx + 1] = 255;
+        data[idx + 2] = 255;
+        data[idx + 3] = 255;
+      } else {
+        data[idx] = 0;
+        data[idx + 1] = 0;
+        data[idx + 2] = 0;
+        data[idx + 3] = 0;
+      }
+    }
+  }
+  mctx.putImageData(imgData, 0, 0);
+  const saida = document.createElement("canvas");
+  saida.width = W;
+  saida.height = W;
+  const ctx2 = saida.getContext("2d");
+  const e = W / L;
+  ctx2.imageSmoothingEnabled = true;
+  ctx2.imageSmoothingQuality = "high";
+  try {
+    ctx2.filter = "blur(" + e * 1.2 + "px)";
+  } catch (err) {
+  }
+  ctx2.drawImage(mascara, -P * e, -P * e, (L + 2 * P) * e, (L + 2 * P) * e);
+  ctx2.filter = "none";
+  ctx2.globalCompositeOperation = "source-in";
+  const pattern = ctx2.createPattern(texturaNuvem(), "repeat");
+  const matrix = new DOMMatrix();
+  matrix.scaleSelf(W / 256);
+  pattern.setTransform(matrix);
+  ctx2.fillStyle = pattern;
+  ctx2.fillRect(0, 0, W, W);
+  ctx2.globalCompositeOperation = "source-over";
+  mapa.nevoaCache.set(W, { v, canvas: saida });
+  ctx.drawImage(saida, 0, 0);
+}
+var _nuvem = null;
+function texturaNuvem() {
+  if (_nuvem) return _nuvem;
+  const c = document.createElement("canvas");
+  c.width = 128;
+  c.height = 128;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#dfe5ea";
+  ctx.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 60; i++) {
+    const x = Math.random() * 128;
+    const y = Math.random() * 128;
+    const r = 10 + Math.random() * 20;
+    const cor = Math.random() > 0.5 ? "rgba(255,255,255,0.35)" : "rgba(150,165,180,0.25)";
+    const offsets = [[0, 0], [-128, 0], [128, 0], [0, -128], [0, 128]];
+    for (const [dx, dy] of offsets) {
+      const g = ctx.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
+      g.addColorStop(0, cor);
+      g.addColorStop(1, cor.replace(/[\d.]+\)$/, "0)"));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  _nuvem = c;
+  return c;
+}
+
 // js/acoes-mapa.js
 import * as THREE5 from "three";
 var RAIO_ACAO = 1.5;
@@ -4822,7 +4982,7 @@ function criarMapa(scene2, gato, salvo) {
   sol.shadow.camera.near = 1;
   sol.shadow.camera.far = 80;
   grupo.add(sol, sol.target);
-  const mapa = { grupo, mundo, seed, camY: 0, pitch: 0, arbInst: /* @__PURE__ */ new Map(), agachado: false, LIMITE: mundo.LIMITE, cat: null, sol, hemi, solOffset: SOL_OFFSET.clone(), raioSombra: 0, ciclo: "dia", scene: scene2 };
+  const mapa = { grupo, mundo, seed, camY: 0, pitch: 0, arbInst: /* @__PURE__ */ new Map(), agachado: false, LIMITE: mundo.LIMITE, cat: null, sol, hemi, solOffset: SOL_OFFSET.clone(), raioSombra: 0, ciclo: "dia", scene: scene2, descoberto: descobertoDeBase64(salvo && salvo.descoberto, mundo.LIMITE), nevoaVersao: 0 };
   const tex = criarTexturaTerreno(THREE6, mundo, 1024);
   mapa.texCanvas = tex.canvas;
   const detalhe = criarTexturaDetalhe(THREE6);
@@ -4914,7 +5074,7 @@ function criarMapa(scene2, gato, salvo) {
     // gancho dos bichos: por enquanto sempre []
     presasProximas: (pos2, raio) => presasProximas(mapa, pos2, raio),
     // o que o save guarda (main.js acrescenta o zoom)
-    estadoMundo: () => ({ v: 1, seed, x: gatoGroup.position.x, z: gatoGroup.position.z, rot: gatoGroup.rotation.y, agachado: mapa.agachado, ciclo: mapa.ciclo, mobs: [] }),
+    estadoMundo: () => ({ v: 1, seed, x: gatoGroup.position.x, z: gatoGroup.position.z, rot: gatoGroup.rotation.y, agachado: mapa.agachado, ciclo: mapa.ciclo, mobs: [], descoberto: descobertoParaBase64(mapa.descoberto) }),
     // sombra do sol: quanto mais longe a câmera, maior a área coberta
     ajustarZoom(dist) {
       const r = THREE6.MathUtils.clamp(dist * 1.15 + 5, 10, 24);
@@ -4942,6 +5102,7 @@ function criarMapa(scene2, gato, salvo) {
   });
   mapa.ajustarZoom(10);
   iniciarCiclo(mapa, scene2, salvo && salvo.ciclo);
+  revelar(mapa, gatoGroup.position.x, gatoGroup.position.z, mapa.ciclo === "noite" ? RAIO_NOITE : RAIO_DIA);
   mapa.setCiclo = (id) => setCiclo(mapa, scene2, id);
   loadCat(THREE6, gato).then((cat) => {
     if (mapa.descartado) {
@@ -5021,6 +5182,7 @@ function atualizarMapa(mapa, dt, input, tempoSegundos) {
       mapa.cat.setMove(len > 0.05 ? correndo ? len : 0.5 * Math.max(0.6, len) : 0);
       mapa.cat.update(dt);
     }
+    atualizarNevoa(mapa, dt);
     return { x: gp.x, z: gp.z };
   } catch (e) {
     console.error("atualizarMapa", e);
@@ -5247,6 +5409,7 @@ function criarMapaCompleto({ container, mapa, aoFechar }) {
   const capa = criarCapaEstatica(mapa, lado * 2);
   function atualizar() {
     ctx.drawImage(capa, 0, 0);
+    desenharNevoa(ctx, mapa, lado * 2);
     desenharGato(ctx, mapa, lado * 2);
   }
   atualizar();
@@ -5682,6 +5845,7 @@ function desenharMinimapa() {
   if (!ctx) return;
   if (!capaMini) capaMini = criarCapaEstatica(mapaAtual, canvas.width);
   ctx.drawImage(capaMini, 0, 0);
+  desenharNevoa(ctx, mapaAtual, canvas.width);
   desenharGato(ctx, mapaAtual, canvas.width);
 }
 if (renderer) {
