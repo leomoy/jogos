@@ -26,7 +26,7 @@ function hexVertices(x, y) {
 var VERSION, TILE, COLS, ROWS, GRID, GCOLS, GROWS, MAP_W, MAP_H, ROAD_W, HEX_APOTHEM, HEX_R, SPEEDS, LEVEL_CAP, MAP_LEVEL_CAP, WAVE_GOLD, WAVE_CURVE_T, WAVE_CURVE, DIFFICULTY, DIFFICULTY_ORDER, MAP_HP, SLOT_LEVELS, SIM_DT, WAVE_INTERVAL, WAVES_PER_MAP, START_LIVES, SELL_RATIO, LVL_DMG, FIRE_DOT_DUR, LVL_UPG, TIER_HP, TIER_REW, TIER_SPEED, TIER_COLOR, DENSITY, HP_FLOOR, TOWERS_BASE, TOWERS, CHAIN_FALLOFF, W, ROCKETS, TANK_W, HOWITZER_W, WIRE_W, WIRE_THICK_W, STAKES_W, STEEL_PLATE_W, FOG_W, FLASH_W, NEW_W, NW, FIRE, RANGE_MUL, FAMILIES, FAM_INFO, FAM, weapon, BASES, A, SUP_COST, ATK_COST, ADDONS, ENEMIES, RES, THEMES, MAPS;
 var init_data = __esm({
   "js/core/data.js"() {
-    VERSION = "6.30.0";
+    VERSION = "6.30.1";
     TILE = 40;
     COLS = 48;
     ROWS = 30;
@@ -6868,7 +6868,9 @@ var Sim = class _Sim {
       dead: false,
       waveNo,
       dmgFam: { kin: 0, ele: 0, chem: 0, mag: 0 },
-      dmgCaused: 0
+      dmgCaused: 0,
+      arriving: dist < 0
+      // 6.29.2: chegada de chefe/escolta (a separação não pode zerar o dist)
     };
     this.enemies.push(e);
     if (this.waveRemaining[waveNo]) this.waveRemaining[waveNo].alive++;
@@ -6953,7 +6955,8 @@ var Sim = class _Sim {
       const e = this.enemies[order[i]], lim = Math.max(0, this.path.widthAt(e.dist) / 2 - e.radius);
       if (e.lat > lim) e.lat = lim;
       else if (e.lat < -lim) e.lat = -lim;
-      if (e.dist < 0) e.dist = 0;
+      if (e.dist < 0 && !e.arriving) e.dist = 0;
+      if (e.dist >= 0) e.arriving = false;
     }
   }
   // v6 F0: minRange — bases à distância (melee: false) não acertam quem está a menos de ~1,5 tile (SPEC §6)
@@ -7054,14 +7057,6 @@ var Sim = class _Sim {
       dmg -= used;
     }
     if (dmg > 0) enemy.hp -= dmg;
-    if (this._isBoss(enemy) && enemy.hp <= 0 && !opts.silver && enemy.dist <= 0.85 * this.pathLen) {
-      if (!opts.direct || enemy.silverProj) {
-        enemy.hp = 1;
-        enemy.finisher = true;
-      } else {
-        opts.silver = true;
-      }
-    }
     const dealt = hpBefore - Math.max(0, enemy.hp);
     if (dealt > 0 && this._shooterId) {
       enemy.hurtBy[this._shooterId] = (enemy.hurtBy[this._shooterId] || 0) + dealt;
@@ -7071,7 +7066,7 @@ var Sim = class _Sim {
     }
     if (enemy.hp <= 0) {
       enemy.hp = 0;
-      this.killEnemy(enemy, opts.silver === true);
+      this.killEnemy(enemy, this._shooterId, opts.direct === true);
     }
     return amount;
   }
@@ -7139,7 +7134,9 @@ var Sim = class _Sim {
     }
     this.farthest.sort((a, b) => b.dist - a.dist);
   }
-  killEnemy(enemy, silver = false) {
+  // 6.29.2: bala de prata é só animação — killerId/shot dizem quem matou e se foi por disparo; se não foi, a torre
+  // responsável "assume" e um disparo visual sai dela até o chefe (effect 'shot'; não mexe na vida de ninguém)
+  killEnemy(enemy, killerId = null, shot2 = false) {
     if (enemy.dead) return;
     enemy.dead = true;
     this._trackFarthest(enemy, false);
@@ -7156,7 +7153,19 @@ var Sim = class _Sim {
     }
     if (killer) killer.kills++;
     this.effects.push({ type: "death", x: enemy.x, y: enemy.y, color: enemy.type.color, reward: enemy.reward, radius: enemy.radius, boss: !!enemy.type.boss });
-    if (this._isBoss(enemy)) this.events.push(this._ev("bossKill", { uid: enemy.uid, x: enemy.x, y: enemy.y, silver }));
+    if (this._isBoss(enemy)) {
+      let author = null;
+      const aid = killerId || enemy.lastHit;
+      for (let i = 0; i < this.towers.length; i++) if (this.towers[i].id === aid) {
+        author = this.towers[i];
+        break;
+      }
+      if (author && !shot2 && author.weapons[0]) {
+        const wd = author.weapons[0].def;
+        this.effects.push({ type: "shot", towerId: author.id, weapon: wd.weapon || wd.id, x: author.x, y: author.y, tx: enemy.x, ty: enemy.y, silver: true });
+      }
+      this.events.push(this._ev("bossKill", { uid: enemy.uid, x: enemy.x, y: enemy.y, towerId: author ? author.id : null }));
+    }
     if (this.waveRemaining[enemy.waveNo]) this.waveRemaining[enemy.waveNo].alive--;
     if (enemy.type.split) {
       const childDef = _enemyById(enemy.type.split.id);
@@ -7167,11 +7176,10 @@ var Sim = class _Sim {
       }
     }
   }
-  applyHit(target, stats, weaponDef, towerId, silver = false) {
+  applyHit(target, stats, weaponDef, towerId) {
     const fam = weaponDef.fam;
     const opts = { direct: true };
     if (weaponDef.vsAirMul) opts.vsAirMul = weaponDef.vsAirMul;
-    if (silver) opts.silver = true;
     this.damage(target, stats.dmg, fam, opts);
     if (stats.splash > 0) {
       const splash2 = stats.splash * stats.splash;
@@ -7266,7 +7274,6 @@ var Sim = class _Sim {
     weapon2.angle = Math.atan2(target.y - tower.y, target.x - tower.x);
     if (tower.weapons[0] === weapon2) tower.angle = weapon2.angle;
     const weaponId = def.weapon || def.id;
-    const isSilverShot = this._isBoss(target) && !target.silverProj && target.dist <= 0.85 * this.pathLen && (target.finisher || stats.dmg >= target.hp);
     if (def.kind === "mine") {
       const existing = this.mines.filter((m) => m.towerId === tower.id).length;
       const count = Math.min(3, (def.maxMines || 3) - existing);
@@ -7295,23 +7302,14 @@ var Sim = class _Sim {
         stats,
         weaponDef: def,
         towerId: tower.id,
-        color: def.color,
-        silver: isSilverShot
+        color: def.color
       };
       this.projectiles.push(proj);
-      if (isSilverShot) {
-        target.silverProj = proj.id;
-        this.events.push(this._ev("silver", { uid: target.uid, towerId: tower.id, projId: proj.id }));
-      }
       this.effects.push({ type: "shot", towerId: tower.id, weapon: weaponId, x: tower.x, y: tower.y, tx: target.x, ty: target.y });
     } else {
-      if (isSilverShot) {
-        target.silverProj = "instant";
-        this.events.push(this._ev("silver", { uid: target.uid, towerId: tower.id, projId: null }));
-      }
       this.effects.push({ type: "shot", towerId: tower.id, weapon: weaponId, x: tower.x, y: tower.y, tx: target.x, ty: target.y });
       if (def.kind === "chain") {
-        this.damage(target, stats.dmg, def.fam, { direct: true, silver: isSilverShot });
+        this.damage(target, stats.dmg, def.fam, { direct: true });
         const hit = [target];
         let cur = target;
         let dmg = stats.dmg;
@@ -7351,7 +7349,7 @@ var Sim = class _Sim {
         for (let i = 0; i < hit.length; i++) pts.push({ x: hit[i].x, y: hit[i].y });
         this.effects.push({ type: "chain", pts });
       } else {
-        this.applyHit(target, stats, def, tower.id, isSilverShot);
+        this.applyHit(target, stats, def, tower.id);
       }
     }
   }
@@ -7395,14 +7393,9 @@ var Sim = class _Sim {
         e.hp -= e.dotDps * dt;
         e.dotT -= dt;
         if (e.hp <= 0) {
-          if (this._isBoss(e) && e.dist <= 0.85 * this.pathLen) {
-            e.hp = 1;
-            e.finisher = true;
-          } else {
-            e.hp = 0;
-            this.killEnemy(e);
-            continue;
-          }
+          e.hp = 0;
+          this.killEnemy(e, e.dotOwner, false);
+          continue;
         }
       }
       if (e.type.regen > 0) {
@@ -7531,7 +7524,7 @@ var Sim = class _Sim {
       if (dist <= move + 4) {
         this._shooterId = p.towerId;
         if (target) {
-          this.applyHit(target, p.stats, p.weaponDef, p.towerId, !!p.silver);
+          this.applyHit(target, p.stats, p.weaponDef, p.towerId);
         } else if (p.stats.splash > 0) {
           const splash2 = p.stats.splash * p.stats.splash;
           for (let j = 0; j < this.enemies.length; j++) {
@@ -10225,7 +10218,6 @@ var Game = class {
     this._cineT = 0;
     this._cineHeld = false;
     this._cineOverride = null;
-    this._pendingSilver = null;
     this._sndT = {};
     this._t = 0;
     this._ended = false;
@@ -10684,16 +10676,13 @@ var Game = class {
     const evs = this.sim.events;
     for (; this._evCursor < evs.length; this._evCursor++) {
       const e = evs[this._evCursor];
-      if (e.type === "silver") {
-        this._pendingSilver = { uid: e.uid, projId: e.projId };
-      } else if (e.type === "bossEnter") {
+      if (e.type === "bossEnter") {
         if (Save.data.cinematics !== false && !this._cine && !this._cineNext) {
           this._queueCine({ type: "enter", uid: e.uid, name: e.name, elite: e.elite });
         }
       } else if (e.type === "bossKill") {
         if (Save.data.cinematics !== false) {
-          const projId = this._pendingSilver && this._pendingSilver.uid === e.uid ? this._pendingSilver.projId : null;
-          this._queueCine({ type: "death", uid: e.uid, x: e.x, y: e.y, silver: e.silver, projId });
+          this._queueCine({ type: "death", uid: e.uid, x: e.x, y: e.y });
         }
       }
     }
@@ -10727,15 +10716,7 @@ var Game = class {
       Sfx.play("leak");
       this.hud.toast((scene.elite ? "L\xEDder: " : "") + scene.name, 4e3);
     } else {
-      if (scene.projId != null) {
-        const pid = scene.projId;
-        this.world.follow(() => {
-          const p = this.sim.projectiles.find((pp) => pp.id === pid);
-          return p ? { x: p.x / TILE, z: p.y / TILE } : null;
-        });
-      } else {
-        this.world.lookAt(scene.x / TILE, scene.y / TILE);
-      }
+      this.world.lookAt(scene.x / TILE, scene.y / TILE);
     }
   }
   _stepCine(dt) {
@@ -10744,16 +10725,6 @@ var Game = class {
     if (this._cine.type === "enter") {
       const boss = this.sim.enemyByUid.get(this._cine.uid);
       if (!boss || boss.dead || boss.dist >= 0 || this._cineT > 4) this._endCine();
-    } else if (this._cine.projId != null && !this._cineHeld) {
-      const stillFlying = this.sim.projectiles.some((pp) => pp.id === this._cine.projId);
-      if (!stillFlying) {
-        this._cineHeld = true;
-        this._cineT = 0;
-        this.world.follow(null);
-        this.fx.bossDeath(this._cine.x, this._cine.y, 16777215, 3);
-      } else if (this._cineT > 4) {
-        this._endCine();
-      }
     } else if (!this._cineHeld) {
       this._cineHeld = true;
       this._cineT = 0;

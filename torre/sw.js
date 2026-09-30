@@ -1,9 +1,9 @@
 // Service worker do jogo — cache-first para mesma origem e CDN do three.js
-const CACHE = 'torre-6.30.0';
+const CACHE = 'torre-6.30.1';
 const FILES = [
   "./",
   "index.html",
-  "torre-6.30.0.js",
+  "torre-6.30.1.js",
   "icon-192.png",
   "icon-512.png",
   "manifest.json",
