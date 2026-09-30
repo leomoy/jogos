@@ -26,7 +26,7 @@ function hexVertices(x, y) {
 var VERSION, TILE, COLS, ROWS, GRID, GCOLS, GROWS, MAP_W, MAP_H, ROAD_W, HEX_APOTHEM, HEX_R, SPEEDS, LEVEL_CAP, MAP_LEVEL_CAP, WAVE_GOLD, WAVE_CURVE_T, WAVE_CURVE, DIFFICULTY, DIFFICULTY_ORDER, MAP_HP, SLOT_LEVELS, SIM_DT, WAVE_INTERVAL, WAVES_PER_MAP, START_LIVES, SELL_RATIO, LVL_DMG, FIRE_DOT_DUR, LVL_UPG, TIER_HP, TIER_REW, TIER_SPEED, TIER_COLOR, DENSITY, HP_FLOOR, TOWERS_BASE, TOWERS, CHAIN_FALLOFF, W, ROCKETS, TANK_W, HOWITZER_W, WIRE_W, WIRE_THICK_W, STAKES_W, STEEL_PLATE_W, FOG_W, FLASH_W, NEW_W, NW, FIRE, RANGE_MUL, FAMILIES, FAM_INFO, FAM, weapon, BASES, A, SUP_COST, ATK_COST, ADDONS, ENEMIES, RES, THEMES, MAPS;
 var init_data = __esm({
   "js/core/data.js"() {
-    VERSION = "6.30.1";
+    VERSION = "6.31.0";
     TILE = 40;
     COLS = 48;
     ROWS = 30;
@@ -1103,6 +1103,50 @@ ${(e.stack || "").split("\n").slice(1, 4).join("\n")}`);
     fx.stepBurning(g().sim, 1 / 60);
     fx.stepZones(g().sim, 1 / 60);
     fx.spawnAmbient(1 / 60, TD.world.themeId || 0);
+  });
+  await step("cinem\xE1ticas de chefe: chegada (foco, gesto, giro, volta) e morte (torre dispara, c\xE2mera segue a bala, morte)", async () => {
+    TD.go("game", 0);
+    TD.step(3);
+    const G = g(), s = G.sim;
+    Save.data.cinematics = true;
+    s.gold = 5e3;
+    const t = build("artilharia");
+    assert(t, "n\xE3o construiu a torre autora");
+    const goal0 = { yaw: TD.world._goal.yaw, dist: TD.world._goal.dist };
+    const b = s.spawnEnemy("voidlord", 3, 1, -96, false, 0);
+    TD.step(2);
+    assert(G._cine && G._cine.type === "enter", "chegada: cena n\xE3o come\xE7ou");
+    assert(G._effSpeed() === 0.5, "chegada: tempo n\xE3o caiu para 0,5\xD7");
+    assert(TD.world._goal.dist === 9, "chegada: c\xE2mera n\xE3o aproximou");
+    TD.step(70);
+    assert(G._cine.phase >= 1, "chegada: gesto n\xE3o aconteceu");
+    await shot2("cine-enter");
+    const yaw1 = TD.world._goal.yaw;
+    TD.step(30);
+    assert(TD.world._goal.yaw > yaw1, "chegada: c\xE2mera n\xE3o girou");
+    TD.step(200);
+    assert(!G._cine, "chegada: cena n\xE3o terminou");
+    assert(Math.abs(TD.world._goal.dist - goal0.dist) < 1e-6, "chegada: c\xE2mera n\xE3o voltou");
+    assert(G._cineOverride == null, "chegada: velocidade n\xE3o voltou");
+    b.dist = 200;
+    TD.step(2);
+    s._shooterId = t.id;
+    s.damage(b, 1e9, { ele: 1 }, {});
+    s._shooterId = 0;
+    assert(b.dead, "chefe n\xE3o morreu");
+    TD.step(2);
+    assert(G._cine && G._cine.type === "death" && G._cine.tower === t, "morte: cena n\xE3o foca a torre autora");
+    TD.step(45);
+    await shot2("cine-tower");
+    TD.step(25);
+    assert(G._cine.phase >= 1 && G._cine.bullet, "morte: bala n\xE3o saiu");
+    await shot2("cine-bullet");
+    TD.step(150);
+    assert(!G._cine || G._cine.phase === 3, "morte: bala n\xE3o acertou");
+    await shot2("cine-death");
+    TD.step(200);
+    assert(!G._cine, "morte: cena n\xE3o terminou");
+    assert(G.big._held.size === 0, "morte: chefe ficou preso de p\xE9");
   });
   await step("retomar partida: salva no in\xEDcio da onda, bot\xE3o Continuar aparece e retoma", async () => {
     TD.go("game", 2);
@@ -7152,7 +7196,7 @@ var Sim = class _Sim {
       break;
     }
     if (killer) killer.kills++;
-    this.effects.push({ type: "death", x: enemy.x, y: enemy.y, color: enemy.type.color, reward: enemy.reward, radius: enemy.radius, boss: !!enemy.type.boss });
+    this.effects.push({ type: "death", uid: enemy.uid, x: enemy.x, y: enemy.y, color: enemy.type.color, reward: enemy.reward, radius: enemy.radius, boss: !!enemy.type.boss });
     if (this._isBoss(enemy)) {
       let author = null;
       const aid = killerId || enemy.lastHit;
@@ -8253,6 +8297,11 @@ var Fx = class {
     this._scorch(px, py, radiusTiles);
     if (this.world && typeof this.world.shake === "function") this.world.shake(0.4);
   }
+  // Bala de prata da cinemática de morte do chefe (6.31)
+  cineBullet(x, y, z) {
+    this._spawn(x, y, z, 0, 0, 0, 0.06, 0.38, 16774080, 0, 3);
+    this._spawn(x, y, z, (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6, 0.4, 0.16, 16763210, 0, 2);
+  }
   _onDeath(e) {
     this._burst(e.x, e.y, 0.4, e.color, { count: 10, speed: 1.6, size: 0.09, life: 0.4, gravity: 2.5, biasY: 0.8 });
     this._burst(e.x, e.y, 0.3, 8146431, { count: 6 + Math.round((e.radius || 8) / 4), speed: 0.6, size: 0.1, life: 0.9, gravity: -1.2, biasY: 1.2, glow: 1.8 });
@@ -8594,6 +8643,7 @@ var BOSS_PIECE = {
   voidlord: "misc_voidlord_crown"
 };
 var CAP = 40;
+var _v = new THREE8.Vector3();
 function findClip(animations, name) {
   if (!animations) return null;
   for (const clip of animations) {
@@ -8617,6 +8667,7 @@ var BigUnits = class {
     this._live = /* @__PURE__ */ new Map();
     this._dying = [];
     this._gen = 0;
+    this._held = /* @__PURE__ */ new Set();
   }
   sync(sim, dt, alpha) {
     this._gen++;
@@ -8684,16 +8735,13 @@ var BigUnits = class {
     }
     for (const [uid, entry] of this._live) {
       if (entry.gen === this._gen) continue;
-      const clip = findClip(entry.gltf.animations, entry.cfg[2]);
-      if (clip) {
-        const death = entry.mixer.clipAction(clip);
-        death.setLoop(THREE8.LoopOnce);
-        death.clampWhenFinished = true;
-        death.reset().play();
+      if (this._held.has(uid)) {
+        entry.gen = this._gen;
+        if (entry.walk) entry.walk.timeScale = 0.3;
+        entry.mixer.update(dt);
+        continue;
       }
-      if (entry.walk) entry.walk.stop();
-      this._dying.push({ root: entry.root, mixer: entry.mixer, t: 1.6 });
-      this._live.delete(uid);
+      this._die(uid, entry);
     }
     for (let i = this._dying.length - 1; i >= 0; i--) {
       const d = this._dying[i];
@@ -8708,6 +8756,76 @@ var BigUnits = class {
       }
     }
   }
+  _die(uid, entry) {
+    const clip = findClip(entry.gltf.animations, entry.cfg[2]);
+    if (clip) {
+      const death = entry.mixer.clipAction(clip);
+      death.setLoop(THREE8.LoopOnce);
+      death.clampWhenFinished = true;
+      death.reset().play();
+    }
+    if (entry.walk) entry.walk.stop();
+    this._dying.push({ root: entry.root, mixer: entry.mixer, t: 1.6 });
+    this._live.delete(uid);
+  }
+  taunt(uid) {
+    const entry = this._live.get(uid);
+    if (!entry) return false;
+    const names = ["Wave", "Punch", "Attack", "Dragon_Attack", "Skeleton_Attack", "Bat_Attack", "Headbutt", "Yes"];
+    for (const nome of names) {
+      const clip = findClip(entry.gltf.animations, nome);
+      if (clip) {
+        const a = entry.mixer.clipAction(clip);
+        a.setLoop(THREE8.LoopOnce);
+        a.clampWhenFinished = false;
+        a.reset().fadeIn(0.15).play();
+        if (entry.walk) {
+          entry.walk.fadeOut(0.15);
+          const listener = (e) => {
+            if (e.action === a) {
+              entry.mixer.removeEventListener("finished", listener);
+              entry.walk.reset().fadeIn(0.2).play();
+            }
+          };
+          entry.mixer.addEventListener("finished", listener);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+  hold(uid) {
+    this._held.add(uid);
+  }
+  release(uid) {
+    this._held.delete(uid);
+    const entry = this._live.get(uid);
+    if (!entry) return null;
+    const p = this._center(entry);
+    this._die(uid, entry);
+    return p;
+  }
+  pos(uid) {
+    const entry = this._live.get(uid);
+    return entry ? this._center(entry) : null;
+  }
+  // posição do corpo do chefe em tiles (osso Hips/Body: a animação de morte desloca o corpo para longe da origem;
+  // Box3 de modelo com esqueleto sai errada, não usar); y = altura do corpo
+  _center(entry) {
+    if (entry.body === void 0) {
+      entry.body = null;
+      entry.root.traverse((o) => {
+        if (!entry.body && o.isBone && (o.name === "Hips" || o.name === "Body")) entry.body = o;
+      });
+    }
+    if (entry.body) {
+      entry.root.updateMatrixWorld(true);
+      const c = this.world.root.worldToLocal(entry.body.getWorldPosition(_v));
+      return { x: c.x, y: c.y, z: c.z };
+    }
+    const p = entry.root.position, sz = entry.gltf.userData && entry.gltf.userData.size;
+    return { x: p.x, y: p.y + (sz ? sz.y * entry.root.scale.y * 0.6 : 1.2), z: p.z };
+  }
   clear() {
     for (const [uid, entry] of this._live) {
       this.world.root.remove(entry.root);
@@ -8719,6 +8837,7 @@ var BigUnits = class {
     this._dying.length = 0;
     this.handled.clear();
     this._gen = 0;
+    this._held.clear();
   }
 };
 
@@ -10677,12 +10796,13 @@ var Game = class {
     for (; this._evCursor < evs.length; this._evCursor++) {
       const e = evs[this._evCursor];
       if (e.type === "bossEnter") {
-        if (Save.data.cinematics !== false && !this._cine && !this._cineNext) {
+        if (Save.data.cinematics !== false) {
           this._queueCine({ type: "enter", uid: e.uid, name: e.name, elite: e.elite });
         }
       } else if (e.type === "bossKill") {
         if (Save.data.cinematics !== false) {
-          this._queueCine({ type: "death", uid: e.uid, x: e.x, y: e.y });
+          this.big.hold(e.uid);
+          this._queueCine({ type: "death", uid: e.uid, x: e.x, y: e.y, towerId: e.towerId });
         }
       }
     }
@@ -10706,37 +10826,128 @@ var Game = class {
   }
   _startCine(scene) {
     this._cineT = 0;
-    this._cineHeld = false;
+    scene.phase = 0;
     this._cineGoalSaved = { yaw: this.world._goal.yaw, pitch: this.world._goal.pitch, dist: this.world._goal.dist, target: this.world._goal.target.clone() };
     this._cineOverride = 0.5;
     if (scene.type === "enter") {
+      this.world.follow(() => this.big.pos(scene.uid) || (() => {
+        const b = this.sim.enemyByUid.get(scene.uid);
+        return b && !b.dead ? { x: b.x / TILE, z: b.y / TILE } : null;
+      })());
+      this.world._goal.dist = 9;
+      this.world._goal.pitch = 62 * Math.PI / 180;
       const p = this.sim.path.at(0, 0, {});
-      this.world.lookAt(p.x / TILE, p.y / TILE);
       this.fx.bossPortal(p.x, p.y);
-      Sfx.play("leak");
       this.hud.toast((scene.elite ? "L\xEDder: " : "") + scene.name, 4e3);
     } else {
-      this.world.lookAt(scene.x / TILE, scene.y / TILE);
+      const t = this.sim.towers.find((tw) => tw.id === scene.towerId);
+      if (t) {
+        scene.tower = t;
+        this.world.follow(null);
+        this.world.lookAt(t.x / TILE, t.y / TILE);
+        this.world._goal.dist = 8;
+        this.world._goal.pitch = 60 * Math.PI / 180;
+      } else {
+        scene.phase = 2;
+        this.world.follow(null);
+        this.world.lookAt(scene.x / TILE, scene.y / TILE);
+      }
     }
   }
   _stepCine(dt) {
     if (!this._cine) return;
     this._cineT += dt;
-    if (this._cine.type === "enter") {
-      const boss = this.sim.enemyByUid.get(this._cine.uid);
-      if (!boss || boss.dead || boss.dist >= 0 || this._cineT > 4) this._endCine();
-    } else if (!this._cineHeld) {
-      this._cineHeld = true;
-      this._cineT = 0;
-      this.fx.bossDeath(this._cine.x, this._cine.y, 16777215, 3);
-    } else if (this._cineT > 1) {
-      this._endCine();
+    const t = this._cineT;
+    const scene = this._cine;
+    if (scene.type === "enter") {
+      if (t >= 0.9 && scene.phase === 0) {
+        this.big.taunt(scene.uid);
+        Sfx.play("leak");
+        scene.phase = 1;
+      }
+      if (scene.phase === 1 && t >= 0.9 && t < 3.4) {
+        this.world._goal.yaw += dt * 0.7;
+      }
+      if (t >= 3.4 && scene.phase === 1) {
+        this.world.follow(null);
+        if (this._cineGoalSaved) {
+          this.world._goal.yaw = this._cineGoalSaved.yaw;
+          this.world._goal.pitch = this._cineGoalSaved.pitch;
+          this.world._goal.dist = this._cineGoalSaved.dist;
+          this.world._goal.target.copy(this._cineGoalSaved.target);
+        }
+        scene.phase = 2;
+      }
+      if (t >= 4) this._endCine();
+    } else {
+      if (scene.tower) {
+        if (scene.phase === 0 && t >= 0.8) {
+          const bossPos = this.big.pos(scene.uid) || { x: scene.x / TILE, z: scene.y / TILE };
+          scene.from = { x: scene.tower.x / TILE, z: scene.tower.y / TILE };
+          scene.to = bossPos;
+          const dx = scene.to.x - scene.from.x;
+          const dz = scene.to.z - scene.from.z;
+          const dist = Math.sqrt(dx * dx + dz * dz);
+          scene.flyDur = Math.max(0.9, Math.min(2.2, dist / 7));
+          this.world._goal.yaw = Math.atan2(-dx, -dz);
+          scene.flyT = 0;
+          const w = scene.tower.weapons[0];
+          const arma = w && w.def && (w.def.weapon || w.def.id);
+          if (arma) {
+            this.fx.handle({ type: "shot", towerId: scene.tower.id, weapon: arma, x: scene.tower.x, y: scene.tower.y, tx: scene.x, ty: scene.y });
+            Sfx.play(arma);
+          }
+          this.world.follow(() => scene.bullet || null);
+          scene.phase = 1;
+        }
+        if (scene.phase === 1) {
+          scene.flyT += dt;
+          const k = Math.min(1, scene.flyT / scene.flyDur);
+          const bx = scene.from.x + (scene.to.x - scene.from.x) * k;
+          const bz = scene.from.z + (scene.to.z - scene.from.z) * k;
+          const by = 1.2 + ((scene.to.y || 1.2) - 1.2) * k + Math.sin(Math.PI * k) * 1.5;
+          scene.bullet = { x: bx, z: bz };
+          this.fx.cineBullet(bx, by, bz);
+          this.world._goal.dist = 8 + (6 - 8) * k;
+          if (k >= 1) scene.phase = 2;
+        }
+      }
+      if (scene.phase === 2) {
+        const at = this.big.release(scene.uid);
+        if (at) {
+          scene.x = at.x * TILE;
+          scene.y = at.z * TILE;
+        }
+        this.fx.bossDeath(scene.x, scene.y, 16777215, 3);
+        Sfx.play("hitHeavy");
+        this.world.follow(null);
+        this.world.lookAt(scene.x / TILE, scene.y / TILE);
+        scene.hitT = t;
+        scene.phase = 3;
+      }
+      if (scene.phase === 3) {
+        this.world._goal.yaw += dt * 0.4;
+        if (t - scene.hitT >= 1.8) {
+          if (this._cineGoalSaved) {
+            this.world._goal.yaw = this._cineGoalSaved.yaw;
+            this.world._goal.pitch = this._cineGoalSaved.pitch;
+            this.world._goal.dist = this._cineGoalSaved.dist;
+            this.world._goal.target.copy(this._cineGoalSaved.target);
+          }
+        }
+        if (t - scene.hitT >= 2.4) this._endCine();
+      }
     }
+    if (this._cine === scene && t > 9) this._endCine();
   }
   _skipCine() {
     if (this._cine) this._endCine();
   }
   _endCine() {
+    if (this._cine && this._cine.type === "death" && this._cine.phase < 3) {
+      this.big.release(this._cine.uid);
+      this.fx.bossDeath(this._cine.x, this._cine.y, 16777215, 3);
+    }
     this._cineOverride = null;
     this.world.follow(null);
     if (this._cineGoalSaved) {
@@ -10746,7 +10957,6 @@ var Game = class {
       this.world._goal.target.copy(this._cineGoalSaved.target);
     }
     this._cine = null;
-    this._cineHeld = false;
     this._cineGoalSaved = null;
     if (this._cineNext) {
       const n = this._cineNext;
@@ -10822,9 +11032,11 @@ var Game = class {
       }
       simDt = n * SIM_DT;
     }
+    this._scanBossEvents();
     const effects = this.sim.effects;
     for (let i = 0; i < effects.length; i++) {
       const e = effects[i];
+      if (Save.data.cinematics !== false && (e.type === "shot" && e.silver || e.type === "death" && this.big._held.has(e.uid))) continue;
       this.fx.handle(e);
       let som = e.type === "shot" ? e.weapon : e.type;
       if (som === "hit" && e.splash >= 80) som = "hitHeavy";
@@ -10847,7 +11059,6 @@ var Game = class {
       else if (e.type === "leak") this.hud.toast("Vazou! \u2212" + e.lives + " vida(s)");
     }
     effects.length = 0;
-    this._scanBossEvents();
     this._stepCine(dt);
     if (this.selTower && !this.sim.towers.includes(this.selTower)) {
       this.selectTower(null);
