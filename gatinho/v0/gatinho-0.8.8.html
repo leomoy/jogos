@@ -1629,6 +1629,21 @@ canvas,
 .dialogo-conexao-botoes { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 .dialogo-conexao-botoes .botao-grande { width: 100%; box-sizing: border-box; }
 @media (max-height: 520px) { .hud-conexao { top: 64px; } .conexao-oferta { top: auto; bottom: 12px; } .dialogo-conexao-caixa { padding: 10px; gap: 8px; } .dialogo-conexao-caixa p { font-size: 1.05rem; } .dialogo-conexao-botoes { flex-direction: row; } .dialogo-conexao-botoes .botao-grande { min-height: 44px; padding: 6px 10px; font-size: 1rem; } }
+
+/* 0.8.8: votação. Pergunta a quem pede (mesmo visual do diálogo da nuvem) e aviso aos outros (fica no alto, sem tapar os controles). */
+.dialogo-votacao { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; background: rgba(40,40,70,0.45); }
+.dialogo-votacao-caixa { width: min(88vw, 340px); box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; background: #fff; border: 3px solid #cdd6f0; border-radius: 18px; box-shadow: 0 4px 0 #cdd6f0; color: #3a3a55; }
+.dialogo-votacao-caixa p { margin: 0; font-size: 1.3rem; font-weight: 700; text-align: center; }
+.dialogo-votacao-botoes { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.dialogo-votacao-botoes .botao-grande { width: 100%; box-sizing: border-box; }
+.aviso-votacao { position: absolute; left: 50%; top: 204px; transform: translateX(-50%); z-index: 60; width: min(86vw, 320px); box-sizing: border-box; padding: 8px 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; background: #fff; border: 3px solid #cdd6f0; border-radius: 16px; box-shadow: 0 3px 0 #cdd6f0; color: #3a3a55; text-align: center; }
+.aviso-votacao[hidden], .aviso-votacao .botao[hidden] { display: none; }
+.aviso-votacao-texto { flex: 1 1 100%; margin: 0; font-size: 0.95rem; line-height: 1.25; font-weight: 700; }
+.aviso-votacao-tempo { font-size: 0.85rem; font-weight: 700; color: #6b6b8a; }
+.aviso-votacao-botoes { display: flex; gap: 8px; }
+.aviso-votacao .botao { min-height: 44px; min-width: 64px; padding: 6px 14px; font-size: 1rem; }
+@media (max-height: 520px) { .dialogo-votacao-caixa { padding: 10px; gap: 8px; } .dialogo-votacao-caixa p { font-size: 1.05rem; } .dialogo-votacao-botoes { flex-direction: row; } .dialogo-votacao-botoes .botao-grande { flex: 1 1 0; min-width: 0; width: auto; min-height: 44px; padding: 6px 10px; font-size: 1rem; }
+  .aviso-votacao { top: 8px; width: min(48vw, 340px); padding: 6px 10px; } .aviso-votacao-texto { font-size: 0.85rem; } .aviso-votacao .botao { min-height: 40px; } }
 </style>
 <script type="importmap">{
   "imports": {
@@ -2123,7 +2138,8 @@ if (typeof window !== "undefined") {
 import * as THREE10 from "three";
 
 // js/data.js
-var VERSION = "0.8.7";
+var VERSION = "0.8.8";
+var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
 var CORES_GATO = {
@@ -12781,6 +12797,88 @@ function eleger(presencas, gestor, agora) {
   return gestorVivo.uid;
 }
 
+// js/votacao.js
+var TEXTOS_HORARIO = {
+  dia: { fique: "de dia", ficou: "Ficou de dia!", continuou: "Continuou de dia." },
+  anoitecer: { fique: "anoitecendo", ficou: "Est\xE1 anoitecendo!", continuou: "Continuou anoitecendo." },
+  noite: { fique: "de noite", ficou: "Ficou de noite!", continuou: "Continuou de noite." }
+};
+function textoHorario(valor) {
+  return TEXTOS_HORARIO[valor] || TEXTOS_HORARIO.dia;
+}
+var TIPOS_VOTACAO = {
+  ciclo: {
+    nome: "hor\xE1rio",
+    valido(valor, ctx) {
+      const lista = ["dia", "anoitecer", "noite"];
+      if (!lista.includes(valor)) return false;
+      if (ctx && ctx.mapa && ctx.mapa.ciclo !== void 0) {
+        return ctx.mapa.ciclo !== valor;
+      }
+      return true;
+    },
+    convite(valor) {
+      return "Voc\xEA quer mudar o hor\xE1rio! Como tem mais gente, temos que abrir uma vota\xE7\xE3o! Vamos l\xE1?";
+    },
+    pedido(valor) {
+      return "Voc\xEA pediu para ficar " + textoHorario(valor).fique + "! Esperando os outros votarem\u2026";
+    },
+    pergunta(nome, valor) {
+      return nome + " quer que fique " + textoHorario(valor).fique + ". Voc\xEA quer?";
+    },
+    resultado(aprovada, valor, ctx) {
+      const t = textoHorario(valor);
+      if (aprovada) return t.ficou;
+      const atual = ctx && ctx.mapa && ctx.mapa.ciclo ? ctx.mapa.ciclo : "dia";
+      return textoHorario(atual).continuou;
+    },
+    aplicar(valor, ctx) {
+      if (this.valido(valor, ctx) && ctx && ctx.mapa && typeof ctx.mapa.setCiclo === "function") {
+        ctx.mapa.setCiclo(valor);
+      }
+    }
+  }
+};
+function contarVotos({ votos, quem } = {}) {
+  let sim = 0;
+  let nao = 0;
+  if (votos && typeof votos === "object") {
+    for (const uid in votos) {
+      if (uid === quem) continue;
+      const v = votos[uid];
+      if (v === true) sim++;
+      else if (v === false) nao++;
+    }
+  }
+  return { sim, nao, aprovada: sim >= nao };
+}
+function precisaVotar(presentes) {
+  if (!Array.isArray(presentes)) return false;
+  const jogadores = presentes.filter((p) => p && p.papel === "jogador").length;
+  return jogadores >= 2;
+}
+function validarPedido(tipo, valor, ctx) {
+  if (!Object.hasOwn(TIPOS_VOTACAO, tipo)) return false;
+  if (typeof valor !== "string" || valor.length < 1 || valor.length > 30) return false;
+  return TIPOS_VOTACAO[tipo].valido(valor, ctx) === true;
+}
+function concluirVotacao({ tipo, valor, quem, votos }, ctx) {
+  const { sim, nao, aprovada } = contarVotos({ votos, quem });
+  if (!Object.hasOwn(TIPOS_VOTACAO, tipo)) {
+    return { aprovada: false, sim, nao, texto: "" };
+  }
+  const tipoDef = TIPOS_VOTACAO[tipo];
+  if (aprovada) {
+    try {
+      tipoDef.aplicar(valor, ctx);
+    } catch (e) {
+      return { aprovada: false, sim, nao, texto: tipoDef.resultado(false, valor, ctx) };
+    }
+  }
+  const texto = tipoDef.resultado(aprovada, valor, ctx);
+  return { aprovada, sim, nao, texto };
+}
+
 // js/aovivo.js
 var ENVIO = 100;
 var PARADO = 1e3;
@@ -12791,6 +12889,9 @@ var ELEICAO = 1e3;
 var BICHOS = 200;
 var PEDIDO_VALE = 1e4;
 var CICLOS2 = ["dia", "anoitecer", "noite"];
+var RESULTADO_MS = 2e3;
+var RECUSA_ESPERA = 6e4;
+var VOTACAO_VELHA = 8e3;
 var arred = (v, k = 1e3) => Math.round(v * k) / k;
 var menorArco = (a, b) => {
   let d = b - a;
@@ -12805,10 +12906,8 @@ function comTempo4(p, ms = TEMPO_REDE) {
   });
   return Promise.race([p, limite]).finally(() => clearTimeout(t));
 }
-function aplicarPedidoCiclo(mapa, valor) {
-  if (CICLOS2.includes(valor) && mapa.setCiclo && valor !== mapa.ciclo) mapa.setCiclo(valor);
-}
-function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao: conexao2, aoPapel }) {
+var ehTipo = (t) => typeof t === "string" && Object.hasOwn(TIPOS_VOTACAO, t);
+function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao: conexao2, aoPapel, tempoVotacao = TEMPO_VOTACAO * 1e3, esperaRecusa = RECUSA_ESPERA }) {
   let S = null;
   let sessao = 0;
   let offset = 0;
@@ -12889,7 +12988,12 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
         papelAplicado: null,
         cicloGravado: null,
         ultBichos: 0,
-        pronto: false
+        pronto: false,
+        votos: /* @__PURE__ */ new Map(),
+        recusadoAte: /* @__PURE__ */ new Map(),
+        votou: 0,
+        ultVot: 0
+        // recusadoAte: 'quem|tipo' -> hora do servidor   // 0.8.8 (votos: uid -> { voto, n }, guardados por todos: quem virar host continua a contagem)
       };
       S = st;
       try {
@@ -12972,6 +13076,8 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
       D.onValue(ref(st, "dinamico"), (snap) => {
         const v = snap.val();
         st.dinamico = v && typeof v === "object" ? v : null;
+        const vt = st.dinamico && st.dinamico.votacao;
+        if (vt && vt.resultado === "recusada" && typeof vt.fim === "number") st.recusadoAte.set(vt.quem + "|" + vt.tipo, vt.fim + esperaRecusa);
         seguirCiclo(st);
       }, nada2),
       D.onValue(ref(st, "bichos"), (snap) => {
@@ -13048,12 +13154,67 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     if (!v || typeof v !== "object" || typeof v.n !== "number") return;
     const antes = st.pedidoN.get(uid);
     st.pedidoN.set(uid, v.n);
-    if (uid === st.con.uid || antes === v.n || papelDe(st) !== "gestor" || agoraServ() - v.n > PEDIDO_VALE) return;
-    if (v.tipo === "ciclo") aplicarPedidoCiclo(st.mapa, v.valor);
+    if (uid === st.con.uid || antes === v.n) return;
+    if (v.tipo === "voto" && typeof v.voto === "boolean") {
+      st.votos.set(uid, { voto: v.voto, n: v.n });
+      return;
+    }
+    if (papelDe(st) !== "gestor" || agoraServ() - v.n > PEDIDO_VALE) return;
+    if (ehTipo(v.tipo)) {
+      if (!precisaVotar(jogadoresVivos(st)) && validarPedido(v.tipo, v.valor, { mapa: st.mapa })) TIPOS_VOTACAO[v.tipo].aplicar(v.valor, { mapa: st.mapa });
+    } else if (typeof v.tipo === "string" && v.tipo.startsWith("votacao:")) abrirVotacao(st, uid, v.tipo.slice(8), v.valor);
     else if (v.tipo === "bote" && st.mapa.animais && typeof v.alvo === "number") {
       const o = observadorDe(st, uid);
       if (o && st.mapa.animais.boteRemoto(v.alvo, o)) publicarBichos(st);
     }
+  }
+  const jogadoresVivos = (st) => {
+    const a = agoraServ();
+    return [...st.presencas.values()].filter((p) => p.papel === "jogador" && a - p.t < VIVA);
+  };
+  function abrirVotacao(st, quem, tipo, valor) {
+    const eu = st.con.uid, ctx = { mapa: st.mapa };
+    if (!validarPedido(tipo, valor, ctx)) return "igual";
+    if (st.dinamico && st.dinamico.votacao) return "ocupada";
+    if ((quem === eu ? st.papelMeu : (st.presencas.get(quem) || {}).papel) !== "jogador") return "igual";
+    if (!precisaVotar(jogadoresVivos(st))) {
+      TIPOS_VOTACAO[tipo].aplicar(valor, ctx);
+      return "direto";
+    }
+    if (!souGestorGravado(st)) return "igual";
+    const agora = Math.round(agoraServ());
+    const corpo2 = { tipo, valor, quem };
+    if (agora < (st.recusadoAte.get(quem + "|" + tipo) || 0)) {
+      if (quem !== eu) st.D.set(ref(st, "dinamico/votacao"), { ...corpo2, fim: agora, resultado: "espere" }).catch(nada2);
+      return "espere";
+    }
+    st.D.set(ref(st, "dinamico/votacao"), { ...corpo2, fim: agora + tempoVotacao }).catch(nada2);
+    return "aberta";
+  }
+  function tocarVotacao(st) {
+    const vt = st.dinamico && st.dinamico.votacao;
+    if (!vt || typeof vt.fim !== "number" || performance.now() - st.ultVot < 500) return;
+    const t = agoraServ(), apagar = () => {
+      st.ultVot = performance.now();
+      st.D.remove(ref(st, "dinamico/votacao")).catch(nada2);
+    };
+    if (vt.resultado) {
+      if (t >= vt.fim + RESULTADO_MS + 500) apagar();
+      return;
+    }
+    if (t < vt.fim) return;
+    if (t >= vt.fim + VOTACAO_VELHA) {
+      apagar();
+      return;
+    }
+    const votos = {}, de = vt.fim - tempoVotacao - 1e3, ate = vt.fim + 1e3;
+    for (const [uid, x] of st.votos) {
+      const p = st.presencas.get(uid);
+      if ((!p || p.papel === "jogador") && x.n >= de && x.n <= ate) votos[uid] = x.voto;
+    }
+    const { aprovada } = concluirVotacao({ tipo: vt.tipo, valor: vt.valor, quem: vt.quem, votos }, { mapa: st.mapa });
+    st.ultVot = performance.now();
+    st.D.update(ref(st, "dinamico/votacao"), { resultado: aprovada ? "aprovada" : "recusada" }).catch(nada2);
   }
   function seguirCiclo(st) {
     const c = st.dinamico && st.dinamico.ciclo;
@@ -13277,8 +13438,9 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
       if (souGestorGravado(st)) {
         if (mapa.ciclo !== st.cicloGravado) {
           st.cicloGravado = mapa.ciclo;
-          st.D.set(ref(st, "dinamico"), { ciclo: String(mapa.ciclo || "dia").slice(0, 12) }).catch(nada2);
+          st.D.update(ref(st, "dinamico"), { ciclo: String(mapa.ciclo || "dia").slice(0, 12) }).catch(nada2);
         }
+        tocarVotacao(st);
         if (agora - st.ultBichos >= BICHOS && outrosVivos(st) > 0) publicarBichos(st);
       }
       enviar(st, agora);
@@ -13323,10 +13485,49 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     setTimeout(() => eleicao(st), 300);
     return st.avocado;
   }
-  function pedirCiclo(valor) {
+  function pedirMudanca(tipo, valor) {
     const st = S;
-    if (!st || !CICLOS2.includes(valor)) return false;
-    pedir(st, { tipo: "ciclo", valor });
+    if (!st || !ehTipo(tipo)) return "local";
+    if (!validarPedido(tipo, valor, { mapa: st.mapa })) return "igual";
+    if (st.dinamico && st.dinamico.votacao) return "ocupada";
+    if (agoraServ() < (st.recusadoAte.get(st.con.uid + "|" + tipo) || 0)) return "espere";
+    if (precisaVotar(jogadoresVivos(st))) return st.papelMeu === "jogador" ? "perguntar" : "so-jogadores";
+    if (papelDe(st) === "gestor") return "local";
+    pedir(st, { tipo, valor });
+    return "enviado";
+  }
+  function abrirVotacaoMeu(tipo, valor) {
+    const st = S;
+    if (!st) return "local";
+    const r = pedirMudanca(tipo, valor);
+    if (r !== "perguntar") return r;
+    if (papelDe(st) === "gestor") return abrirVotacao(st, st.con.uid, tipo, valor);
+    pedir(st, { tipo: "votacao:" + tipo, valor });
+    return "enviado";
+  }
+  function votacao() {
+    const st = S, vt = st && st.dinamico && st.dinamico.votacao;
+    if (!vt || typeof vt.fim !== "number" || typeof vt.valor !== "string" || !ehTipo(vt.tipo)) return null;
+    const p = st.presencas.get(vt.quem), restante = Math.max(0, Math.ceil((vt.fim - agoraServ()) / 1e3)), souQuem = vt.quem === st.con.uid;
+    return {
+      tipo: vt.tipo,
+      valor: vt.valor,
+      quem: vt.quem,
+      nome: p ? p.nome : "Algu\xE9m",
+      fim: vt.fim,
+      restante,
+      resultado: String(vt.resultado || ""),
+      souQuem,
+      jogador: st.papelMeu === "jogador",
+      podeVotar: st.papelMeu === "jogador" && !souQuem && !vt.resultado && restante > 0 && st.votou !== vt.fim
+    };
+  }
+  function votar(voto) {
+    const st = S, vt = st && st.dinamico && st.dinamico.votacao;
+    if (!vt || vt.resultado || vt.quem === st.con.uid || st.papelMeu !== "jogador" || typeof voto !== "boolean" || st.votou === vt.fim) return false;
+    st.votou = vt.fim;
+    st.votos.set(st.con.uid, { voto, n: Math.round(agoraServ()) });
+    pedir(st, { tipo: "voto", voto });
     return true;
   }
   function sair2() {
@@ -13374,7 +13575,10 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     sair: sair2,
     presentes,
     avocar,
-    pedirCiclo,
+    pedirMudanca,
+    abrirVotacao: abrirVotacaoMeu,
+    votacao,
+    votar,
     jogadores,
     posicaoChar,
     ativo: () => !!S && S.pronto,
@@ -14017,6 +14221,167 @@ function perguntarEntrar({ aoEntrar }) {
   return { fechar };
 }
 
+// js/votacao-ui.js
+var dialogoAberto2 = null;
+function perguntarVotacao({ texto: pergunta, aoSim }) {
+  if (dialogoAberto2) {
+    return { fechar: dialogoAberto2.fechar };
+  }
+  const dialogo = document.createElement("div");
+  dialogo.className = "dialogo-votacao";
+  dialogo.setAttribute("role", "dialog");
+  dialogo.setAttribute("aria-modal", "true");
+  const caixa2 = document.createElement("div");
+  caixa2.className = "dialogo-votacao-caixa";
+  const texto = document.createElement("p");
+  texto.textContent = String(pergunta || "");
+  const botoes = document.createElement("div");
+  botoes.className = "dialogo-votacao-botoes";
+  const btnSim = document.createElement("button");
+  btnSim.type = "button";
+  btnSim.className = "botao-grande";
+  btnSim.textContent = "Sim";
+  const btnNao = document.createElement("button");
+  btnNao.type = "button";
+  btnNao.className = "botao-grande";
+  btnNao.textContent = "N\xE3o";
+  botoes.appendChild(btnSim);
+  botoes.appendChild(btnNao);
+  caixa2.appendChild(texto);
+  caixa2.appendChild(botoes);
+  dialogo.appendChild(caixa2);
+  document.body.appendChild(dialogo);
+  let fechado = false;
+  function fechar() {
+    if (fechado) return;
+    fechado = true;
+    if (dialogoAberto2 && dialogoAberto2.dialogo === dialogo) {
+      dialogoAberto2 = null;
+    }
+    if (dialogo.parentNode) {
+      dialogo.parentNode.removeChild(dialogo);
+    }
+  }
+  btnSim.addEventListener("click", () => {
+    fechar();
+    try {
+      aoSim();
+    } catch (e) {
+    }
+  });
+  btnNao.addEventListener("click", () => {
+    fechar();
+  });
+  dialogoAberto2 = { dialogo, fechar };
+  return { fechar };
+}
+function criarAvisoVotacao({ aoVotar }) {
+  const elemento = document.createElement("div");
+  elemento.className = "aviso-votacao";
+  elemento.hidden = true;
+  const texto = document.createElement("p");
+  texto.className = "aviso-votacao-texto";
+  const tempo = document.createElement("span");
+  tempo.className = "aviso-votacao-tempo";
+  const botoes = document.createElement("div");
+  botoes.className = "aviso-votacao-botoes";
+  const btnSim = document.createElement("button");
+  btnSim.type = "button";
+  btnSim.className = "botao aviso-votacao-sim";
+  btnSim.textContent = "Sim";
+  const btnNao = document.createElement("button");
+  btnNao.type = "button";
+  btnNao.className = "botao aviso-votacao-nao";
+  btnNao.textContent = "N\xE3o";
+  botoes.appendChild(btnSim);
+  botoes.appendChild(btnNao);
+  elemento.appendChild(texto);
+  elemento.appendChild(tempo);
+  elemento.appendChild(botoes);
+  let temporizador = null;
+  let mostrandoResultado = false;
+  let votou = false;
+  let destruido = false;
+  function limparTemporizador() {
+    if (temporizador !== null) {
+      clearTimeout(temporizador);
+      temporizador = null;
+    }
+  }
+  function esconder() {
+    if (mostrandoResultado) return;
+    if (destruido) return;
+    elemento.hidden = true;
+  }
+  function mostrar({ texto: textoNovo, restante, podeVotar }) {
+    if (mostrandoResultado) return;
+    if (destruido) return;
+    texto.textContent = textoNovo || "";
+    if (typeof restante === "number" && isFinite(restante)) {
+      tempo.textContent = restante + " s";
+    } else {
+      tempo.textContent = "";
+    }
+    if (podeVotar) votou = false;
+    const mostrarBotoes = !!podeVotar && !votou;
+    btnSim.hidden = !mostrarBotoes;
+    btnNao.hidden = !mostrarBotoes;
+    elemento.hidden = false;
+  }
+  function resultado(textoNovo, ms = 2e3) {
+    if (destruido) return;
+    limparTemporizador();
+    texto.textContent = textoNovo || "";
+    tempo.textContent = "";
+    btnSim.hidden = true;
+    btnNao.hidden = true;
+    elemento.hidden = false;
+    mostrandoResultado = true;
+    temporizador = setTimeout(() => {
+      temporizador = null;
+      mostrandoResultado = false;
+      if (!destruido) {
+        elemento.hidden = true;
+      }
+    }, ms);
+  }
+  function destruir() {
+    if (destruido) return;
+    destruido = true;
+    limparTemporizador();
+    if (elemento.parentNode) {
+      elemento.parentNode.removeChild(elemento);
+    }
+  }
+  btnSim.addEventListener("click", () => {
+    if (votou) return;
+    votou = true;
+    btnSim.hidden = true;
+    btnNao.hidden = true;
+    try {
+      aoVotar(true);
+    } catch (e) {
+    }
+  });
+  btnNao.addEventListener("click", () => {
+    if (votou) return;
+    votou = true;
+    btnSim.hidden = true;
+    btnNao.hidden = true;
+    try {
+      aoVotar(false);
+    } catch (e) {
+    }
+  });
+  return {
+    elemento,
+    mostrar,
+    resultado,
+    esconder,
+    destruir
+  };
+}
+
 // js/main.js
 document.title = "Avel\xE3, o gatinho sobrevivente \u2014 v" + VERSION;
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {
@@ -14093,6 +14458,10 @@ var seguirAte = 0;
 var camYEsp = 0;
 var conexao = null;
 var hudConexao = null;
+var avisoVotacao = null;
+var fecharPergunta = null;
+var vistaResultado = "";
+var tVotacao = 0;
 var pararOfertas = null;
 var timerOfertas = null;
 var semSalvarChar = false;
@@ -14235,6 +14604,15 @@ function desmontarMapa() {
     hudConexao.destruir();
     hudConexao = null;
   }
+  if (avisoVotacao) {
+    avisoVotacao.destruir();
+    avisoVotacao = null;
+  }
+  if (fecharPergunta) {
+    fecharPergunta();
+    fecharPergunta = null;
+  }
+  vistaResultado = "";
   online?.parar();
   if (painelServidor) {
     painelServidor.destruir();
@@ -14497,10 +14875,7 @@ function irPara(nome, opcoes) {
       b.setAttribute("aria-label", rotulo);
       b.dataset.ciclo = id;
       b.addEventListener("click", () => {
-        if (aovivo.papel() === "jogador") {
-          aovivo.pedirCiclo(id);
-          return;
-        }
+        if (pedirHorario(id)) return;
         mapaAtual.setCiclo(id);
         salvarMundoAgora();
         for (const btn of cicloBox.querySelectorAll(".botao-ciclo")) {
@@ -14510,6 +14885,8 @@ function irPara(nome, opcoes) {
       cicloBox.appendChild(b);
     }
     hud.appendChild(cicloBox);
+    avisoVotacao = criarAvisoVotacao({ aoVotar: (v) => aovivo.votar(v) });
+    hud.appendChild(avisoVotacao.elemento);
     const aoVivoEl = document.createElement("div");
     aoVivoEl.id = "hud-aovivo";
     aoVivoEl.className = "hud-aovivo";
@@ -14809,6 +15186,49 @@ function avisar2(texto, ms = 4e3) {
     if (d.parentNode) d.parentNode.removeChild(d);
   }, ms);
 }
+var AVISOS_PEDIDO = { ocupada: "J\xE1 tem uma vota\xE7\xE3o acontecendo.", espere: "Espere um pouquinho para pedir de novo.", "so-jogadores": "S\xF3 quem est\xE1 jogando pode pedir." };
+function pedirHorario(id) {
+  const r = aovivo.pedirMudanca("ciclo", id);
+  if (r === "perguntar") {
+    fecharPergunta = perguntarVotacao({
+      texto: TIPOS_VOTACAO.ciclo.convite(id),
+      aoSim: () => {
+        const a = aovivo.abrirVotacao("ciclo", id);
+        if (AVISOS_PEDIDO[a]) avisar2(AVISOS_PEDIDO[a]);
+        else if (a === "local" && mapaAtual) {
+          mapaAtual.setCiclo(id);
+          salvarMundoAgora();
+        }
+      }
+    }).fechar;
+    return true;
+  }
+  if (AVISOS_PEDIDO[r]) avisar2(AVISOS_PEDIDO[r]);
+  return r !== "local";
+}
+function atualizarVotacao(ms) {
+  if (!avisoVotacao || ms - tVotacao < 250) return;
+  tVotacao = ms;
+  const v = aovivo.votacao();
+  if (!v) {
+    avisoVotacao.esconder();
+    return;
+  }
+  const T2 = TIPOS_VOTACAO[v.tipo], ctx = { mapa: mapaAtual }, chave = v.fim + v.resultado;
+  if (v.resultado === "aprovada" || v.resultado === "recusada") {
+    if (chave !== vistaResultado) {
+      vistaResultado = chave;
+      avisoVotacao.resultado(T2.resultado(v.resultado === "aprovada", v.valor, ctx));
+    }
+  } else if (v.resultado === "espere") {
+    if (v.souQuem && chave !== vistaResultado) {
+      vistaResultado = chave;
+      avisoVotacao.resultado(AVISOS_PEDIDO.espere);
+    }
+  } else if (v.jogador) {
+    avisoVotacao.mostrar({ texto: v.souQuem ? T2.pedido(v.valor) : T2.pergunta(v.nome, v.valor), restante: v.restante, podeVotar: v.podeVotar });
+  } else avisoVotacao.esconder();
+}
 var tHudAoVivo = 0;
 function atualizarHudAoVivo(ms) {
   if (ms - tHudAoVivo < 500) return;
@@ -15031,6 +15451,7 @@ if (renderer) {
     if (telaAtual === "mapa" && mapaAtual) {
       aovivo.atualizar(dt, tempoSegundos);
       atualizarHudAoVivo(tempoMs);
+      atualizarVotacao(tempoMs);
     }
     if (telaAtual === "mapa" && !pausado && mapaAtual) {
       const alvo = alvoAtivo();
@@ -15159,6 +15580,10 @@ window.GATINHO = {
   get aovivo() {
     return aovivo;
   },
+  get avisoVotacao() {
+    return avisoVotacao;
+  },
+  // 0.8.8 (teste da tela de votação)
   get online() {
     return online;
   },
