@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Torre — A Grande Guerra contra o Vazio</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="theme-color" content="#0b0f17">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Torre">
+  <style>/* ============================================================
+   TORRE v3 — css/style.css
+   Interface HTML/CSS sobre o canvas 3D (Three.js)
+   Tema escuro · fonte 'Trebuchet MS' · texto #e8ecf5
+   ============================================================ */
+
+:root {
+  --gold: #ffd54f;
+  --red: #ef5350;
+  --green: #66bb6a;
+  --muted: #8a93a6;
+  --panel: rgba(16, 20, 28, .88);
+  --border: rgba(255, 255, 255, .12);
+  --btn: #2a3040;
+  --btn-border: #3d4760;
+  --btn-hover: #36405a;
+  --accent: #3b6fd8;
+  --active: #c98a1a;
+}
+
+/* ---------- Base ---------- */
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #0b0f17;
+  color: #e8ecf5;
+  font-family: 'Trebuchet MS', sans-serif;
+}
+
+#view {
+  position: fixed;
+  inset: 0;
+}
+
+#view canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  z-index: 10;
+}
+
+/* Elementos interativos recebem ponteiro */
+.panel,
+.screen,
+.btn,
+button,
+input,
+select,
+.card {
+  pointer-events: auto;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---------- Painéis e telas ---------- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .45);
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(5, 8, 14, .45);
+  /* v5: tela mais alta que o celular rola (safe center: o topo não some) */
+  justify-content: safe center;
+  overflow-y: auto;
+  pointer-events: auto;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+h1.title {
+  font-size: 64px;
+  letter-spacing: 8px;
+  color: var(--gold);
+  text-shadow: 0 4px 18px rgba(0, 0, 0, .6), 0 0 30px rgba(255, 213, 79, .25);
+  margin: 0;
+}
+
+h2 {
+  color: var(--gold);
+  font-size: 22px;
+  margin: 0 0 6px;
+}
+
+div.title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+/* ---------- Botões ---------- */
+.btn,
+button {
+  background: var(--btn);
+  border: 1px solid var(--btn-border);
+  color: #e8ecf5;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.btn:hover:not(:disabled),
+button:hover:not(:disabled) {
+  background: var(--btn-hover);
+}
+
+.btn.small {
+  padding: 4px 9px;
+  font-size: 14px;
+}
+
+.btn.primary {
+  background: var(--accent);
+  min-width: 220px;
+  font-size: 18px;
+}
+
+.btn.active {
+  background: var(--active);
+  color: #111;
+}
+
+.btn:disabled,
+button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+/* ---------- Cartões (mapas) ---------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  max-width: 900px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 110px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+
+.card-title { font-size: 1.3em; font-weight: bold; }
+
+.card:hover:not(.locked) {
+  background: var(--btn-hover);
+  border-color: var(--btn-border);
+}
+
+.card.locked {
+  opacity: .5;
+  cursor: default;
+}
+
+.stars {
+  color: var(--gold);
+  font-size: 20px;
+  letter-spacing: 2px;
+}
+
+/* 6.2 F2: estrelas de cada dificuldade no cartão do mapa (bronze/prata/ouro) */
+.stars-multi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.stars-row {
+  font-size: 12px;
+  letter-spacing: 1px;
+  line-height: 1.2;
+}
+
+.row.diffrow {
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* 6.6.5: botões de dificuldade usam .btn-big (ícone maior, mais preenchido), mas em linha, não empilhados */
+.diffrow .btn-big {
+  width: auto;
+  flex: 1 1 140px;
+}
+
+/* ---------- Utilitários ---------- */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.battle-report {
+  display: block;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--gold);
+  border-left: 3px solid var(--gold);
+  padding-left: 10px;
+  margin: 8px 0;
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.icon.big {
+  width: 64px;
+  height: 64px;
+}
+
+.hpbar {
+  height: 10px;
+  background: #333;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.hpbar > i {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  transition: width .1s;
+}
+
+/* ---------- Barra de cima ---------- */
+#topbar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  /* fundo escuro: sobre mapas claros (neve, areia) os números sumiam */
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .45);
+  pointer-events: auto;
+}
+
+.chip {
+  background: rgba(0, 0, 0, .35);
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.chip.gold {
+  font-size: 28px;
+  color: var(--gold);
+  border: 1px solid rgba(255, 213, 79, .35);
+}
+
+.chip.lives {
+  color: #ff8a80;
+  font-size: 22px;
+}
+
+.chip.wave {
+  font-size: 16px;
+}
+
+.chip.wave small {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  font-weight: normal;
+}
+
+.chip.score,
+.chip.cap {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.chip.gold.up {
+  animation: flashUp .4s;
+}
+
+.chip.gold.down {
+  animation: flashDown .4s;
+}
+
+@keyframes flashUp {
+  0% { background: rgba(102, 187, 106, .45); }
+  100% { background: rgba(255, 255, 255, .06); }
+}
+
+@keyframes flashDown {
+  0% { background: rgba(239, 83, 80, .45); }
+  100% { background: rgba(255, 255, 255, .06); }
+}
+
+#topbar .group {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Barra de construção ---------- */
+#buildbar {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px;
+}
+
+#buildgold {
+  align-self: center;
+  font-size: 20px;
+  color: var(--gold);
+  font-weight: bold;
+}
+
+.buildcard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 92px;
+  padding: 6px 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+
+.buildcard:hover:not(.locked) {
+  background: var(--btn-hover);
+}
+
+.bname {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.price {
+  color: var(--gold);
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.need {
+  font-size: 12px;
+  color: var(--red);
+  min-height: 14px;
+}
+
+.buildcard.poor .price {
+  color: var(--red);
+}
+
+.buildcard.active {
+  border: 2px solid var(--active);
+  background: #3a3320;
+}
+
+.buildcard.locked {
+  filter: grayscale(1);
+  opacity: .5;
+  cursor: default;
+}
+
+/* ---------- Painel da torre / inimigo ---------- */
+#towerpanel,
+#enemypanel {
+  position: absolute;
+  right: 8px;
+  top: 74px;
+  width: 300px;
+  max-height: calc(100vh - 170px);
+  overflow: auto;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tp-head {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 8px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2b3550, #1c2233);
+  border: 1px solid #4a5a80;
+}
+
+button.tp-head:hover:not(:disabled) {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.tp-name {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.pips {
+  color: var(--gold);
+  letter-spacing: 2px;
+  font-size: 15px;
+}
+
+.tp-lvl {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tp-up {
+  text-align: right;
+}
+
+.tp-up .lbl {
+  font-size: 12px;
+}
+
+.tp-up .price {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--gold);
+}
+
+.tp-up .need {
+  font-size: 12px;
+  color: var(--red);
+}
+
+.tp-head.poor .price {
+  color: var(--red);
+}
+
+.tp-head.locked .need,
+.tp-head.maxed .lbl {
+  color: var(--muted);
+}
+
+.tp-head:disabled {
+  opacity: 1;
+}
+
+.tp-stats {
+  font-size: 12px;
+  color: #c5cbd8;
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
+}
+
+/* ---------- ficha de detalhes da torre (v2, js/ui/towerdetail.js) ---------- */
+.tp-detail2 { display: flex; flex-direction: column; gap: 10px; padding: 6px 0; }
+.td-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.td-name { font-weight: bold; }
+.td-pips { color: var(--gold); letter-spacing: 2px; }
+.td-pos { font-size: 12px; color: var(--muted); flex-basis: 100%; }
+.td-weapons { display: flex; flex-direction: column; gap: 4px; }
+.td-title { font-weight: bold; color: var(--gold); font-size: 13px; margin-top: 4px; }
+.td-wrow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 4px 6px; border-radius: 6px; background: rgba(255,255,255,.04); border-left: 3px solid transparent; font-size: 12px; }
+.td-wrow.white { border-left-color: #c5cbd8; }
+.td-wrow.yellow { border-left-color: var(--gold); }
+.td-famform { font-size: 13px; }
+.td-stat { color: #c5cbd8; min-width: 42px; text-align: center; }
+.td-target { color: var(--muted); font-size: 11px; }
+.td-support { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 4px 6px; border-radius: 6px; background: rgba(179,136,255,.08); font-size: 12px; }
+.td-supname { font-weight: bold; }
+.td-supdesc { color: #c5cbd8; flex-basis: 100%; font-size: 11px; }
+.td-cyclebar { width: 60px; height: 6px; border-radius: 3px; background: #1b1f27; overflow: hidden; }
+.td-cyclebar > i { display: block; height: 100%; background: var(--green); transition: width .2s; }
+.td-cycletext { font-size: 11px; color: var(--muted); }
+.td-perf { display: flex; flex-direction: column; gap: 4px; }
+.td-perfgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.td-perfcell { display: flex; flex-direction: column; align-items: center; text-align: center; background: rgba(255,255,255,.04); border-radius: 6px; padding: 4px; font-size: 11px; }
+.td-perficon { font-size: 14px; }
+.td-perflabel { color: var(--muted); font-size: 10px; }
+.td-perfval { font-weight: bold; }
+.td-fambar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: #1b1f27; margin-top: 2px; }
+.td-fambar span { display: block; }
+.td-vs { display: flex; flex-direction: column; gap: 4px; }
+.td-vsrow { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 12px; }
+.td-vslabel { color: var(--muted); font-size: 11px; }
+.td-vschip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,.06); font-size: 12px; }
+.td-vschip > i { width: 10px; height: 10px; display: inline-block; border-radius: 50%; }
+
+/* ---------- Prévia da próxima onda ---------- */
+#preview {
+  position: absolute;
+  left: 8px;
+  bottom: 10px;
+  font-size: 14px;
+  max-width: 360px;
+}
+
+.prev {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.previtem {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.previtem .icon {
+  width: 32px;
+  height: 32px;
+}
+
+/* ---------- Toast / aviso ---------- */
+#toast {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 30px;
+  font-weight: bold;
+  color: var(--gold);
+  text-shadow: 0 2px 8px #000;
+  pointer-events: none;
+  white-space: pre-line; /* v6 F16: avisos de onda podem ter 2 linhas + quebrar em telas estreitas */
+  max-width: calc(100vw - 32px);
+  text-align: center;
+}
+
+/* ---------- Faixa de pausa ---------- */
+#pausebar {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--active);
+  color: #111;
+  padding: 4px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 15px;
+  border: 0;
+  cursor: pointer;
+  pointer-events: auto; /* toque na faixa continua o jogo */
+}
+
+/* ---------- Menu do jogo (☰) ---------- */
+#gamemenu .panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 240px;
+}
+
+/* ---------- Ajuda ---------- */
+.help-panel {
+  max-width: 760px;
+  max-height: 80vh;
+  overflow: auto;
+  line-height: 1.5;
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 900px) {
+  .chip.gold {
+    font-size: 22px;
+  }
+
+  #towerpanel,
+  #enemypanel {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    top: auto;
+    bottom: 130px;
+    max-height: 45vh;
+  }
+}
+
+@media (max-width: 700px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ---------- painel da torre: armas, selos de dano e requisitos ---------- */
+.weapon {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  grid-template-areas: "icon name target" "icon badges target" "icon stats stats";
+  column-gap: 8px;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .04);
+}
+.weapon .icon { grid-area: icon; }
+.weapon .wname { grid-area: name; font-weight: bold; }
+.weapon .badges { grid-area: badges; }
+.weapon .wstats { grid-area: stats; font-size: 12px; color: #c5cbd8; }
+.weapon .btn { grid-area: target; }
+.badges { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
+ul.reqs { list-style: none; margin: 2px 0 0; padding: 0; font-size: 12px; text-align: left; }
+ul.reqs li { line-height: 1.35; white-space: nowrap; }
+.tp-head.ready { border-color: var(--green); }
+
+/* barras de vida sobre chefes, elites e inimigos grandes (posicionadas por transform) */
+#bars { position: absolute; inset: 0; pointer-events: none; }
+.ebar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 6px;
+  background: rgba(0, 0, 0, .65);
+  border: 1px solid rgba(0, 0, 0, .8);
+  border-radius: 3px;
+  will-change: transform;
+}
+.ebar > i { display: block; height: 100%; background: var(--green); border-radius: 2px; }
+.ebar.elite > i { background: #ffb300; }
+.ebar.boss { height: 9px; border-color: #ff8a80; }
+.ebar.boss > i { background: var(--red); }
+.ebar .ename { display: none; }
+.ebar.boss .ename {
+  display: block;
+  position: absolute;
+  bottom: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  font: bold 12px 'Trebuchet MS', sans-serif;
+  color: #ffcdd2;
+  text-shadow: 0 1px 3px #000;
+  white-space: nowrap;
+}
+
+/* ---------- painel da torre v2: um card por arma (cabeça = arma principal + upgrade) ---------- */
+.tp-info { display: flex; flex-direction: column; gap: 1px; }
+.tp-lvl { font-size: 12px; color: #c5cbd8; }
+/* requisitos: mesma cor para todos; a diferença é só o ✓ ou o ✗ */
+ul.reqs li, ul.reqs li.ok, ul.reqs li.no { color: #c5cbd8; }
+/* indisponível agora (falta ouro, encaixe ou onda): escuro, tracejado e com cadeado; os requisitos ✓/✗ dizem o que falta */
+.tp-head { position: relative; }
+.tp-head.later::after { content: '🔒'; position: absolute; top: 4px; right: 6px; font-size: 14px; }
+.tp-head.ready { box-shadow: 0 0 0 1px var(--green), 0 0 10px rgba(76, 175, 80, .35); }
+/* ouro no topo do painel da torre, à vista enquanto se escolhe upgrade e addons */
+#towerpanel > * { flex-shrink: 0; } /* painel com rolagem: os cards não encolhem (cortava os requisitos) */
+.tp-top { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(12, 14, 19, .92); padding: 4px 4px 4px 8px; border-radius: 6px; }
+.tp-gold { font-weight: 700; font-size: 16px; color: #ffd54f; }
+.tp-close { min-width: 34px; font-size: 16px; }
+#enemypanel > .tp-close { position: absolute; top: 6px; right: 6px; z-index: 1; }
+/* cabeça de upgrade indisponível: escura, com cadeado (o ✓/✗ diz o que falta) */
+.tp-head.later { background: #1b1f27; border: 1px dashed #4a5160; cursor: not-allowed; }
+.tp-head.later .icon, .tp-head.later .tp-name, .tp-head.later .pips { filter: grayscale(1); opacity: .55; }
+.tp-head.maxed { background: linear-gradient(135deg, #3b3320, #1c2233); }
+
+/* ---------- balões de voz das torres e dos chefes (etapa D1) ---------- */
+#voices { position: absolute; inset: 0; pointer-events: none; }
+.voice {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .94);
+  color: #1b1f27;
+  font: bold 13px 'Trebuchet MS', sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .45);
+  will-change: transform;
+}
+.voice::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  margin-left: -6px;
+  border: 6px solid transparent;
+  border-bottom: 0;
+  border-top-color: rgba(255, 255, 255, .94);
+}
+.voice.req { pointer-events: auto; cursor: pointer; background: #ffe082; border: 2px solid #ff8f00; }
+.voice.req::after { border-top-color: #ff8f00; }
+.voice.req:hover { background: #ffd54f; }
+.voice.emo { font-size: 22px; padding: 1px 6px; background: rgba(255, 255, 255, .85); }
+
+/* ---------- celular (etapa D4): barra de construção cabe na largura, prévia e ouro duplicado somem ---------- */
+@media (max-width: 700px) {
+  #topbar { gap: 6px; padding: 5px 6px; }
+  .chip { font-size: 14px; padding: 3px 8px; }
+  .chip.gold { font-size: 20px; }
+  .chip.lives { font-size: 16px; }
+  #topbar .btn.small { padding: 3px 7px; font-size: 13px; }
+  #buildbar { left: 6px; right: 6px; transform: none; justify-content: center; gap: 6px; padding: 6px; }
+  #buildgold, #preview { display: none; }
+  .buildcard { min-width: 0; flex: 1; padding: 4px; }
+  .buildcard .icon { width: 30px; height: 30px; }
+  #towerpanel, #enemypanel { bottom: 132px; max-height: 48vh; }
+  .voice { font-size: 11px; }
+}
+
+.row.res .v { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.resv { font-size: 12px; padding: 1px 4px; border-radius: 4px; background: rgba(255, 255, 255, .06); }
+.resv.weak { background: rgba(102, 187, 106, .3); }
+.resv.strong { background: rgba(239, 83, 80, .3); }
+
+/* v5: introdução, história de cada mapa e Sobre */
+.panel.intro { max-width: 640px; }
+.story { text-align: left; line-height: 1.55; font-size: 16px; color: #d5dbe8; margin: 6px 0 14px; }
+.story p { margin: 0 0 10px; }
+.panel a { color: #80cbc4; }
+.buildcard { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } /* v5: arrastar a carta sem rolar a página nem abrir menu */
+.buildcard img { pointer-events: none; -webkit-user-drag: none; } /* a imagem não é arrastada pelo navegador (ficava presa ao cursor) */
+
+/* v5: telas de texto e menus mais compactas no celular */
+@media (max-width: 700px) {
+  .screen .panel { max-width: calc(100vw - 24px); box-sizing: border-box; padding: 10px; }
+  h1.title { font-size: 40px; letter-spacing: 4px; }
+  h2 { font-size: 18px; }
+  .story { font-size: 14px; line-height: 1.45; }
+  .screen .btn, .screen button { padding: 7px 12px; font-size: 14px; }
+  .card { min-height: 64px; padding: 6px; font-size: 13px; gap: 2px; }
+}
+/* v5.3: ficha da torre — vender pequeno e com confirmação; no celular, a barra de torres novas some enquanto a ficha está aberta */
+.tp-sell { font-size: 13px; }
+.tp-sell.armed { background: #8e2b2b; border-color: #e57373; }
+@media (max-width: 900px) {
+  #ui.sheet-open #buildbar { display: none; }
+  #ui.sheet-open #towerpanel { bottom: 8px; max-height: 62vh; }
+}
+@media (max-width: 700px) {
+  #toast { font-size: 22px; white-space: pre-line; text-align: center; width: calc(100vw - 32px); left: 16px; transform: none; }
+}
+
+/* v5.4: barra de cima compacta — velocidade em menu cortina, prefixos por CSS; no celular cabe em 2 linhas curtas */
+.wmain::before { content: 'Onda '; }
+.wsub.next::before { content: 'próxima em '; }
+.speedsel { appearance: none; -webkit-appearance: none; text-align: center; padding-right: 7px; }
+.speedsel option { background: #1b1f27; color: #fff; }
+@media (max-width: 700px) {
+  #topbar { gap: 4px 6px; justify-content: space-between; }
+  #topbar .group { margin-left: 0; }
+  #topbar .chip.cap, #topbar .chip.score, #topbar .lbl, #topbar [data-act=cam] { display: none; }
+  #topbar .chip.wave { display: flex; gap: 6px; align-items: baseline; font-size: 14px; }
+  .wmain::before { content: '🌊 '; }
+  .wsub.next::before { content: '⏱ '; }
+  .wsub { font-size: 12px; color: var(--muted); }
+  #topbar .btn.small { min-width: 34px; min-height: 30px; }
+  #pausebar { font-size: 14px; white-space: nowrap; }
+}
+
+/* v6 F5 (etapa 6.5): gráfico e tabela da tela de fim de partida */
+.wavechart, .towertable { width: 100%; max-width: 420px; margin: 10px 0; }
+.wavechart h3, .towertable h3 { margin: 0 0 4px; font-size: 14px; color: var(--muted); }
+.wavechart-svgwrap { width: 100%; }
+.wavechart-svg { width: 100%; height: auto; display: block; }
+.wavechart-legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; margin-top: 4px; }
+.ttable { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ttable th, .ttable td { padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--border); }
+.ttable th { color: var(--muted); font-weight: 600; }
+
+/* v6 6.5.1: painel da torre em dois níveis (resumo compacto + ficha detalhada) */
+.tp-summary { display: flex; flex-direction: column; gap: 4px; }
+.tp-slotrow { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+.tp-slotlabel { font-size: 12px; color: var(--muted); min-width: 52px; }
+.tp-slotopts { display: flex; gap: 6px; flex: 1; }
+.tp-slotnote { flex: 1; color: #ffb74d; font-weight: bold; }
+.tp-slotopt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 2px;
+  font-size: 11px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .04);
+}
+.tp-slotopt .icon { width: 22px; height: 22px; }
+.tp-slotopt-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.tp-slotopt-price { color: var(--muted); }
+.tp-slotopt.chosen { box-shadow: 0 0 0 1px var(--green), 0 0 8px rgba(76, 175, 80, .35); background: rgba(76, 175, 80, .12); }
+.tp-slotopt.later { opacity: .55; cursor: not-allowed; }
+.tp-slotopt.poor .tp-slotopt-price { color: var(--red); } /* v6 6.6.8: falta ouro — mesma cor de .buildcard.poor/.addon.poor */
+/* 6.10 DESIGN §9: indisponível (não liberado) = cadeado grande e escuro; liberado sem ouro = cinza, cadeado pequeno */
+.tp-slotopt.locked { position: relative; background: #12141a; }
+.tp-slotopt.locked::after { content: '🔒'; position: absolute; font-size: 22px; opacity: .85; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.tp-slotopt.locked .icon, .tp-slotopt.locked .tp-slotopt-name { visibility: hidden; }
+.tp-slotopt.poor { position: relative; filter: grayscale(.6); }
+.tp-slotopt.poor::before { content: '🔒'; position: absolute; top: 2px; right: 2px; font-size: 9px; opacity: .7; }
+.tp-revive.poor { color: var(--red); }
+.tp-summary-actions { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+.tp-detailbtn { margin-left: auto; }
+.tp-detail { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+.tp-detail.hidden { display: none; }
+@media (max-width: 700px) {
+  .tp-slotrow { flex-wrap: wrap; }
+  .tp-slotopts { flex-wrap: wrap; }
+  .tp-slotlabel { min-width: 100%; }
+}
+
+/* v6 6.5.1: relatório — "quem chegou mais longe" */
+.farthesttable { width: 100%; max-width: 460px; margin: 10px 0; }
+.farthesttable h3 { margin: 0 0 4px; font-size: 14px; color: var(--muted); }
+.farthesttable .frow { padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 12px; line-height: 1.5; }
+.farthesttable .frow .fname { font-weight: 700; }
+.farthesttable .frow .fmuted { color: var(--muted); }
+
+.eshape { display: inline-block; width: 9px; height: 9px; flex: none; }
+
+/* v6 6.6.2 F12: janela "Composição" (onda atual/próxima) — legível no celular */
+.compopanel { width: 100%; max-width: 460px; margin: 6px 0; font-size: 12px; }
+.compopanel h3 { margin: 10px 0 4px; font-size: 14px; color: var(--muted); }
+.compo-row { display: flex; flex-direction: column; gap: 2px; margin: 0 0 6px; padding: 4px 6px; border-radius: 8px; background: rgba(255, 255, 255, .04); }
+.compo-nums { font-size: 11px; }
+.compo-alert { font-size: 12px; font-weight: 700; color: var(--gold); margin: 2px 0 6px; }
+
+/* v6 6.5.3: relatório — "dano causado x dano necessário", barra + marcador do ideal */
+.needstable { width: 100%; max-width: 460px; margin: 10px 0; font-size: 12px; }
+.needstable h3 { margin: 0 0 4px; font-size: 14px; color: var(--muted); }
+.needs-legend { font-size: 11px; margin: 0 0 6px; }
+.needs-row { margin: 0 0 8px; }
+.needs-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; margin-bottom: 2px; }
+.needs-name { font-weight: 600; }
+.needs-verdict { font-size: 11px; font-weight: 700; }
+.needs-muito .needs-verdict { color: var(--red); }
+.needs-falta .needs-verdict { color: #ffb74d; }
+.needs-ok .needs-verdict { color: var(--green); }
+.needs-sobra .needs-verdict { color: var(--muted); }
+.needs-baixo .needs-verdict { color: var(--gold); }
+.needs-pressure { font-size: 11px; margin: 0 0 6px; }
+.needs-bar { position: relative; height: 10px; border-radius: 5px; background: rgba(255, 255, 255, .08); }
+.needs-fill { position: absolute; inset: 0; width: 0; border-radius: 5px; opacity: .85; }
+.needs-marker { position: absolute; top: -2px; bottom: -2px; width: 2px; background: #fff; opacity: .8; }
+.needs-pct { font-size: 11px; margin-top: 2px; }
+.needs-sugg { font-size: 12px; color: var(--gold); margin-top: 2px; }
+.needs-sugg-global { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; font-size: 12px; }
+
+/* v6 6.5.3: popup de confirmação genérico (Apagar dados locais etc.) */
+.modal-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .55); }
+.modal-box { background: rgba(16, 20, 28, .55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; max-width: 340px; text-align: center; }
+.modal-box h3 { margin: 0 0 8px; color: var(--gold); }
+.modal-box p { margin: 0 0 14px; color: #d5dbe8; }
+.modal-box .row { display: flex; gap: 8px; justify-content: center; }
+.btn.danger, .tp-sell.armed, .next.armed { background: #8e2b2b; border-color: #e57373; }
+
+/* v6 6.5.3: painéis de tela (menu, lore, etc.) — fundo translúcido + blur */
+.screen-panel { background: rgba(16, 20, 28, .55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.screen-head { text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 2px 10px rgba(0,0,0,.5); color: var(--gold); margin: 18px 0 8px; }
+.btn-big { display: flex; align-items: center; gap: 10px; font-size: 17px; padding: 12px 16px; width: 100%; box-sizing: border-box; text-align: left; }
+.btn-big .menu-icon { font-size: 22px; }
+
+/* v6 6.5.3: menu inicial — painel translúcido sobre o mapa 3D girando atrás, botões grandes com ícone, versão no canto */
+.menu-panel { max-width: 380px; }
+h1.title.poster { text-transform: uppercase; }
+.version-tag { position: fixed; right: 10px; bottom: 8px; font-size: 11px; color: var(--muted); z-index: 15; }
+
+/* v6 6.5.3: tela Lore — enciclopédia (tipos de dano, torres/evolução, inimigos) */
+.panel.lore { max-width: 720px; text-align: left; max-height: 86vh; overflow: auto; }
+.panel.lore h2 { margin: 18px 0 8px; color: var(--gold); }
+.lore-ring { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; align-items: center; }
+.lore-ring-item { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px; background: rgba(255, 255, 255, .05); }
+.lore-ring-arrow { font-size: 14px; color: var(--muted); }
+.lore-towerbox { border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 12px; }
+.lore-flowrow { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
+.lore-flowbox { flex: 1 1 150px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: rgba(255, 255, 255, .04); min-width: 130px; }
+.lore-flowbox-title { font-weight: 600; color: var(--gold); font-size: 12px; margin-bottom: 4px; }
+.lore-flowbox-line { font-size: 11px; color: #d5dbe8; margin: 1px 0; }
+.lore-flowarrow { align-self: center; font-size: 16px; color: var(--muted); }
+.lore-levelstrip { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+.lore-levelcell { flex: 1 1 60px; border: 1px solid var(--border); border-radius: 6px; padding: 4px; text-align: center; font-size: 10px; background: rgba(255, 255, 255, .03); }
+.lore-levelcell-n { font-weight: 600; }
+.lore-levelcell-dmg { color: var(--gold); }
+.lore-levelcell-cost { color: var(--muted); }
+.lore-enemygrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.lore-ecard2 { border: 1px solid var(--border); border-radius: 10px; padding: 8px; font-size: 11px; background: rgba(255, 255, 255, .04); }
+.lore-eicon-hidden { font-size: 20px; text-align: center; margin-bottom: 4px; }
+.lore-eline { font-size: 10px; color: #d5dbe8; margin: 2px 0; }
+.lore-ename { font-weight: 600; font-size: 12px; margin-bottom: 2px; }
+.lore-echip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 10px; background: rgba(255, 255, 255, .06); font-size: 12px; }
+.help-guide { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+.help-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: rgba(255, 255, 255, .04); text-align: center; }
+.help-card-icon { font-size: 28px; margin-bottom: 6px; }
+.help-card-title { font-weight: bold; margin-bottom: 4px; }
+.help-card-text { font-size: 13px; color: #d5dbe8; }
+.collapse-btn {
+  position: fixed;
+  top: 10px;
+  right: 56px;
+  z-index: 16;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(16, 20, 28, .55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  font-size: 18px;
+  color: #e8ecf5;
+  cursor: pointer;
+  pointer-events: auto;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ui-collapsed .screen,
+.ui-collapsed .version-tag,
+.ui-collapsed .collapse-btn {
+  display: none;
+}
+@media (max-width: 700px) {
+  .panel.lore { max-width: calc(100vw - 24px); }
+  .lore-flowrow { flex-direction: column; }
+  .lore-flowarrow { transform: rotate(90deg); }
+}
+
+/* 6.31.1: cinemática de chefe — esconde o HUD (fica o aviso com o nome) */
+#ui.cine > :not(#toast) { opacity: 0; pointer-events: none; }
+details.lore-cortina {
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .04);
+  padding: 0;
+}
+
+details.lore-cortina > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  font-weight: 600;
+}
+
+details.lore-cortina > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.lore-cortina > summary::before {
+  content: '▸';
+  color: var(--muted);
+  transition: transform .2s;
+}
+
+details.lore-cortina[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.lore-cbody {
+  padding: 4px 10px 10px;
+}
+
+details.lore-cortina.lore-sub {
+  margin-left: 0;
+  background: rgba(255, 255, 255, .03);
+}
+
+img.lore-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex: none;
+}
+
+img.lore-thumb.big {
+  width: 72px;
+  height: 72px;
+}
+
+.lore-sum-info {
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: auto;
+  text-align: right;
+}
+
+.lore-boss {
+  border: 2px solid var(--gold);
+  padding: 10px;
+  border-radius: 12px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.lore-tag {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  margin: 14px 0 6px;
+  text-transform: uppercase;
+}
+</style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="view"></div>
+  <div id="ui"><div class="screen"><div class="panel" style="font-size:20px;padding:18px 28px">Carregando…</div></div></div>
+  <script>
+  // PWA: guarda o jogo e o Three.js no aparelho (sw.js) e pede que o save (localStorage) não seja apagado
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js');
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+  </script>
+  <script type="module" src="torre-6.35.3.js"></script>
+</body>
+</html>
