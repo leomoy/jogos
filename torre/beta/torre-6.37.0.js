@@ -23,10 +23,10 @@ function hexVertices(x, y) {
   }
   return out;
 }
-var VERSION, TILE, COLS, ROWS, GRID, GCOLS, GROWS, MAP_W, MAP_H, ROAD_W, HEX_APOTHEM, HEX_R, SPEEDS, LEVEL_CAP, MAP_LEVEL_CAP, WAVE_GOLD, WAVE_CURVE_T, WAVE_CURVE, DIFFICULTY, DIFFICULTY_ORDER, MAP_HP, SLOT_LEVELS, SIM_DT, WAVE_INTERVAL, WAVES_PER_MAP, START_LIVES, SELL_RATIO, LVL_DMG, FIRE_DOT_DUR, LVL_UPG, TIER_HP, TIER_REW, TIER_SPEED, TIER_COLOR, DENSITY, HP_FLOOR, TOWERS_BASE, TOWERS, CHAIN_FALLOFF, W, ROCKETS, TANK_W, HOWITZER_W, WIRE_W, WIRE_THICK_W, STAKES_W, STEEL_PLATE_W, FOG_W, FLASH_W, NEW_W, NW, FIRE, RANGE_MUL, FAMILIES, FAM_INFO, FAM, weapon, BASES, A, SUP_COST, ATK_COST, ADDONS, SIZE, ENEMIES, RES, THEMES, MAPS;
+var VERSION, TILE, COLS, ROWS, GRID, GCOLS, GROWS, MAP_W, MAP_H, ROAD_W, HEX_APOTHEM, HEX_R, SPEEDS, LEVEL_CAP, MAP_LEVEL_CAP, WAVE_GOLD, WAVE_CURVE_T, WAVE_CURVE, DIFFICULTY, DIFFICULTY_ORDER, MAP_HP, SLOT_LEVELS, SIM_DT, WAVE_INTERVAL, WAVES_PER_MAP, START_LIVES, SELL_RATIO, LVL_DMG, FIRE_DOT_DUR, LVL_UPG, TIER_HP, TIER_REW, TIER_SPEED, TIER_COLOR, DENSITY, HP_FLOOR, TOWERS_BASE, TOWERS, CHAIN_FALLOFF, W, ROCKETS, TANK_W, HOWITZER_W, WIRE_W, WIRE_THICK_W, STAKES_W, STEEL_PLATE_W, FOG_W, FLASH_W, NEW_W, NW, FIRE, RANGE_MUL, FAMILIES, FAM_INFO, FAM, weapon, BASES, A, SUP_COST, ATK_COST, ADDONS, SIZE, ELITE_LAST_HP, ENEMIES, RES, THEMES, MAPS;
 var init_data = __esm({
   "js/core/data.js"() {
-    VERSION = "6.35.3";
+    VERSION = "6.37.0";
     TILE = 40;
     COLS = 48;
     ROWS = 30;
@@ -51,17 +51,17 @@ var init_data = __esm({
         n: [10, 16],
         goldMargin: 0.5,
         enemyDpsMul: 1,
-        hp: [2.7, 1.8, 1.7, 0.8, 2.3, 0.85, 0.75, 0.6, 0.5, 0.45],
-        gold: [1.21, 1.03, 1.08, 1.14, 2.16, 1.45, 1.75, 1.99, 1.49, 1.48]
+        hp: [3, 1.75, 1.65, 0.7, 2.45, 0.8, 0.9, 0.6, 0.55, 0.35],
+        gold: [1.23, 1.03, 1.12, 0.88, 2.11, 1.43, 1.86, 2, 1.49, 1.5]
       },
       normal: {
         name: "M\xE9dio",
         star: "#c0c0c0",
-        n: [16, 26],
-        goldMargin: 0.35,
+        n: [16, 24],
+        goldMargin: 0.25,
         enemyDpsMul: 1,
-        hp: [3, 2.85, 2.6, 1.45, 3, 1.5, 1.3, 0.9, 0.8, 0.45],
-        gold: [1.74, 1.43, 1.59, 1.3, 2.99, 2.58, 2.56, 2.89, 2.22, 2.17]
+        hp: [3, 2.65, 2.65, 1.1, 3, 1.2, 1.35, 0.85, 0.75, 0.6],
+        gold: [1.64, 1.33, 1.55, 1.18, 2.74, 1.83, 2.32, 2.45, 1.9, 1.89]
       },
       hard: {
         name: "Dif\xEDcil",
@@ -69,8 +69,8 @@ var init_data = __esm({
         n: [22, 34],
         goldMargin: 0.2,
         enemyDpsMul: 1.25,
-        hp: [3, 3, 3, 2.1, 3, 1.3, 1.65, 1.1, 0.65, 0.65],
-        gold: [2.14, 2.3, 2.6, 2.47, 3.62, 3.26, 2.94, 4.73, 3.22, 3.31]
+        hp: [3, 3, 3, 1.45, 3, 1.65, 1.6, 1.05, 0.65, 0.55],
+        gold: [2.16, 1.73, 2.04, 1.52, 3.51, 2.54, 3.2, 3.32, 2.62, 2.56]
       }
     };
     DIFFICULTY_ORDER = ["easy", "normal", "hard"];
@@ -215,6 +215,7 @@ var init_data = __esm({
       A(NW("mines"), "artilharia", "sup", SUP_COST, 0, { minRange: 140, range: 400, role: "off" })
     ];
     SIZE = { leader: 1.15, elite: 1.4, voidlord: 1.7 };
+    ELITE_LAST_HP = 1.6;
     ENEMIES = [
       { id: "grunt", name: "Recruta do Vazio", hp: 40, speed: 65, radius: 0.18, reward: 4, lives: 1, color: 10395294, shape: "circle", size: 10, map: 0, domain: "solo", heavy: false, fly: false, regen: 0, heal: 0, split: null, enrage: false, shield: 0, spawn: null, boss: false, atk: 4, ranged: false },
       { id: "runner", name: "Corredor", hp: 25, speed: 124, radius: 0.16, reward: 4, lives: 1, color: 16761095, shape: "triangle", size: 9, map: 0, domain: "solo", heavy: false, fly: false, regen: 0, heal: 0, split: null, enrage: false, shield: 0, spawn: null, boss: false, atk: 2, ranged: false },
@@ -1156,16 +1157,16 @@ ${(e.stack || "").split("\n").slice(1, 4).join("\n")}`);
     const b = s.spawnEnemy("voidlord", 3, 1, -96, false, 0);
     TD.step(2);
     assert(G._cine && G._cine.type === "enter", "chegada: cena n\xE3o come\xE7ou");
-    assert(G._effSpeed() === 0.1, "chegada: tempo n\xE3o caiu para 0,1\xD7");
+    assert(G._effSpeed() === 0, "chegada: tempo n\xE3o caiu para pausado");
     assert(TD.ui.classList.contains("cine") && getComputedStyle($("#topbar")).pointerEvents === "none", "chegada: HUD n\xE3o sumiu");
     assert(TD.world._cine, "chegada: c\xE2mera de cinema n\xE3o assumiu");
-    TD.step(90);
+    TD.step(150);
     assert(G._cine.i === 1, "chegada: corte 2 (foco) n\xE3o come\xE7ou");
     await shot2("cine-enter");
     const p1 = TD.world.camera.position.clone();
     TD.step(60);
     assert(TD.world.camera.position.distanceTo(p1) > 0.01, "chegada: c\xE2mera n\xE3o girou");
-    TD.step(240);
+    TD.step(500);
     assert(!G._cine, "chegada: cena n\xE3o terminou");
     assert(!TD.world._cine && G._cineOverride == null, "chegada: c\xE2mera/velocidade n\xE3o voltaram");
     assert(!TD.ui.classList.contains("cine"), "chegada: HUD n\xE3o voltou");
@@ -1177,16 +1178,16 @@ ${(e.stack || "").split("\n").slice(1, 4).join("\n")}`);
     assert(b.dead, "chefe n\xE3o morreu");
     TD.step(2);
     assert(G._cine && G._cine.type === "death" && G._cine.i === 0, "morte: cena n\xE3o come\xE7ou na torre autora");
-    TD.step(40);
+    TD.step(70);
     assert(G._cine.i === 1, "morte: corte da torre girando n\xE3o come\xE7ou");
     await shot2("cine-tower");
-    TD.step(90);
+    TD.step(180);
     assert(G._cine.i === 2, "morte: corte da bala n\xE3o come\xE7ou");
     await shot2("cine-bullet");
-    TD.step(120);
+    TD.step(180);
     assert(G._cine.impacted, "morte: sem impacto");
     await shot2("cine-death");
-    TD.step(300);
+    TD.step(520);
     assert(!G._cine, "morte: cena n\xE3o terminou");
     assert(G.big._held.size === 0, "morte: chefe ficou preso de p\xE9");
   });
@@ -3667,7 +3668,7 @@ var Units = class {
     if (!c || !c.armed) return;
     c.t += dtReal;
     this._corpseStep(c);
-    if (c.t >= 3.6) {
+    if (c.t >= 7.2) {
       this.world.root.remove(c.g);
       this._disposeGroup(c.g);
       this._corpse = null;
@@ -3723,11 +3724,11 @@ var Units = class {
     this._corpse = { g, t: 0, armed: false, y0: g.position.y, s, r: radius / TILE };
   }
   _corpseStep(c) {
-    const k = Math.min(1, c.t / 0.7);
+    const k = Math.min(1, c.t / 1.4);
     const s = k * k * (3 - 2 * k);
     c.g.rotation.z = -(Math.PI / 2) * s;
-    if (c.t > 1) {
-      c.g.position.y = c.y0 - c.r * 0.5 - c.r * 1.5 * Math.min(1, (c.t - 1) / 2);
+    if (c.t > 2) {
+      c.g.position.y = c.y0 - c.r * 0.5 - c.r * 1.5 * Math.min(1, (c.t - 2) / 4);
     } else {
       c.g.position.y = c.y0 - c.r * 0.5 * s;
     }
@@ -5244,7 +5245,7 @@ function enemyList(porte, icons2, big) {
 }
 function chefesBox(icons2) {
   const box = el("div");
-  box.appendChild(el("p", "story", "Nas ondas 5 e 10 de cada fase um inimigo comum volta como mini-chefe: bem maior, com coroa."));
+  box.appendChild(el("p", "story", "Nas ondas 3, 6, 9 e 10 de cada fase um inimigo comum volta como mini-chefe: bem maior, com coroa."));
   const v = ENEMIES.find((e) => e.boss);
   const b = el("div", "lore-boss");
   if (v) {
@@ -6562,7 +6563,7 @@ function buildWaves(mapIndex, rng = mulberry32(DEFAULT_SEED)) {
       }
     }
     spawns = varyWave(spawns, rng);
-    if (w === 4 || w === 9 && mapIndex !== 9) {
+    if (w === 2 || w === 5 || w === 8 || w === 9 && mapIndex !== 9) {
       const cand = [];
       for (const sp of spawns) {
         const d = ENEMIES.find((e) => e.id === sp.id);
@@ -7132,7 +7133,7 @@ var Sim = class _Sim {
   spawnEnemy(id, tier, hpMul, dist, elite, waveNo, parentLat) {
     const def = _enemyById(id);
     if (!def) return null;
-    let hp = def.hp * TIER_HP[tier - 1] * hpMul * (elite ? 8 : 1) * this.diff.hp[this.mapIndex];
+    let hp = def.hp * TIER_HP[tier - 1] * hpMul * (elite ? 8 * (waveNo === WAVES_PER_MAP - 1 ? ELITE_LAST_HP : 1) : 1) * this.diff.hp[this.mapIndex];
     if (!def.boss && !elite) hp *= DENSITY.hp;
     const ws = this._wstat(waveNo);
     ws.spawned[id] = (ws.spawned[id] || 0) + hp;
@@ -9042,7 +9043,7 @@ var BigUnits = class {
       death.reset().play();
     }
     if (entry.walk) entry.walk.stop();
-    this._dying.push({ uid, root: entry.root, mixer: entry.mixer, t: uid === this._cineUid ? 4.5 : 1.6 });
+    this._dying.push({ uid, root: entry.root, mixer: entry.mixer, t: uid === this._cineUid ? 9 : 1.6 });
     this._live.delete(uid);
   }
   taunt(uid) {
@@ -11158,7 +11159,7 @@ var Game = class {
   }
   _startCine(scene) {
     const w = this.world;
-    this._cineOverride = 0.1;
+    this._cineOverride = 0;
     this.app.ui.classList.add("cine");
     scene.c = new THREE9.Vector3(scene.x != null ? scene.x / TILE : 0, scene.R, scene.y != null ? scene.y / TILE : 0);
     scene.i = -1;
@@ -11182,12 +11183,12 @@ var Game = class {
       this.fx.bossPortal(p.x, p.y);
       this.hud.toast((scene.elite ? "L\xEDder: " : "") + scene.name, 4e3);
       scene.cuts = [
-        { dur: 1, blend: 1, to: () => this._cineFrame(scene, az0) },
-        { dur: 3, blend: 0, fade: true, on: () => {
+        { dur: 2, blend: 1, to: () => this._cineFrame(scene, az0) },
+        { dur: 6, blend: 0, fade: true, on: () => {
           this.big.taunt(scene.uid);
           Sfx.play("leak");
         }, to: (k) => this._cineFrame(scene, az0 + 0.35 * Math.sin(k * Math.PI * 2)) },
-        { dur: 1, blend: 1, to: orbit }
+        { dur: 2, blend: 1, to: orbit }
       ];
     } else {
       if (!big) this.units.cineCorpse(scene.id, scene.x, scene.y, scene.rpx, scene.fly, scene.uid);
@@ -11224,9 +11225,9 @@ var Game = class {
         };
         const a0 = tw.weapons[0] ? tw.weapons[0].angle : 0;
         azD = Math.atan2(T.x - scene.c.x, T.z - scene.c.z) + 0.9;
-        cuts.push({ dur: 0.5, blend: 1, to: tpose });
+        cuts.push({ dur: 1, blend: 1, to: tpose });
         cuts.push({
-          dur: 1.5,
+          dur: 3,
           blend: 0,
           to: tpose,
           tick: (k) => {
@@ -11238,7 +11239,7 @@ var Game = class {
           }
         });
         cuts.push({
-          dur: 1.5,
+          dur: 3,
           blend: 0.25,
           on: () => {
             const b = B();
@@ -11257,8 +11258,8 @@ var Game = class {
           }
         });
       }
-      cuts.push({ dur: 3, blend: 0.3, fade: true, on: impact, to: (k) => this._cineFrame(scene, azD + 0.2 * k, 1.5) });
-      cuts.push({ dur: 1, blend: 1, to: orbit });
+      cuts.push({ dur: 6, blend: 0.3, fade: true, on: impact, to: (k) => this._cineFrame(scene, azD + 0.2 * k, 1.5) });
+      cuts.push({ dur: 2, blend: 1, to: orbit });
       scene.cuts = cuts;
     }
     this._nextCut(scene);
@@ -11304,7 +11305,7 @@ var Game = class {
       this.units.cineHide = null;
     }
     this.units.cineTick(dt);
-    if (this._cine === scene && scene.T > 12) this._endCine();
+    if (this._cine === scene && scene.T > 24) this._endCine();
   }
   // quem está na frente do chefe (a menos de R do segmento câmera→chefe) some: os de modelo grande a 30% de opacidade,
   // os instanciados (não dá para mudar a opacidade de um só) ficam escondidos
@@ -11467,7 +11468,7 @@ var Game = class {
     this.world.update(dt);
     this.world.render();
     this.hud.update();
-    if (this.sim.state !== "playing" && !this._ended) {
+    if (this.sim.state !== "playing" && !this._ended && !this._cine && !this._cineNext) {
       this._ended = true;
       MatchSave.clear();
       const won = this.sim.state === "won";
