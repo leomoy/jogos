@@ -1611,6 +1611,24 @@ canvas,
 .mundos-entrar .botao { flex: 1 1 100%; }
 @media (max-height: 520px) { .mundos-entrar input { flex: 1 1 45%; } .mundos-entrar .botao { flex: 1 1 100%; } }
 @media (orientation: landscape) and (max-height: 520px) { .gato-botoes { flex-wrap: nowrap; gap: 4px; } .gato-botoes .botao { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 4px 2px; font-size: 0.8rem; } }
+
+/* 19. Online e offline (0.8.7): ☁️ que acende, "Tentando conectar…", "Continuar só aqui" e o diálogo de entrar */
+@keyframes nuvem-acende { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+.botao-nuvem.so-aqui { opacity: 0.55; }
+.botao-nuvem.acesa, .conexao-nuvem.acesa { opacity: 1; border-color: #f2c94c; background: #fff7d1; box-shadow: 0 3px 0 #f2c94c; animation: nuvem-acende 1.6s ease-in-out infinite; }
+.hud-conexao { position: absolute; top: 88px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 6px; pointer-events: none; }
+.conexao-nuvem { width: 38px; height: 38px; min-width: 0; padding: 0; font-size: 1.15rem; line-height: 1; border-radius: 50%; border: 3px solid #cdd6f0; background: #fff; opacity: 0.55; cursor: pointer; pointer-events: auto; touch-action: manipulation; }
+.conexao-nuvem[hidden], .conexao-tentando[hidden], .conexao-oferta[hidden] { display: none; }
+.conexao-tentando { padding: 2px 8px; font-size: 0.68rem; font-weight: 700; color: #3a3a55; background: rgba(255,255,255,0.75); border-radius: 10px; white-space: nowrap; }
+.conexao-oferta { position: fixed; left: 50%; top: 210px; transform: translateX(-50%); z-index: 60; width: min(86vw, 300px); box-sizing: border-box; padding: 10px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #fff; border: 3px solid #cdd6f0; border-radius: 16px; box-shadow: 0 4px 0 #cdd6f0; color: #3a3a55; text-align: center; pointer-events: auto; }
+.conexao-oferta p { margin: 0; font-size: 0.85rem; line-height: 1.25; font-weight: 700; }
+.conexao-oferta .botao { min-height: 44px; padding: 6px 14px; font-size: 1rem; }
+.dialogo-conexao { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; background: rgba(40,40,70,0.45); }
+.dialogo-conexao-caixa { width: min(88vw, 340px); box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; background: #fff; border: 3px solid #cdd6f0; border-radius: 18px; box-shadow: 0 4px 0 #cdd6f0; color: #3a3a55; }
+.dialogo-conexao-caixa p { margin: 0; font-size: 1.3rem; font-weight: 700; text-align: center; }
+.dialogo-conexao-botoes { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.dialogo-conexao-botoes .botao-grande { width: 100%; box-sizing: border-box; }
+@media (max-height: 520px) { .hud-conexao { top: 64px; } .conexao-oferta { top: auto; bottom: 12px; } .dialogo-conexao-caixa { padding: 10px; gap: 8px; } .dialogo-conexao-caixa p { font-size: 1.05rem; } .dialogo-conexao-botoes { flex-direction: row; } .dialogo-conexao-botoes .botao-grande { min-height: 44px; padding: 6px 10px; font-size: 1rem; } }
 </style>
 <script type="importmap">{
   "imports": {
@@ -2105,7 +2123,7 @@ if (typeof window !== "undefined") {
 import * as THREE10 from "three";
 
 // js/data.js
-var VERSION = "0.8.6";
+var VERSION = "0.8.7";
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
 var CORES_GATO = {
@@ -2719,7 +2737,7 @@ var Save = {
 };
 
 // js/menu.js
-function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, continuar, observarEmJogo: observarEmJogo2 }) {
+function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, continuar, observarEmJogo: observarEmJogo2, conexao: conexao2 }) {
   let morto = false;
   const tela = document.createElement("div");
   tela.className = "tela tela-menu";
@@ -2759,7 +2777,10 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
   atualizarInstalar();
   const soltarInstalar = aoMudar(atualizarInstalar);
   function atualizarSinal() {
-    if (!nuvem2 || !nuvem2.codigo()) {
+    const soAqui = !!conexao2 && conexao2.modo() === "so-aqui" && !!nuvem2 && !!nuvem2.codigo();
+    nuvemBtn.classList.toggle("so-aqui", soAqui);
+    nuvemBtn.classList.toggle("acesa", soAqui && conexao2.voltou());
+    if (!nuvem2 || !nuvem2.codigo() || soAqui) {
       nuvemSinal.textContent = "";
       return;
     }
@@ -9495,7 +9516,7 @@ function paraDoc(x) {
   if (x.dono) d.dono = String(x.dono).slice(0, 20);
   return d;
 }
-function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
+function criarNuvem({ aoMudarEstado, aoReceber, conexao: modo } = {}) {
   const noArquivo = location.protocol === "file:";
   const local = location.hostname === "127.0.0.1" || location.hostname === "localhost";
   let codigo = noArquivo ? "" : lerCodigo();
@@ -9507,6 +9528,8 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
   let timer = null;
   let base = null;
   const pendentes = /* @__PURE__ */ new Set();
+  const soAqui = () => !!modo && modo.modo() === "so-aqui";
+  const ligada = () => !noArquivo && !!codigo && !soAqui();
   const ganchos = { antesJuntar: null, depoisEnvio: null, depoisSync: null };
   const avisar3 = (nome, ...a) => {
     try {
@@ -9522,6 +9545,24 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     } catch {
     }
   }
+  function redeAplicar(b) {
+    try {
+      if (soAqui()) {
+        b.m.database.goOffline(b.rtdb);
+        b.m.firestore.disableNetwork(b.db).catch(() => {
+        });
+      } else {
+        b.m.database.goOnline(b.rtdb);
+        b.m.firestore.enableNetwork(b.db).catch(() => {
+        });
+      }
+    } catch {
+    }
+  }
+  const rede = () => {
+    if (base) base.then(redeAplicar, () => {
+    });
+  };
   function iniciar() {
     if (base) return base;
     base = (async () => {
@@ -9543,7 +9584,9 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
         m.firestore.connectFirestoreEmulator(db, "127.0.0.1", 8080);
         m.database.connectDatabaseEmulator(rtdb, "127.0.0.1", 9e3);
       }
-      return { m, auth, db, rtdb, fs: m.firestore };
+      const b = { m, auth, db, rtdb, fs: m.firestore };
+      redeAplicar(b);
+      return b;
     })();
     base.catch(() => {
       base = null;
@@ -9639,7 +9682,7 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     avisar3("depoisSync");
   }
   function sincronizar({ forcar = false } = {}) {
-    if (noArquivo || !codigo) return Promise.resolve(false);
+    if (!ligada()) return Promise.resolve(false);
     if (emAndamento) return emAndamento;
     if (!forcar && Date.now() - ultimaTentativa < INTERVALO_SYNC) return Promise.resolve(false);
     ultimaTentativa = Date.now();
@@ -9657,7 +9700,7 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     return emAndamento;
   }
   async function enviarPendentes() {
-    if (noArquivo || !codigo || !pendentes.size || emAndamento) return;
+    if (!ligada() || !pendentes.size || emAndamento) return;
     if (!jaSincronizou) return sincronizar({ forcar: true });
     const ids = [...pendentes];
     pendentes.clear();
@@ -9689,7 +9732,7 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     window.addEventListener("pagehide", enviarPendentes);
   }
   async function criarFamilia() {
-    if (noArquivo) return null;
+    if (noArquivo || soAqui()) return null;
     if (codigo) return codigo;
     mudar("sincronizando");
     let novo = "";
@@ -9724,6 +9767,7 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
   async function verificarCodigo(texto) {
     const c = normalizarCodigo(texto);
     if (noArquivo || !c) return "invalido";
+    if (soAqui()) return "sem-rede";
     try {
       return await comTempo(async () => {
         const b = await iniciar();
@@ -9735,7 +9779,7 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     }
   }
   async function entrarFamilia(texto) {
-    if (noArquivo) return false;
+    if (noArquivo || soAqui()) return false;
     const c = normalizarCodigo(texto);
     if (!c) {
       mudar("codigo-invalido");
@@ -9787,18 +9831,19 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     }
   };
   if (codigo) iniciarTimer();
-  async function conexao() {
+  async function conexao2() {
     if (noArquivo || !codigo) throw new Error("sem-familia");
+    if (soAqui()) throw new Error("so-aqui");
     const b = await iniciar();
     return { m: b.m, rtdb: b.rtdb, db: b.db, fs: b.fs, uid: await login(b) };
   }
   const publico = () => lerPublico(codigo);
   async function publicoGarantido() {
     if (publico()) return publico();
-    const c = await conexao();
+    const c = await conexao2();
     return garantirPublico(c, codigo);
   }
-  return { conexao, ganchos, publico, garantirPublico: publicoGarantido, estado: () => estado, codigo: () => codigo, ultima: () => ultima, criarFamilia, entrarFamilia, verificarCodigo, sairFamilia, pendentes: () => pendentes.size, sincronizar, enviarPendentes };
+  return { conexao: conexao2, rede, ligada, ganchos, publico, garantirPublico: publicoGarantido, estado: () => estado, codigo: () => codigo, ultima: () => ultima, criarFamilia, entrarFamilia, verificarCodigo, sairFamilia, pendentes: () => pendentes.size, sincronizar, enviarPendentes };
 }
 
 // js/familia.js
@@ -10866,6 +10911,19 @@ function juntarEstado(a, b) {
     if (ab) return b2;
     return null;
   }
+  const ga = Number.isInteger(a.geracao) ? a.geracao : 1;
+  const gb = Number.isInteger(b.geracao) ? b.geracao : 1;
+  if (ga !== gb) {
+    const r2 = copia3(ga > gb ? a : b);
+    r2.cavernas = r2.cavernas || {};
+    r2.arvores = r2.arvores || {};
+    r2.pegos = r2.pegos || {};
+    r2.geracao = Math.max(ga, gb);
+    if (r2.formato == null) r2.formato = 1;
+    const mobs = a.mobs || b.mobs;
+    if (mobs) r2.mobs = copia3(mobs);
+    return r2;
+  }
   const r = {};
   const desc = ouBytes(a.descoberto, b.descoberto);
   if (desc !== void 0) r.descoberto = desc;
@@ -10929,6 +10987,7 @@ function juntarEstado(a, b) {
   else if (fa != null) r.formato = fa;
   else if (fb != null) r.formato = fb;
   else r.formato = 1;
+  if (a.geracao != null || b.geracao != null) r.geracao = ga;
   return r;
 }
 
@@ -10942,7 +11001,8 @@ var FILA_MAX2 = 100;
 var INTERVALO = 6e4;
 var TEMPO2 = 12e3;
 var SEED_PADRAO = 12345;
-var CAMPOS = ["descoberto", "cavernas", "arvores", "pegos", "ciclo"];
+var CAMPOS = ["descoberto", "cavernas", "arvores", "pegos", "ciclo", "geracao"];
+var OFERTA_A_CADA = 6e4;
 var agoraISO4 = () => {
   try {
     return (/* @__PURE__ */ new Date()).toISOString();
@@ -11007,7 +11067,9 @@ function criarMundos({ nuvem: nuvem2 }) {
     const w = lerTudo().mundos[id];
     return w ? copia2(w) : null;
   };
-  const online2 = () => !!nuvem2.codigo() && location.protocol !== "file:";
+  const temNuvem = () => !!nuvem2.codigo() && location.protocol !== "file:";
+  const online2 = () => temNuvem() && (!nuvem2.ligada || nuvem2.ligada());
+  const ultimaOferta = /* @__PURE__ */ new Map();
   function alterar(id, fn) {
     try {
       const t = lerTudo();
@@ -11062,7 +11124,7 @@ function criarMundos({ nuvem: nuvem2 }) {
       const tudo = lerJson2(CHAVE_VERSOES, {});
       tudo[id] = [v, ...doMundo(id)].slice(0, POR_MUNDO);
       gravarJson2(CHAVE_VERSOES, tudo);
-      if (online2()) {
+      if (temNuvem()) {
         const fila = lerJson2(CHAVE_FILA2, []);
         fila.push({ mundoId: id, versao: v });
         gravarJson2(CHAVE_FILA2, fila.slice(-FILA_MAX2));
@@ -11229,7 +11291,7 @@ function criarMundos({ nuvem: nuvem2 }) {
         familia: "",
         subido: false
       };
-      t.mundos[id] = { registro, estado: estado ? { ...copia2(estado), atualizado: estado.atualizado || agoraISO4(), formato: 1 } : null, pendente: true };
+      t.mundos[id] = { registro, estado: estado ? { ...copia2(estado), atualizado: estado.atualizado || agoraISO4(), formato: 1, geracao: estado.geracao || 1 } : null, pendente: true };
       gravarTudo(t);
       if (online2()) sincronizar(id, { forcar: true });
       return copia2(registro);
@@ -11241,7 +11303,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     try {
       const w = pegar(id);
       if (!w || !estado) return false;
-      const novo = { ...copia2(estado), pegos: estado.pegos || w.estado && w.estado.pegos || {}, formato: 1 };
+      const novo = { ...copia2(estado), pegos: estado.pegos || w.estado && w.estado.pegos || {}, formato: 1, geracao: w.estado && w.estado.geracao || 1 };
       novo.atualizado = mudou(novo, w.estado) ? agoraISO4() : w.estado && w.estado.atualizado || agoraISO4();
       const ultima = doMundo(id)[0];
       if (w.estado && (!ultima || dia2(ultima.quando) !== dia2(agoraISO4()))) guardarVersao(id, "diario");
@@ -11421,6 +11483,11 @@ function criarMundos({ nuvem: nuvem2 }) {
       const conv = await convidadas(id);
       const lote = b.fs.writeBatch(b.db);
       for (const c of conv) lote.delete(b.fs.doc(b.db, "mundos", id, "familias", c.publico));
+      lote.delete(b.fs.doc(b.db, "mundos", id, "estado", "principal"));
+      try {
+        for (const o of (await comTempo3(b.fs.getDocs(b.fs.collection(b.db, "mundos", id, "ofertas")))).docs) lote.delete(o.ref);
+      } catch {
+      }
       lote.delete(b.fs.doc(b.db, "convites", w.registro.codigo));
       lote.delete(b.fs.doc(b.db, "mundos", id));
       lote.delete(b.fs.doc(b.db, "familias", nuvem2.codigo(), "mundos", id));
@@ -11439,7 +11506,7 @@ function criarMundos({ nuvem: nuvem2 }) {
       guardarVersao(id, "antes-restaurar");
       const w = pegar(id);
       if (!w) return false;
-      const estado = { ...copia2(versao.dados), atualizado: agoraISO4(), formato: 1, mobs: w.estado && w.estado.mobs || [] };
+      const estado = { ...copia2(versao.dados), atualizado: agoraISO4(), formato: 1, geracao: (w.estado && w.estado.geracao || 1) + 1, mobs: w.estado && w.estado.mobs || [] };
       alterar(id, (x) => {
         x.estado = estado;
         x.pendente = true;
@@ -11459,6 +11526,76 @@ function criarMundos({ nuvem: nuvem2 }) {
     } catch {
       return false;
     }
+  }
+  const paraOferta = (e) => copia2({ descoberto: e.descoberto, cavernas: e.cavernas || {}, arvores: e.arvores || {}, geracao: e.geracao || 1, atualizado: e.atualizado || agoraISO4(), formato: 1 });
+  async function entregarOferta(id, { forcar = false } = {}) {
+    try {
+      const w = pegar(id);
+      if (!online2() || !w || !w.estado || !w.registro.subido || !w.pendente) return false;
+      if (!forcar && Date.now() - (ultimaOferta.get(id) || 0) < OFERTA_A_CADA) return false;
+      ultimaOferta.set(id, Date.now());
+      const b = await comTempo3(nuvem2.conexao());
+      await comTempo3(garantirUsuario(b));
+      const e = w.estado;
+      await comTempo3(b.fs.setDoc(b.fs.doc(b.db, "mundos", id, "ofertas", b.uid), paraOferta(e)));
+      alterar(id, (x) => {
+        if ((x.estado && x.estado.atualizado) === e.atualizado) x.pendente = false;
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  async function juntarOferta(b, id, ref, oferta) {
+    const rEstado = b.fs.doc(b.db, "mundos", id, "estado", "principal");
+    const snap = await comTempo3(b.fs.getDoc(rEstado));
+    const remoto = snap.exists() ? snap.data() : null;
+    const atual = juntarEstado(pegar(id)?.estado, remoto);
+    const junto = juntarEstado(atual, oferta);
+    if (mudou(junto, atual)) {
+      const ult = doMundo(id)[0];
+      if (!ult || ult.motivo !== "antes-juntar" || Date.now() - Date.parse(ult.quando) > 6e5) guardarVersao(id, "antes-juntar");
+    }
+    if (!remoto || mudou(junto, remoto)) await comTempo3(b.fs.setDoc(rEstado, paraRemoto(junto)));
+    await comTempo3(b.fs.deleteDoc(ref));
+  }
+  function escutarOfertas(id) {
+    let parou = false, off = null, cadeia = Promise.resolve();
+    (async () => {
+      const b = await comTempo3(nuvem2.conexao());
+      await comTempo3(garantirUsuario(b));
+      if (parou) return;
+      off = b.fs.onSnapshot(b.fs.collection(b.db, "mundos", id, "ofertas"), (snap) => {
+        for (const ch of snap.docChanges()) {
+          if (ch.type === "removed") continue;
+          const ref = ch.doc.ref, dados = ch.doc.data();
+          cadeia = cadeia.then(() => parou ? null : juntarOferta(b, id, ref, dados)).catch(() => {
+          });
+        }
+      }, () => {
+      });
+    })().catch(() => {
+    });
+    return () => {
+      parou = true;
+      if (off) {
+        try {
+          off();
+        } catch {
+        }
+        off = null;
+      }
+    };
+  }
+  async function voltouParaRede() {
+    for (const id of Object.keys(lerTudo().mundos)) {
+      if (!online2()) return;
+      const w = pegar(id);
+      if (!w) continue;
+      if (!w.registro.subido) await sincronizar(id, { forcar: true });
+      else if (w.pendente) await entregarOferta(id, { forcar: true });
+    }
+    enviarVersoes();
   }
   function mundoDoGato(gatoId) {
     const g = Save.pegar(gatoId);
@@ -11616,7 +11753,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     });
     return juntando;
   }
-  const api = { criar: criar3, entrarComCodigo, listar, listarLocal, pegar, obter, salvarEstado, sincronizar, guardarVersao, listarVersoes, apagar, apagarVersao, apagarVersoes, restaurar: restaurar2, enviarVersoes, mundoDoGato, mundo1, migrarSave07, juntar, juntando: () => juntando, precisaJuntar: () => online2() && !lerJson2(CHAVE_JUNTOU + (nuvem2.publico() || ""), null), ganchos, formatarCodigo, minhaFamilia: () => nuvem2.codigo(), convidadas, tirarConvidada, sairDoMundo, verificar, esquecer, reiniciar: () => {
+  const api = { criar: criar3, entrarComCodigo, listar, listarLocal, pegar, obter, salvarEstado, sincronizar, guardarVersao, listarVersoes, apagar, apagarVersao, apagarVersoes, restaurar: restaurar2, enviarVersoes, entregarOferta, escutarOfertas, voltouParaRede, mundoDoGato, mundo1, migrarSave07, juntar, juntando: () => juntando, precisaJuntar: () => online2() && !lerJson2(CHAVE_JUNTOU + (nuvem2.publico() || ""), null), ganchos, formatarCodigo, minhaFamilia: () => nuvem2.codigo(), convidadas, tirarConvidada, sairDoMundo, verificar, esquecer, reiniciar: () => {
     ultimaSync.clear();
     andamento.clear();
     usuarioOk = "";
@@ -12671,7 +12808,7 @@ function comTempo4(p, ms = TEMPO_REDE) {
 function aplicarPedidoCiclo(mapa, valor) {
   if (CICLOS2.includes(valor) && mapa.setCiclo && valor !== mapa.ciclo) mapa.setCiclo(valor);
 }
-function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
+function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao: conexao2, aoPapel }) {
   let S = null;
   let sessao = 0;
   let offset = 0;
@@ -12848,6 +12985,12 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
     );
     let jaConectou = false;
     st.unsub.push(D.onValue(D.ref(st.con.rtdb, ".info/connected"), (s) => {
+      if (S === st && conexao2 && (s.val() === true || jaConectou)) {
+        try {
+          conexao2.sinal(s.val() === true);
+        } catch {
+        }
+      }
       if (s.val() !== true) return;
       if (S === st) {
         registrarDesconexao(st);
@@ -13114,6 +13257,10 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
       const papel = papelDe(st);
       if (papel !== st.papelAplicado) {
         st.papelAplicado = papel;
+        try {
+          if (aoPapel) aoPapel(papel);
+        } catch {
+        }
         st.cicloGravado = null;
         if (animais) {
           animais.modoEspelho(papel === "jogador");
@@ -13187,6 +13334,11 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
     sessao++;
     S = null;
     if (!st) return Promise.resolve();
+    try {
+      if (aoPapel) aoPapel("fora");
+      if (conexao2) conexao2.sinal(true);
+    } catch {
+    }
     try {
       for (const t of st.timers) clearInterval(t);
       for (const u of st.unsub) {
@@ -13625,6 +13777,246 @@ function criarSaida({ nuvem: nuvem2, versoes: versoes2, mundos: mundos2, Save: S
   return { preparar, sair: sair2 };
 }
 
+// js/conexao.js
+var ESPERA_ABRIR = 8e3;
+var TEMPO_SONDA = 6e3;
+var ESPERA_OFERTA = 2e4;
+var RONDA = 1e4;
+async function sondaPadrao() {
+  try {
+    if (location.protocol === "file:") return navigator.onLine !== false;
+    if (navigator.onLine === false) return false;
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), TEMPO_SONDA);
+    try {
+      await fetch(new URL("manifest.json?sonda=" + Date.now(), location.href), { method: "HEAD", cache: "no-store", signal: c.signal });
+      return true;
+    } finally {
+      clearTimeout(t);
+    }
+  } catch {
+    return false;
+  }
+}
+function criarConexao({ sondar = sondaPadrao, usa = () => true } = {}) {
+  let modo = "conectado", voltou = false, caido = false, oferta = false;
+  let timerOferta = null, ronda = null, iniciou = false;
+  const ouvintes2 = /* @__PURE__ */ new Set();
+  const emitir = (tipo) => {
+    for (const f of [...ouvintes2]) {
+      try {
+        f(tipo);
+      } catch {
+      }
+    }
+  };
+  const zerar = () => {
+    clearTimeout(timerOferta);
+    timerOferta = null;
+    caido = false;
+    oferta = false;
+  };
+  async function ver() {
+    if (modo !== "so-aqui") return;
+    const ok = await sondar();
+    if (modo === "so-aqui" && ok !== voltou) {
+      voltou = ok;
+      emitir("estado");
+    }
+  }
+  function irSoAqui(aviso) {
+    if (modo === "so-aqui") return;
+    modo = "so-aqui";
+    voltou = false;
+    zerar();
+    if (!ronda) ronda = setInterval(ver, RONDA);
+    emitir("modo");
+    if (aviso) emitir(aviso);
+  }
+  function entrar2() {
+    if (modo === "conectado") return;
+    modo = "conectado";
+    voltou = false;
+    zerar();
+    clearInterval(ronda);
+    ronda = null;
+    emitir("modo");
+  }
+  function sinal(ok) {
+    if (modo !== "conectado") return;
+    if (ok) {
+      if (caido) {
+        zerar();
+        emitir("estado");
+      }
+      return;
+    }
+    if (caido || !usa()) return;
+    caido = true;
+    timerOferta = setTimeout(() => {
+      if (caido && modo === "conectado") {
+        oferta = true;
+        emitir("estado");
+      }
+    }, ESPERA_OFERTA);
+    emitir("estado");
+  }
+  function iniciar() {
+    if (iniciou) return Promise.resolve();
+    iniciou = true;
+    try {
+      window.addEventListener("online", () => {
+        if (modo === "so-aqui") ver();
+        else if (caido) sondar().then((ok) => {
+          if (ok) sinal(true);
+        });
+      });
+      window.addEventListener("offline", () => {
+        if (modo === "so-aqui") {
+          if (voltou) {
+            voltou = false;
+            emitir("estado");
+          }
+        } else sinal(false);
+      });
+    } catch {
+    }
+    if (navigator.onLine === false) {
+      irSoAqui("sem-internet");
+      return Promise.resolve();
+    }
+    let t;
+    return Promise.race([sondar(), new Promise((r) => {
+      t = setTimeout(() => r(false), ESPERA_ABRIR);
+    })]).then((ok) => {
+      if (!ok) irSoAqui("sem-internet");
+    }, () => irSoAqui("sem-internet")).finally(() => clearTimeout(t));
+  }
+  return {
+    iniciar,
+    sinal,
+    entrar: entrar2,
+    on(fn) {
+      ouvintes2.add(fn);
+      return () => ouvintes2.delete(fn);
+    },
+    modo: () => modo,
+    voltou: () => voltou,
+    caido: () => caido,
+    ofertaContinuar: () => oferta,
+    continuarSoAqui: () => irSoAqui(),
+    // para os testes
+    forcarOffline: () => irSoAqui(),
+    forcarOnline: entrar2
+  };
+}
+
+// js/conexao-ui.js
+var dialogoAberto = null;
+function criarHudConexao({ conexao: conexao2, aoTocarNuvem }) {
+  const elemento = document.createElement("div");
+  elemento.className = "hud-conexao";
+  const nuvem2 = document.createElement("button");
+  nuvem2.type = "button";
+  nuvem2.className = "conexao-nuvem";
+  nuvem2.setAttribute("aria-label", "Entrar no mundo de todos");
+  nuvem2.textContent = "\u2601\uFE0F";
+  nuvem2.addEventListener("click", () => {
+    try {
+      aoTocarNuvem();
+    } catch (e) {
+    }
+  });
+  const tentando = document.createElement("span");
+  tentando.className = "conexao-tentando";
+  tentando.textContent = "Tentando conectar\u2026";
+  const oferta = document.createElement("div");
+  oferta.className = "conexao-oferta";
+  const ofertaTexto = document.createElement("p");
+  ofertaTexto.textContent = "N\xE3o tem internet\u2026 Quer continuar s\xF3 aqui? Nem tudo que voc\xEA fizer vai voltar para o mundo de todos.";
+  const ofertaBotao = document.createElement("button");
+  ofertaBotao.type = "button";
+  ofertaBotao.className = "botao";
+  ofertaBotao.textContent = "Continuar s\xF3 aqui";
+  ofertaBotao.addEventListener("click", () => {
+    try {
+      conexao2.continuarSoAqui();
+    } catch (e) {
+    }
+  });
+  oferta.appendChild(ofertaTexto);
+  oferta.appendChild(ofertaBotao);
+  elemento.appendChild(nuvem2);
+  elemento.appendChild(tentando);
+  elemento.appendChild(oferta);
+  function atualizar() {
+    nuvem2.hidden = conexao2.modo() !== "so-aqui";
+    nuvem2.classList.toggle("acesa", conexao2.voltou());
+    tentando.hidden = !(conexao2.modo() === "conectado" && conexao2.caido());
+    oferta.hidden = !(conexao2.modo() === "conectado" && conexao2.ofertaContinuar());
+  }
+  const cancelar = conexao2.on(atualizar);
+  atualizar();
+  let destruido = false;
+  function destruir() {
+    if (destruido) return;
+    destruido = true;
+    cancelar();
+    elemento.remove();
+  }
+  return { elemento, destruir };
+}
+function perguntarEntrar({ aoEntrar }) {
+  if (dialogoAberto) {
+    return { fechar: dialogoAberto.fechar };
+  }
+  const dialogo = document.createElement("div");
+  dialogo.className = "dialogo-conexao";
+  dialogo.setAttribute("role", "dialog");
+  dialogo.setAttribute("aria-modal", "true");
+  const caixa2 = document.createElement("div");
+  caixa2.className = "dialogo-conexao-caixa";
+  const texto = document.createElement("p");
+  texto.textContent = "Entrar no mundo de todos?";
+  const botoes = document.createElement("div");
+  botoes.className = "dialogo-conexao-botoes";
+  const botaoEntrar = document.createElement("button");
+  botaoEntrar.type = "button";
+  botaoEntrar.className = "botao-grande";
+  botaoEntrar.textContent = "Entrar";
+  botaoEntrar.addEventListener("click", () => {
+    fechar();
+    try {
+      aoEntrar();
+    } catch (e) {
+    }
+  });
+  const botaoNao = document.createElement("button");
+  botaoNao.type = "button";
+  botaoNao.className = "botao-grande";
+  botaoNao.textContent = "Agora n\xE3o";
+  botaoNao.addEventListener("click", () => {
+    fechar();
+  });
+  botoes.appendChild(botaoEntrar);
+  botoes.appendChild(botaoNao);
+  caixa2.appendChild(texto);
+  caixa2.appendChild(botoes);
+  dialogo.appendChild(caixa2);
+  document.body.appendChild(dialogo);
+  let fechado = false;
+  function fechar() {
+    if (fechado) return;
+    fechado = true;
+    if (dialogoAberto && dialogoAberto.dialogo === dialogo) {
+      dialogoAberto = null;
+    }
+    dialogo.remove();
+  }
+  dialogoAberto = { dialogo, fechar };
+  return { fechar };
+}
+
 // js/main.js
 document.title = "Avel\xE3, o gatinho sobrevivente \u2014 v" + VERSION;
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {
@@ -13699,6 +14091,10 @@ var seguirChar = null;
 var seguirAchou = false;
 var seguirAte = 0;
 var camYEsp = 0;
+var conexao = null;
+var hudConexao = null;
+var pararOfertas = null;
+var timerOfertas = null;
 var semSalvarChar = false;
 var tInicio = Date.now();
 var telaAtual = null;
@@ -13831,9 +14227,14 @@ function desmontarMapa() {
   if (idMundoMapa) {
     mundos.guardarVersao(idMundoMapa, "fim-sessao");
     if (aovivo.papel() === "gestor") mundos.sincronizar(idMundoMapa, { forcar: true });
+    else mundos.entregarOferta(idMundoMapa, { forcar: true });
   }
   idMundoMapa = null;
   aovivo.sair();
+  if (hudConexao) {
+    hudConexao.destruir();
+    hudConexao = null;
+  }
   online?.parar();
   if (painelServidor) {
     painelServidor.destruir();
@@ -13917,7 +14318,7 @@ function irPara(nome, opcoes) {
       } else if (acao === "sobre") {
         mostrarSobre();
       } else if (acao === "familia") {
-        irPara("familia");
+        nuvemDoMenu();
       } else if (acao === "em-jogo-entrar" && dado) {
         const u2 = parContinuar();
         jogar(u2 ? u2.char : Save.atual()?.id, dado.mundo);
@@ -13926,7 +14327,7 @@ function irPara(nome, opcoes) {
       }
     };
     const u = parContinuar();
-    telaObj = criarMenu({ container: uiRoot, scene, aoEscolher, nuvem, continuar: u ? { charNome: u.charNome, mundoNome: u.mundoNome } : null, observarEmJogo });
+    telaObj = criarMenu({ container: uiRoot, scene, aoEscolher, nuvem, continuar: u ? { charNome: u.charNome, mundoNome: u.mundoNome } : null, observarEmJogo, conexao });
     telaAtual = "menu";
     if (nuvem && Date.now() - tInicio > 1500) nuvem.sincronizar();
   } else if (nome === "gatos") {
@@ -14125,6 +14526,8 @@ function irPara(nome, opcoes) {
       painelServidor = criarPainelServidor({ aoAssumir: () => aovivo.avocar() });
       hud.appendChild(painelServidor.elemento);
     }
+    hudConexao = criarHudConexao({ conexao, aoTocarNuvem: tocarNuvem });
+    hud.appendChild(hudConexao.elemento);
     uiRoot.appendChild(hud);
     if (!servidor || espectando) {
       inputAtual = criarInput(uiRoot, { agachado: !!salvo?.agachado });
@@ -14224,17 +14627,82 @@ async function jogar(id, mundoId, { usarAtual = false } = {}) {
       await Promise.race([mundos.sincronizar(mundoId, { forcar: true }), espera(w.estado || !w.registro.subido ? 1500 : 6e3)]);
     }
     if (comNuvem && w.registro.subido) {
-      await Promise.race([online.jogando(g.id, { mundo: mundoId, nome: nomeChar, aoTomado: () => {
-        if (telaAtual !== "mapa" || idGatoMapa !== g.id) return;
-        avisar2(nomeChar + " foi jogar em outro aparelho");
-        semSalvarChar = true;
-        entrarEspectador(mundoId, g.id);
-      } }), espera(1500)]);
+      await Promise.race([online.jogando(g.id, emJogoOpcoes(g, mundoId)), espera(1500)]);
     }
     irPara("mapa", { gato: g.look, id: g.id, mundo: mundoId });
   } finally {
     entrando = false;
   }
+}
+function emJogoOpcoes(g, mundoId) {
+  const nomeChar = g.look?.nome || "O gatinho";
+  return { mundo: mundoId, nome: nomeChar, aoTomado: () => {
+    if (telaAtual !== "mapa" || idGatoMapa !== g.id) return;
+    avisar2(nomeChar + " foi jogar em outro aparelho");
+    semSalvarChar = true;
+    entrarEspectador(mundoId, g.id);
+  } };
+}
+function tocarNuvem() {
+  if (conexao.modo() !== "so-aqui") return;
+  if (!conexao.voltou()) {
+    avisar2("Ainda sem internet\u2026", 2500);
+    return;
+  }
+  perguntarEntrar({ aoEntrar: () => conexao.entrar() });
+}
+function nuvemDoMenu() {
+  if (conexao.modo() !== "so-aqui") {
+    irPara("familia");
+    return;
+  }
+  if (nuvem.codigo()) {
+    tocarNuvem();
+    return;
+  }
+  if (!conexao.voltou()) {
+    avisar2("Ainda sem internet\u2026", 2500);
+    return;
+  }
+  conexao.entrar();
+  irPara("familia");
+}
+async function modoMudou() {
+  if (conexao.modo() === "so-aqui") {
+    await Promise.race([Promise.all([aovivo.sair(), online.parar()]), espera(1500)]);
+    if (conexao.modo() === "so-aqui") nuvem.rede();
+  } else {
+    nuvem.rede();
+    await Promise.race([nuvem.sincronizar({ forcar: true }).then(() => mundos.juntando()), espera(6e3)]);
+    await Promise.race([mundos.voltouParaRede(), espera(6e3)]);
+    if (conexao.modo() !== "conectado") return;
+    if (telaAtual === "mapa" && mapaAtual && !aovivo.ativo()) {
+      iniciarAoVivo(mapaAtual, opcoesMapaAtual.gato, servidorMundo, espectando);
+      const g = idGatoMapa && !espectando && !servidorMundo ? Save.pegar(idGatoMapa) : null;
+      if (g && idMundoMapa) {
+        const mundoId = idMundoMapa, o = await online.consultar(g.id);
+        if (o) {
+          avisar2((g.look?.nome || "O gatinho") + " foi jogar em outro aparelho");
+          semSalvarChar = true;
+          entrarEspectador(mundoId, g.id);
+        } else online.jogando(g.id, emJogoOpcoes(g, mundoId));
+      }
+    }
+  }
+  const cl = telaObj?.elemento?.classList;
+  if (cl && cl.contains("tela-menu")) irPara("menu");
+}
+function papelMudou(papel) {
+  clearTimeout(timerOfertas);
+  if (pararOfertas) {
+    pararOfertas();
+    pararOfertas = null;
+  }
+  if (papel !== "gestor") return;
+  const id = idMundoMapa;
+  timerOfertas = setTimeout(() => {
+    if (id && id === idMundoMapa && aovivo.ativo() && aovivo.papel() === "gestor" && conexao.modo() === "conectado") pararOfertas = mundos.escutarOfertas(id);
+  }, 1500);
 }
 function perguntar(texto, botoes) {
   return new Promise((resolve) => {
@@ -14276,6 +14744,10 @@ function observarEmJogo(cb) {
   };
 }
 async function prepararMundoSemChar(mundoId, verbo) {
+  if (conexao.modo() === "so-aqui") {
+    avisar2("Para " + verbo + ", entre no mundo de todos (\u2601\uFE0F).");
+    return false;
+  }
   await esperarJuntar();
   if (mundoId && !mundos.pegar(mundoId)) await mundos.obter(mundoId);
   let w = mundoId && mundos.pegar(mundoId);
@@ -14311,7 +14783,7 @@ async function iniciarAoVivo(mapa, gato, servidor, espectador) {
   try {
     const id = idMundoMapa;
     const w = id && mundos.pegar(id);
-    if (!nuvem.codigo() || location.protocol === "file:" || !w || !w.registro.subido) return;
+    if (!nuvem.codigo() || location.protocol === "file:" || !w || !w.registro.subido || conexao.modo() !== "conectado") return;
     const ok = await aovivo.iniciar({ mapa, gato, mundoId: id, semGato: !!servidor, char: idGatoMapa || "", papel: espectador ? "espectador" : servidor ? "servidor" : "jogador" });
     if (ok && mapaAtual !== mapa) aovivo.sair();
   } catch (e) {
@@ -14328,14 +14800,14 @@ async function abrirServidor(idMundo) {
   }
 }
 var AVISO_REVOGADO = "Este mundo n\xE3o est\xE1 mais dispon\xEDvel.";
-function avisar2(texto) {
+function avisar2(texto, ms = 4e3) {
   const d = document.createElement("div");
   d.className = "aviso";
   d.textContent = texto;
   document.body.appendChild(d);
   setTimeout(() => {
     if (d.parentNode) d.parentNode.removeChild(d);
-  }, 4e3);
+  }, ms);
 }
 var tHudAoVivo = 0;
 function atualizarHudAoVivo(ms) {
@@ -14584,7 +15056,10 @@ if (renderer) {
       tempoSalvar += dt;
       if (tempoSalvar >= 5) {
         salvarMundoAgora();
-        if (idMundoMapa && aovivo.papel() === "gestor") mundos.sincronizar(idMundoMapa, { emJogo: true });
+        if (idMundoMapa) {
+          if (aovivo.papel() === "gestor") mundos.sincronizar(idMundoMapa, { emJogo: true });
+          else mundos.entregarOferta(idMundoMapa);
+        }
       }
       if (!servidorMundo) desenharMinimapa();
     }
@@ -14593,7 +15068,9 @@ if (renderer) {
   });
 }
 Save.carregar();
+conexao = criarConexao({ usa: () => !!nuvem && !!nuvem.codigo() });
 nuvem = criarNuvem({
+  conexao,
   aoMudarEstado: () => {
     try {
       telaObj?.aoEstado?.();
@@ -14619,8 +15096,18 @@ mundos.ganchos.aoJuntar = () => {
   if (cl && (cl.contains("tela-menu") || cl.contains("tela-gatos"))) irPara(telaAtual);
   setTimeout(() => nuvem.sincronizar({ forcar: true }), 500);
 };
-aovivo = criarAoVivo({ nuvem, THREE: THREE10, loadCat });
+aovivo = criarAoVivo({ nuvem, THREE: THREE10, loadCat, conexao, aoPapel: papelMudou });
+conexao.on((t) => {
+  if (t === "sem-internet") avisar2("Sem internet \u2014 a brincadeira continua aqui!", 3e3);
+  else if (t === "modo") modoMudou().catch(() => {
+  });
+  try {
+    telaObj?.aoEstado?.();
+  } catch (e) {
+  }
+});
 irPara("menu");
+conexao.iniciar();
 if (nuvem.codigo()) setTimeout(() => nuvem.sincronizar(), 1500);
 window.GATINHO = {
   get tela() {
@@ -14649,6 +15136,9 @@ window.GATINHO = {
   salvarMundo: salvarMundoAgora,
   get nuvem() {
     return nuvem;
+  },
+  get conexao() {
+    return conexao;
   },
   get versoes() {
     return versoes;
