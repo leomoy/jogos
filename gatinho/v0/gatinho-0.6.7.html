@@ -132,6 +132,25 @@ canvas,
   pointer-events: auto;
 }
 
+@media (max-height: 420px) {
+  .tela-menu {
+    padding: 8px;
+    gap: 6px;
+  }
+  .tela-menu h1 {
+    font-size: 1.3rem;
+    margin: 0;
+  }
+  .botao-grupo {
+    gap: 8px;
+  }
+  .botao-grupo .botao-grande {
+    min-height: 44px;
+    padding: 6px 22px;
+    font-size: 1.1rem;
+  }
+}
+
 /* botão principal (destaque pastel) */
 .botao-grande {
   background: #ffd9e8;
@@ -744,6 +763,23 @@ canvas,
   }
 }
 
+@media (orientation: landscape) and (max-height: 520px) {
+  .creator-acoes-brincar {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 6px;
+    max-width: none;
+    max-height: none;
+    right: 20px;
+    bottom: 22px;
+  }
+  .creator-acoes-brincar .botao-acao {
+    width: 46px;
+    height: 46px;
+    font-size: 0.6rem;
+  }
+}
+
 /* ===== 13. MEUS GATINHOS (0.5.1) — lista de cartões que rola por dentro; a página não rola ===== */
 .tela-gatos {
   justify-content: flex-start;
@@ -784,6 +820,9 @@ canvas,
 .gato-bolinhas { display: flex; gap: 5px; }
 .gato-bolinha { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.18); box-sizing: border-box; }
 .gato-data { flex-basis: 100%; font-size: 0.8rem; opacity: 0.65; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .gatos-lista { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 8px; width: min(100%, 720px); }
+}
 .gato-botoes, .gato-confirma { display: flex; gap: 8px; align-items: center; }
 .gato-botoes .botao, .gato-confirma .botao { flex: 1 1 0; min-width: 0; min-height: 48px; padding: 8px 6px; font-size: 1rem; }
 .gato-jogar { background: #ffd9e8; border-color: #f7a8c6; box-shadow: 0 4px 0 #f7a8c6; }
@@ -1381,7 +1420,7 @@ var init_smoke = __esm({
 import * as THREE10 from "three";
 
 // js/data.js
-var VERSION = "0.6.6";
+var VERSION = "0.6.7";
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
 var CORES_GATO = {
