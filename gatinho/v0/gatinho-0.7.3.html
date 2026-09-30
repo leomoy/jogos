@@ -1015,12 +1015,37 @@ canvas,
 #veu.escuro {
   opacity: 1;
 }
+
+/* 17. Nuvem e tela Família (0.7.3) */
+.botao-nuvem { position: absolute; top: 10px; right: 10px; width: 48px; height: 48px; min-width: 0; padding: 0; border-radius: 50%; border: 3px solid #cdd6f0; background: #ffffff; box-shadow: 0 3px 0 #cdd6f0; font-family: inherit; cursor: pointer; pointer-events: auto; display: flex; align-items: center; justify-content: center; }
+.nuvem-icone { font-size: 1.5rem; line-height: 1; }
+.nuvem-sinal { position: absolute; right: -4px; bottom: -4px; min-width: 20px; height: 20px; border-radius: 10px; background: #ffffff; border: 2px solid #cdd6f0; font-size: 0.7rem; line-height: 16px; text-align: center; color: #3a3a55; box-sizing: border-box; }
+.nuvem-sinal:empty { display: none; }
+.tela-familia { gap: 12px; padding: 16px; overflow: hidden; }
+.familia-painel { display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(100%, 420px); box-sizing: border-box; padding: 14px 16px; background: #ffffff; border: 3px solid #cdd6f0; border-radius: 18px; box-shadow: 0 4px 0 #cdd6f0; color: #3a3a55; }
+.familia-painel h2 { margin: 0; font-size: 1.5rem; color: #5b6bb0; }
+.familia-painel p { margin: 0; line-height: 1.3; }
+.familia-rotulo { font-size: 0.95rem; opacity: 0.8; }
+.familia-codigo { font-size: 2.2rem; font-weight: 700; letter-spacing: 0.12em; color: #5b6bb0; user-select: text; -webkit-user-select: text; }
+.familia-pequeno, .familia-situacao { font-size: 0.9rem; }
+.familia-situacao:empty { display: none; }
+.familia-bloco-codigo { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+.familia-campo { width: 100%; box-sizing: border-box; min-height: 52px; padding: 8px 12px; font-family: inherit; font-size: 1.6rem; font-weight: 700; letter-spacing: 0.12em; text-align: center; text-transform: uppercase; color: #3a3a55; border: 3px solid #cdd6f0; border-radius: 14px; user-select: text; -webkit-user-select: text; }
+.familia-painel .botao-grande, .familia-painel .botao { width: 100%; box-sizing: border-box; }
+@media (max-height: 520px) { .tela-familia { gap: 6px; padding: 8px 16px; } .familia-painel { gap: 6px; padding: 8px 14px; } .familia-painel h2 { font-size: 1.15rem; } .familia-codigo { font-size: 1.7rem; } .familia-painel .botao-grande, .familia-painel .botao, .familia-voltar { min-height: 44px; padding: 6px 14px; font-size: 1rem; } .familia-campo { min-height: 44px; font-size: 1.3rem; } .botao-nuvem { top: 6px; right: 6px; width: 42px; height: 42px; } }
+/* paisagem: com o campo do código aberto, some a frase de apresentação para caber sem rolar */
+@media (max-height: 520px) { .familia-painel:has(.familia-bloco-codigo:not([style*="none"])) > p:first-of-type { display: none; } }
 </style>
 <script type="importmap">{
   "imports": {
     "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js",
     "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/",
-    "@dimforge/rapier3d-compat": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/dist/rapier.mjs"
+    "@dimforge/rapier3d-compat": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/dist/rapier.mjs",
+    "firebase/app": "https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-app.js",
+    "firebase/auth": "https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-auth.js",
+    "firebase/firestore": "https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-firestore.js",
+    "firebase/app-check": "https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-app-check.js",
+    "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js": "https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-app.js"
   }
 }</script>
 </head>
@@ -1420,7 +1445,7 @@ var init_smoke = __esm({
 import * as THREE10 from "three";
 
 // js/data.js
-var VERSION = "0.6.7";
+var VERSION = "0.7.3";
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
 var CORES_GATO = {
@@ -1697,7 +1722,13 @@ function lerBruto() {
       if (!gatos.some((g) => g.id === atual)) {
         atual = gatos.length ? gatos[0].id : null;
       }
-      return { v: 3, atual, gatos };
+      const apagados = {};
+      if (dados.apagados && typeof dados.apagados === "object" && !Array.isArray(dados.apagados)) {
+        for (const [k, v] of Object.entries(dados.apagados)) {
+          if (typeof v === "string") apagados[k] = v;
+        }
+      }
+      return { v: 3, atual, gatos, apagados };
     }
     if (dados.gato && typeof dados.gato === "object") {
       const agora = agoraISO();
@@ -1712,7 +1743,8 @@ function lerBruto() {
           criado: dados.criado || agora,
           atualizado: dados.atualizado || agora,
           mundo: null
-        }]
+        }],
+        apagados: {}
       };
     }
     return null;
@@ -1730,6 +1762,8 @@ function gravar(dados) {
   }
 }
 var Save = {
+  aoMudar: null,
+  // aviso de mudança (a nuvem escuta): (id) => void
   listar() {
     const dados = lerBruto();
     if (!dados || !Array.isArray(dados.gatos)) return [];
@@ -1753,7 +1787,7 @@ var Save = {
   },
   salvarGato(look, id) {
     try {
-      const dados = lerBruto() || { v: 3, atual: null, gatos: [] };
+      const dados = lerBruto() || { v: 3, atual: null, gatos: [], apagados: {} };
       if (!Array.isArray(dados.gatos)) dados.gatos = [];
       const agora = agoraISO();
       const lookFinal = look && typeof look === "object" ? normalizarLook(look) : normalizarLook(gatoPadrao());
@@ -1763,7 +1797,13 @@ var Save = {
         if (g) {
           g.look = lookFinal;
           g.atualizado = agora;
-          if (gravar(dados)) return g.id;
+          if (gravar(dados)) {
+            try {
+              Save.aoMudar?.(g.id);
+            } catch {
+            }
+            return g.id;
+          }
           return null;
         }
       }
@@ -1776,7 +1816,13 @@ var Save = {
         mundo: null
       });
       dados.atual = novoIdGato;
-      if (gravar(dados)) return novoIdGato;
+      if (gravar(dados)) {
+        try {
+          Save.aoMudar?.(novoIdGato);
+        } catch {
+        }
+        return novoIdGato;
+      }
       return null;
     } catch {
       return null;
@@ -1802,17 +1848,19 @@ var Save = {
       const antes = dados.gatos.length;
       dados.gatos = dados.gatos.filter((g) => !(g && g.id === alvo));
       if (dados.gatos.length === antes) return false;
+      if (!dados.apagados || typeof dados.apagados !== "object") dados.apagados = {};
+      dados.apagados[alvo] = agoraISO();
       if (dados.atual === alvo) {
         dados.atual = dados.gatos.length ? dados.gatos[0].id : null;
       }
-      if (dados.gatos.length === 0) {
+      const ok = gravar(dados);
+      if (ok) {
         try {
-          localStorage.removeItem(SAVE_KEY);
+          Save.aoMudar?.(alvo);
         } catch {
         }
-        return true;
       }
-      return gravar(dados);
+      return ok;
     } catch {
       return false;
     }
@@ -1825,7 +1873,15 @@ var Save = {
       const g = dados.gatos.find((x) => x && x.id === alvo);
       if (!g) return false;
       g.mundo = mundo && typeof mundo === "object" && !Array.isArray(mundo) ? mundo : null;
-      return gravar(dados);
+      g.atualizado = agoraISO();
+      const ok = gravar(dados);
+      if (ok) {
+        try {
+          Save.aoMudar?.(alvo);
+        } catch {
+        }
+      }
+      return ok;
     } catch {
       return false;
     }
@@ -1861,12 +1917,39 @@ var Save = {
 };
 
 // js/menu.js
-function criarMenu({ container, scene: scene2, aoEscolher }) {
+function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2 }) {
   const tela = document.createElement("div");
   tela.className = "tela tela-menu";
   const titulo = document.createElement("h1");
   titulo.textContent = "Avel\xE3, o gatinho sobrevivente";
   tela.appendChild(titulo);
+  const nuvemBtn = document.createElement("button");
+  nuvemBtn.className = "botao-nuvem";
+  nuvemBtn.type = "button";
+  nuvemBtn.setAttribute("aria-label", "Fam\xEDlia e nuvem");
+  const nuvemIcone = document.createElement("span");
+  nuvemIcone.className = "nuvem-icone";
+  nuvemIcone.textContent = "\u2601\uFE0F";
+  nuvemBtn.appendChild(nuvemIcone);
+  const nuvemSinal = document.createElement("span");
+  nuvemSinal.className = "nuvem-sinal";
+  nuvemBtn.appendChild(nuvemSinal);
+  nuvemBtn.addEventListener("click", () => aoEscolher("familia"));
+  tela.appendChild(nuvemBtn);
+  function atualizarSinal() {
+    if (!nuvem2 || !nuvem2.codigo()) {
+      nuvemSinal.textContent = "";
+      return;
+    }
+    const estado = nuvem2.estado();
+    let sinal = "";
+    if (estado === "ok") sinal = "\u2713";
+    else if (estado === "sincronizando") sinal = "\u23F3";
+    else if (estado === "sem-rede") sinal = "\u2717";
+    else if (estado === "codigo-invalido") sinal = "\u2717";
+    nuvemSinal.textContent = sinal;
+  }
+  atualizarSinal();
   const botoes = document.createElement("div");
   botoes.className = "botao-grupo";
   tela.appendChild(botoes);
@@ -1895,7 +1978,7 @@ function criarMenu({ container, scene: scene2, aoEscolher }) {
       container.removeChild(container.firstChild);
     }
   }
-  return { elemento: tela, atualizar, destruir };
+  return { elemento: tela, atualizar, destruir, aoEstado: atualizarSinal };
 }
 
 // js/creator.js
@@ -8045,6 +8128,596 @@ function restaurar(mapa, salvoSub) {
   return e ? entrar(mapa, e, salvoSub) : null;
 }
 
+// js/firebase.js
+var _cache = null;
+function carregarFirebase() {
+  if (_cache) return _cache;
+  _cache = Promise.all([
+    import("firebase/app"),
+    import("firebase/auth"),
+    import("firebase/firestore"),
+    import("firebase/app-check")
+  ]).then(([appMod, authMod, firestoreMod, appCheckMod]) => ({
+    app: appMod,
+    auth: authMod,
+    firestore: firestoreMod,
+    appCheck: appCheckMod
+  })).catch((erro) => {
+    _cache = null;
+    throw erro;
+  });
+  return _cache;
+}
+
+// js/mesclar.js
+function mesclar(local, remotos) {
+  const gatosLocal = Array.isArray(local.gatos) ? local.gatos : [];
+  const apagadosLocal = local.apagados && typeof local.apagados === "object" ? local.apagados : {};
+  const remotosArr = Array.isArray(remotos) ? remotos : [];
+  const antesGatos = JSON.stringify(gatosLocal);
+  const antesApagados = JSON.stringify(apagadosLocal);
+  const novosGatos = [];
+  const novosApagados = {};
+  const enviar = [];
+  const mapaLocalGatos = /* @__PURE__ */ new Map();
+  for (const g of gatosLocal) {
+    if (g && g.id != null) mapaLocalGatos.set(g.id, g);
+  }
+  const mapaRemotos = /* @__PURE__ */ new Map();
+  for (const r of remotosArr) {
+    if (r && r.id != null) mapaRemotos.set(r.id, r);
+  }
+  function getAtualizado(obj) {
+    if (!obj) return "";
+    const a = obj.atualizado;
+    if (a == null) return "";
+    return String(a);
+  }
+  function ehApagadoRemoto(r) {
+    return r && r.apagado === true;
+  }
+  function ehGatoRemoto(r) {
+    return r && r.apagado !== true;
+  }
+  const idsProcessados = /* @__PURE__ */ new Set();
+  const ordemIds = [];
+  for (const g of gatosLocal) {
+    if (g && g.id != null && !idsProcessados.has(g.id)) {
+      ordemIds.push(g.id);
+      idsProcessados.add(g.id);
+    }
+  }
+  for (const id of Object.keys(apagadosLocal)) {
+    if (!idsProcessados.has(id)) {
+      ordemIds.push(id);
+      idsProcessados.add(id);
+    }
+  }
+  for (const r of remotosArr) {
+    if (r && r.id != null && !idsProcessados.has(r.id)) {
+      ordemIds.push(r.id);
+      idsProcessados.add(r.id);
+    }
+  }
+  for (const id of ordemIds) {
+    let L = null;
+    if (mapaLocalGatos.has(id)) {
+      L = mapaLocalGatos.get(id);
+    } else if (id in apagadosLocal) {
+      L = { id, apagado: true, atualizado: apagadosLocal[id] };
+    }
+    const R = mapaRemotos.has(id) ? mapaRemotos.get(id) : null;
+    if (L && !R) {
+      enviar.push(L);
+      if (!L.apagado) {
+        novosGatos.push(L);
+      } else {
+        novosApagados[id] = L.atualizado;
+      }
+      continue;
+    }
+    if (!L && R) {
+      if (ehApagadoRemoto(R)) {
+        novosApagados[id] = R.atualizado;
+      } else if (ehGatoRemoto(R)) {
+        novosGatos.push(R);
+      }
+      continue;
+    }
+    if (L && R) {
+      const atualL = getAtualizado(L);
+      const atualR = getAtualizado(R);
+      if (atualL === atualR) {
+        if (L.apagado) {
+          novosApagados[id] = L.atualizado;
+        } else {
+          novosGatos.push(L);
+        }
+        continue;
+      }
+      if (atualL > atualR) {
+        enviar.push(L);
+        if (L.apagado) novosApagados[id] = L.atualizado;
+        else novosGatos.push(L);
+        continue;
+      }
+      if (ehApagadoRemoto(R)) {
+        novosApagados[id] = R.atualizado;
+      } else if (ehGatoRemoto(R)) {
+        novosGatos.push(R);
+      }
+    }
+  }
+  const depoisGatos = JSON.stringify(novosGatos);
+  const depoisApagados = JSON.stringify(novosApagados);
+  const mudouLocal = antesGatos !== depoisGatos || antesApagados !== depoisApagados;
+  return {
+    gatos: novosGatos,
+    apagados: novosApagados,
+    enviar,
+    mudouLocal
+  };
+}
+
+// js/nuvem.js
+var APP_CHECK_CHAVE = "";
+var CHAVE_FAMILIA = "gatinho-familia";
+var ALFABETO = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+var TEMPO_LIMITE = 15e3;
+var INTERVALO_SYNC = 2e4;
+var INTERVALO_ENVIO = 6e4;
+var LOTE = 400;
+var ID_VALIDO = /^[A-Za-z0-9_-]{1,40}$/;
+var CONFIG_REAL = {
+  apiKey: "AIzaSyBAlT_DBgtCiXfHVlwzE-ubTjPN3_xocMw",
+  authDomain: "gatinho-avela.firebaseapp.com",
+  projectId: "gatinho-avela",
+  storageBucket: "gatinho-avela.firebasestorage.app",
+  messagingSenderId: "321141496950",
+  appId: "1:321141496950:web:01dbb7692a4c46c6081357"
+};
+var CONFIG_EMULADOR = { apiKey: "demo", projectId: "demo-gatinho", appId: "1:1:web:1" };
+function agoraISO2() {
+  try {
+    return (/* @__PURE__ */ new Date()).toISOString();
+  } catch {
+    return "";
+  }
+}
+function lerCodigo() {
+  try {
+    return localStorage.getItem(CHAVE_FAMILIA) || "";
+  } catch {
+    return "";
+  }
+}
+function guardarCodigo(c) {
+  try {
+    localStorage.setItem(CHAVE_FAMILIA, c);
+  } catch {
+  }
+}
+function limpar(v) {
+  return JSON.parse(JSON.stringify(v));
+}
+function ehPermissao(e) {
+  return !!e && e.code === "permission-denied";
+}
+function normalizarCodigo(texto) {
+  const c = String(texto || "").toUpperCase().replace(/[-\s]/g, "");
+  return c.length === 8 && [...c].every((ch) => ALFABETO.includes(ch)) ? c : "";
+}
+function formatarCodigo(c) {
+  return c ? c.slice(0, 4) + "-" + c.slice(4) : "";
+}
+function gerarCodigo() {
+  const b = new Uint8Array(8);
+  crypto.getRandomValues(b);
+  return [...b].map((x) => ALFABETO[x % ALFABETO.length]).join("");
+}
+function comTempo(fn) {
+  const run = { cancelado: false };
+  let t;
+  const limite = new Promise((_, rej) => {
+    t = setTimeout(() => {
+      run.cancelado = true;
+      rej(new Error("tempo"));
+    }, TEMPO_LIMITE);
+  });
+  return Promise.race([fn(run), limite]).finally(() => clearTimeout(t));
+}
+function paraDoc(x) {
+  if (x.apagado) return { apagado: true, atualizado: x.atualizado || agoraISO2() };
+  const d = { look: limpar(x.look || {}), mundo: x.mundo ? limpar(x.mundo) : null, atualizado: x.atualizado || agoraISO2() };
+  if (x.criado) d.criado = x.criado;
+  return d;
+}
+function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
+  const noArquivo = location.protocol === "file:";
+  const local = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+  let codigo = noArquivo ? "" : lerCodigo();
+  let estado = noArquivo ? "so-no-site" : codigo ? "sincronizando" : "fora";
+  let ultima = 0;
+  let ultimaTentativa = 0;
+  let emAndamento = null;
+  let jaSincronizou = false;
+  let timer = null;
+  let base = null;
+  const pendentes = /* @__PURE__ */ new Set();
+  function mudar(novo) {
+    estado = novo;
+    if (novo === "ok") ultima = Date.now();
+    try {
+      if (aoMudarEstado) aoMudarEstado(novo);
+    } catch {
+    }
+  }
+  function iniciar() {
+    if (base) return base;
+    base = (async () => {
+      const m = await carregarFirebase();
+      try {
+        m.app.setLogLevel("silent");
+        m.firestore.setLogLevel("silent");
+      } catch {
+      }
+      const app = m.app.initializeApp(local ? CONFIG_EMULADOR : CONFIG_REAL);
+      if (location.hostname === "leomoy.github.io" && APP_CHECK_CHAVE) {
+        m.appCheck.initializeAppCheck(app, { provider: new m.appCheck.ReCaptchaEnterpriseProvider(APP_CHECK_CHAVE), isTokenAutoRefreshEnabled: true });
+      }
+      const auth = m.auth.getAuth(app);
+      const db = m.firestore.getFirestore(app);
+      if (local) {
+        m.auth.connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+        m.firestore.connectFirestoreEmulator(db, "127.0.0.1", 8080);
+      }
+      return { m, auth, db, fs: m.firestore };
+    })();
+    base.catch(() => {
+      base = null;
+    });
+    return base;
+  }
+  async function login(b) {
+    await b.auth.authStateReady();
+    if (!b.auth.currentUser) await b.m.auth.signInAnonymously(b.auth);
+    return b.auth.currentUser.uid;
+  }
+  async function garantirMembro(b, c, uid) {
+    const ref = b.fs.doc(b.db, "familias", c, "membros", uid);
+    try {
+      const s = await b.fs.getDoc(ref);
+      if (!s.exists()) await b.fs.setDoc(ref, { entrou: b.fs.serverTimestamp() });
+    } catch (e) {
+      if (ehPermissao(e)) throw Object.assign(new Error("codigo"), { codigoInvalido: true });
+      throw e;
+    }
+  }
+  function trocarIdAntigo() {
+    const bruto = lerBruto();
+    if (!bruto || !bruto.gatos.some((g) => g.id === "g-antigo")) return;
+    const novo = "g" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const gatos = bruto.gatos.map((g) => g.id === "g-antigo" ? { ...g, id: novo } : g);
+    gravar({ ...bruto, gatos, atual: bruto.atual === "g-antigo" ? novo : bruto.atual });
+  }
+  async function escrever(b, itens) {
+    const validos = itens.filter((x) => ID_VALIDO.test(x.id));
+    for (let i = 0; i < validos.length; i += LOTE) {
+      const lote = b.fs.writeBatch(b.db);
+      for (const x of validos.slice(i, i + LOTE)) lote.set(b.fs.doc(b.db, "familias", codigo, "gatos", x.id), paraDoc(x));
+      await lote.commit();
+    }
+  }
+  async function fazerSync(run) {
+    trocarIdAntigo();
+    const b = await iniciar();
+    const uid = await login(b);
+    await garantirMembro(b, codigo, uid);
+    const snap = await b.fs.getDocs(b.fs.collection(b.db, "familias", codigo, "gatos"));
+    const remotos = snap.docs.map((d) => {
+      const v = d.data();
+      return { ...v, id: d.id, mundo: v.mundo || null };
+    });
+    if (run.cancelado) return;
+    const marcados = [...pendentes];
+    const bruto = lerBruto() || { v: 3, atual: null, gatos: [], apagados: {} };
+    const r = mesclar({ gatos: bruto.gatos, apagados: bruto.apagados || {} }, remotos);
+    if (r.mudouLocal) {
+      const atual = r.gatos.some((g) => g.id === bruto.atual) ? bruto.atual : r.gatos.length ? r.gatos[0].id : null;
+      gravar({ ...bruto, v: 3, gatos: r.gatos, apagados: r.apagados, atual });
+      try {
+        if (aoReceber) aoReceber();
+      } catch {
+      }
+    }
+    if (run.cancelado) return;
+    await escrever(b, r.enviar);
+    for (const id of marcados) pendentes.delete(id);
+    jaSincronizou = true;
+  }
+  function sincronizar({ forcar = false } = {}) {
+    if (noArquivo || !codigo) return Promise.resolve(false);
+    if (emAndamento) return emAndamento;
+    if (!forcar && Date.now() - ultimaTentativa < INTERVALO_SYNC) return Promise.resolve(false);
+    ultimaTentativa = Date.now();
+    iniciarTimer();
+    mudar("sincronizando");
+    emAndamento = comTempo(fazerSync).then(() => {
+      mudar("ok");
+      return true;
+    }).catch((e) => {
+      mudar(e && e.codigoInvalido ? "codigo-invalido" : "sem-rede");
+      return false;
+    }).finally(() => {
+      emAndamento = null;
+    });
+    return emAndamento;
+  }
+  async function enviarPendentes() {
+    if (noArquivo || !codigo || !pendentes.size || emAndamento) return;
+    if (!jaSincronizou) return sincronizar({ forcar: true });
+    const ids = [...pendentes];
+    pendentes.clear();
+    try {
+      await comTempo(async () => {
+        const b = await iniciar();
+        await login(b);
+        const bruto = lerBruto() || { gatos: [], apagados: {} };
+        const itens = [];
+        for (const id of ids) {
+          const g = bruto.gatos.find((x) => x.id === id);
+          if (g) itens.push(g);
+          else if (bruto.apagados && bruto.apagados[id]) itens.push({ id, apagado: true, atualizado: bruto.apagados[id] });
+        }
+        await escrever(b, itens);
+      });
+      mudar("ok");
+    } catch {
+      for (const id of ids) pendentes.add(id);
+      mudar("sem-rede");
+    }
+  }
+  function iniciarTimer() {
+    if (timer) return;
+    timer = setInterval(enviarPendentes, INTERVALO_ENVIO);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") enviarPendentes();
+    });
+    window.addEventListener("pagehide", enviarPendentes);
+  }
+  async function criarFamilia() {
+    if (noArquivo) return null;
+    if (codigo) return codigo;
+    mudar("sincronizando");
+    let novo = "";
+    try {
+      await comTempo(async () => {
+        const b = await iniciar();
+        const uid = await login(b);
+        for (let tentativa = 0; !novo; tentativa++) {
+          const c = gerarCodigo();
+          const lote = b.fs.writeBatch(b.db);
+          lote.set(b.fs.doc(b.db, "familias", c), { criada: b.fs.serverTimestamp() });
+          lote.set(b.fs.doc(b.db, "familias", c, "membros", uid), { entrou: b.fs.serverTimestamp() });
+          try {
+            await lote.commit();
+            novo = c;
+          } catch (e) {
+            if (!ehPermissao(e) || tentativa) throw e;
+          }
+        }
+      });
+    } catch {
+      mudar("fora");
+      return null;
+    }
+    codigo = novo;
+    guardarCodigo(novo);
+    await sincronizar({ forcar: true });
+    return novo;
+  }
+  async function entrarFamilia(texto) {
+    if (noArquivo) return false;
+    const c = normalizarCodigo(texto);
+    if (!c) {
+      mudar("codigo-invalido");
+      return false;
+    }
+    mudar("sincronizando");
+    try {
+      await comTempo(async () => {
+        const b = await iniciar();
+        await garantirMembro(b, c, await login(b));
+      });
+    } catch (e) {
+      mudar(e && e.codigoInvalido ? "codigo-invalido" : codigo ? "sem-rede" : "fora");
+      return false;
+    }
+    codigo = c;
+    guardarCodigo(c);
+    await sincronizar({ forcar: true });
+    return true;
+  }
+  Save.aoMudar = (id) => {
+    if (codigo && !noArquivo) {
+      pendentes.add(id);
+      iniciarTimer();
+    }
+  };
+  if (codigo) iniciarTimer();
+  return { estado: () => estado, codigo: () => codigo, ultima: () => ultima, criarFamilia, entrarFamilia, sincronizar, enviarPendentes };
+}
+
+// js/familia.js
+function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar }) {
+  const raiz = document.createElement("div");
+  raiz.className = "tela tela-familia";
+  const painel = document.createElement("div");
+  painel.className = "painel familia-painel";
+  raiz.appendChild(painel);
+  const btnVoltar = document.createElement("button");
+  btnVoltar.className = "botao-grande familia-voltar";
+  btnVoltar.type = "button";
+  btnVoltar.textContent = "Voltar";
+  btnVoltar.addEventListener("click", () => aoVoltar());
+  raiz.appendChild(btnVoltar);
+  let linhaSituacao = null;
+  function textoSituacao() {
+    const estado = nuvem2.estado();
+    if (estado === "ok") {
+      const ultima = nuvem2.ultima();
+      if (ultima > 0) {
+        const d = new Date(ultima);
+        const h = String(d.getHours()).padStart(2, "0");
+        const m = String(d.getMinutes()).padStart(2, "0");
+        return "Guardado na nuvem \xE0s " + h + ":" + m + " \u2713";
+      }
+      return "Guardado na nuvem \u2713";
+    }
+    if (estado === "sincronizando") return "Sincronizando\u2026";
+    if (estado === "sem-rede") return "Sem internet \u2014 os gatinhos ficam guardados aqui e v\xE3o para a nuvem depois";
+    if (estado === "codigo-invalido") return "Esse c\xF3digo n\xE3o funciona mais.";
+    return "";
+  }
+  function desenhar() {
+    while (painel.firstChild) {
+      painel.removeChild(painel.firstChild);
+    }
+    linhaSituacao = null;
+    const titulo = document.createElement("h2");
+    titulo.textContent = "Fam\xEDlia";
+    painel.appendChild(titulo);
+    const estado = nuvem2.estado();
+    if (estado === "so-no-site") {
+      const p = document.createElement("p");
+      p.textContent = "A nuvem funciona no site do jogo: leomoy.github.io/jogos/gatinho";
+      painel.appendChild(p);
+      return;
+    }
+    const codigo = nuvem2.codigo();
+    if (codigo === "") {
+      const p = document.createElement("p");
+      p.textContent = "Guarde os gatinhos na nuvem para jogar no celular e no computador.";
+      painel.appendChild(p);
+      const linhaSit2 = document.createElement("p");
+      linhaSit2.className = "familia-situacao";
+      linhaSit2.textContent = "";
+      painel.appendChild(linhaSit2);
+      const btnCriar = document.createElement("button");
+      btnCriar.className = "botao-grande";
+      btnCriar.type = "button";
+      btnCriar.textContent = "Criar c\xF3digo da fam\xEDlia";
+      btnCriar.addEventListener("click", async () => {
+        btnCriar.disabled = true;
+        linhaSit2.textContent = "Criando\u2026";
+        const resultado = await nuvem2.criarFamilia();
+        if (resultado === null) {
+          linhaSit2.textContent = "N\xE3o deu certo. Confira a internet e tente de novo.";
+          btnCriar.disabled = false;
+        } else {
+          desenhar();
+        }
+      });
+      painel.appendChild(btnCriar);
+      const btnTenho = document.createElement("button");
+      btnTenho.className = "botao";
+      btnTenho.type = "button";
+      btnTenho.textContent = "Tenho um c\xF3digo";
+      painel.appendChild(btnTenho);
+      const bloco = document.createElement("div");
+      bloco.className = "familia-bloco-codigo";
+      bloco.style.display = "none";
+      const campo = document.createElement("input");
+      campo.className = "familia-campo";
+      campo.type = "text";
+      campo.maxLength = 9;
+      campo.autocomplete = "off";
+      campo.autocapitalize = "characters";
+      campo.spellcheck = false;
+      campo.placeholder = "ABCD-EFGH";
+      campo.addEventListener("input", () => {
+        campo.value = campo.value.toUpperCase();
+      });
+      bloco.appendChild(campo);
+      const btnEntrar = document.createElement("button");
+      btnEntrar.className = "botao-grande";
+      btnEntrar.type = "button";
+      btnEntrar.textContent = "Entrar";
+      btnEntrar.addEventListener("click", async () => {
+        const normalizado = normalizarCodigo(campo.value);
+        if (normalizado === "") {
+          linhaSit2.textContent = "Esse c\xF3digo n\xE3o parece certo.";
+          return;
+        }
+        btnEntrar.disabled = true;
+        linhaSit2.textContent = "Entrando\u2026";
+        const ok = await nuvem2.entrarFamilia(campo.value);
+        if (ok) {
+          desenhar();
+        } else {
+          if (nuvem2.estado() === "codigo-invalido") {
+            linhaSit2.textContent = "C\xF3digo n\xE3o encontrado.";
+          } else {
+            linhaSit2.textContent = "Sem internet agora. Tente de novo.";
+          }
+          btnEntrar.disabled = false;
+        }
+      });
+      bloco.appendChild(btnEntrar);
+      painel.appendChild(bloco);
+      btnTenho.addEventListener("click", () => {
+        if (bloco.style.display === "none") {
+          bloco.style.display = "";
+        } else {
+          bloco.style.display = "none";
+        }
+      });
+      return;
+    }
+    const rotulo = document.createElement("p");
+    rotulo.className = "familia-rotulo";
+    rotulo.textContent = "C\xF3digo da fam\xEDlia";
+    painel.appendChild(rotulo);
+    const divCodigo = document.createElement("div");
+    divCodigo.className = "familia-codigo";
+    divCodigo.textContent = formatarCodigo(codigo);
+    painel.appendChild(divCodigo);
+    const pOutro = document.createElement("p");
+    pOutro.className = "familia-pequeno";
+    pOutro.textContent = "No outro aparelho: Menu \u2192 \u2601\uFE0F \u2192 Tenho um c\xF3digo.";
+    painel.appendChild(pOutro);
+    const linhaSit = document.createElement("p");
+    linhaSit.className = "familia-situacao";
+    linhaSit.textContent = textoSituacao();
+    painel.appendChild(linhaSit);
+    linhaSituacao = linhaSit;
+    const btnSinc = document.createElement("button");
+    btnSinc.className = "botao-grande";
+    btnSinc.type = "button";
+    btnSinc.textContent = "Sincronizar agora";
+    btnSinc.addEventListener("click", () => {
+      nuvem2.sincronizar({ forcar: true });
+    });
+    painel.appendChild(btnSinc);
+  }
+  function aoEstado() {
+    if (linhaSituacao) {
+      linhaSituacao.textContent = textoSituacao();
+    }
+  }
+  container.appendChild(raiz);
+  desenhar();
+  return {
+    elemento: raiz,
+    atualizar() {
+    },
+    destruir() {
+      raiz.parentNode?.removeChild(raiz);
+    },
+    aoEstado
+  };
+}
+
 // js/main.js
 document.title = "Avel\xE3, o gatinho sobrevivente \u2014 v" + VERSION;
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {
@@ -8105,6 +8778,8 @@ window.addEventListener("resize", () => {
   if (renderer) renderer.setSize(window.innerWidth, window.innerHeight);
 });
 var uiRoot = document.getElementById("ui");
+var nuvem = null;
+var tInicio = Date.now();
 var telaAtual = null;
 var telaObj = null;
 var mapaAtual = null;
@@ -8254,10 +8929,13 @@ function irPara(nome, opcoes) {
         mostrarPlaceholder("Op\xE7\xF5es", "Em breve", ["Qualidade", "\xC1udio", "Menu dos pais"]);
       } else if (acao === "sobre") {
         mostrarSobre();
+      } else if (acao === "familia") {
+        irPara("familia");
       }
     };
-    telaObj = criarMenu({ container: uiRoot, scene, aoEscolher });
+    telaObj = criarMenu({ container: uiRoot, scene, aoEscolher, nuvem });
     telaAtual = "menu";
+    if (nuvem && Date.now() - tInicio > 1500) nuvem.sincronizar();
   } else if (nome === "gatos") {
     const jogar = (id) => {
       const g = Save.pegar(id);
@@ -8274,6 +8952,10 @@ function irPara(nome, opcoes) {
       aoVoltar: () => irPara("menu")
     });
     telaAtual = "gatos";
+    if (nuvem && Date.now() - tInicio > 1500) nuvem.sincronizar();
+  } else if (nome === "familia") {
+    telaObj = criarTelaFamilia({ container: uiRoot, nuvem, aoVoltar: () => irPara("menu") });
+    telaAtual = "familia";
   } else if (nome === "criador") {
     const idGato = opcoes.id ?? null;
     const aoSalvar = (gato) => {
@@ -8577,7 +9259,21 @@ if (renderer) {
   });
 }
 Save.carregar();
+nuvem = criarNuvem({
+  aoMudarEstado: () => {
+    try {
+      telaObj?.aoEstado?.();
+    } catch (e) {
+    }
+  },
+  // chegou coisa nova da nuvem: remonta o menu / Meus gatinhos (nunca o mapa) sem sincronizar de novo
+  aoReceber: () => {
+    const cl = telaObj?.elemento?.classList;
+    if (cl && (cl.contains("tela-menu") || cl.contains("tela-gatos"))) irPara(telaAtual);
+  }
+});
 irPara("menu");
+if (nuvem.codigo()) setTimeout(() => nuvem.sincronizar(), 1500);
 window.GATINHO = {
   get tela() {
     return telaAtual;
@@ -8603,6 +9299,10 @@ window.GATINHO = {
     return trocando;
   },
   salvarMundo: salvarMundoAgora,
+  get nuvem() {
+    return nuvem;
+  },
+  carregarFirebase,
   mover(dx, dy, correndo, agachado) {
     ultimoInput = { dx: dx || 0, dy: dy || 0, correndo: !!correndo, agachado: !!agachado };
     return ultimoInput;
