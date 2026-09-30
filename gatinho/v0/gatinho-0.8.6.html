@@ -1520,6 +1520,97 @@ canvas,
   .escolher-lista { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 8px; width: min(100%, 720px); }
   .escolher-item { min-height: 48px; padding: 6px 10px; font-size: 1rem; }
 }
+
+/* ===== 0.8.6 — papéis (jogar / assistir / servir), quem está jogando, família, dono, convidadas ===== */
+/* quem assiste: joystick sim, botões de ação não */
+.em-espectador .acoes { display: none; }
+.painel-espectador .pe-lista { display: flex; flex-direction: column; gap: 6px; }
+.pe-seguir-item, .pe-livre { min-height: 44px; padding: 6px 12px; font-size: 1rem; }
+.pe-seguir-item.ligado, .pe-livre.ligado { background: #fff1b8; border-color: #f2c94c; }
+/* menu: chars em jogo em outro aparelho */
+.em-jogo { display: flex; flex-direction: column; gap: 6px; width: min(92vw, 420px); pointer-events: auto; }
+.em-jogo[hidden] { display: none; }
+.em-jogo-linha { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; padding: 6px 10px; background: #e6f7ea; border: 2px solid #8fd3a0; border-radius: 14px; }
+.em-jogo-texto { font-weight: 700; color: #2f6b3f; font-size: 0.95rem; }
+.em-jogo .botao { min-height: 40px; min-width: 0; padding: 4px 12px; font-size: 0.95rem; }
+/* pergunta por cima da tela ("jogar por aqui?") */
+.pergunta { z-index: 60; background: rgba(238, 243, 255, 0.95); }
+.pergunta-texto { margin: 0; max-width: min(90vw, 480px); font-size: 1.3rem; font-weight: 700; color: #3a3a55; }
+.pergunta .botao-grande { width: min(90vw, 320px); }
+@media (max-height: 420px) { .pergunta { gap: 8px; } .pergunta-texto { font-size: 1.05rem; } .pergunta .botao-grande { min-height: 44px; padding: 6px 18px; } }
+/* escolher o mundo: cada mundo é uma linha (jogar grande; assistir e servir menores); incompatível aparece apagado */
+.escolher-linha { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.escolher-linha .escolher-item { grid-column: 1 / -1; }
+.escolher-assistir, .escolher-servir { min-height: 44px; min-width: 0; padding: 4px 8px; font-size: 0.95rem; }
+.escolher-aviso { grid-column: 1 / -1; order: 1; margin: 0; font-size: 0.85rem; font-weight: 700; color: #8a5a00; }
+.escolher-item.apagado { opacity: 0.45; filter: grayscale(0.6); }
+@media (orientation: landscape) and (max-height: 520px) { .escolher-linha .escolher-item { min-height: 44px; } .escolher-assistir, .escolher-servir { min-height: 36px; font-size: 0.85rem; } }
+/* tela Mundos: Assistir / Servir lado a lado; convidadas */
+.mundo-botoes { display: flex; gap: 8px; }
+.mundo-botoes .botao, .mundo-convidadas, .mundo-sair { min-height: 44px; }
+.mundo-botoes .botao { flex: 1 1 0; min-width: 0; padding: 4px 10px; font-size: 0.95rem; }
+.mundo-convidadas-bloco { display: flex; flex-direction: column; gap: 6px; padding: 6px 8px; background: #fff; border: 2px solid #cdd6f0; border-radius: 10px; }
+.convidada-item, .convidada-confirma { display: flex; align-items: center; gap: 8px; }
+.convidada-nome, .convidada-confirma-texto { flex: 1 1 auto; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+.convidada-item .botao, .convidada-confirma .botao { flex: 0 0 auto; min-height: 40px; min-width: 0; padding: 4px 12px; font-size: 0.95rem; }
+.mundos-familia-nome { width: 100%; box-sizing: border-box; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .mundo-botoes { grid-column: 2; }
+  .mundo-botoes .botao, .mundo-convidadas, .mundo-sair { min-height: 36px; font-size: 0.85rem; }
+  .mundo-convidadas, .mundo-sair, .mundo-convidadas-bloco { grid-column: 1 / -1; }
+  .mundos-entrar { flex-direction: column; gap: 4px; }
+}
+/* família: trocar de família */
+.familia-trocar { width: 100%; text-align: center; }
+.familia-trocar summary { cursor: pointer; font-weight: 700; color: #5b6bb0; padding: 6px; }
+.familia-trocar-botoes, .familia-entrar-bloco, .familia-confirma { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.familia-troca-msg { min-height: 1.2em; font-size: 0.9rem; }
+.familia-confirma-texto { font-weight: 700; }
+@media (max-height: 520px) { .familia-painel { max-height: calc(100vh - 70px); overflow-y: auto; } .familia-trocar-botoes, .familia-confirma { flex-direction: row; flex-wrap: wrap; } .familia-trocar-botoes .botao, .familia-confirma .botao { flex: 1 1 0; min-width: 0; } .familia-confirma-texto { flex: 1 0 100%; } }
+/* char: dono (apelido) */
+.creator-dono-linha { flex: 0 0 auto; padding: 0 10px 4px; }
+.creator-dono-wrap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.85rem; color: #3a3a55; }
+.creator-dono-rotulo { font-weight: 700; }
+.creator-dono { flex: 0 1 11em; min-width: 0; height: 32px; box-sizing: border-box; padding: 0 8px; font-family: inherit; font-size: 0.95rem; color: #3a3a55; background: #fff; border: 2px solid #cdd6f0; border-radius: 10px; }
+.creator-dono-dica { opacity: 0.7; }
+.gato-botoes { flex-wrap: wrap; }
+.gato-botoes .botao { flex: 1 1 22%; }
+/* 0.8.6 — véu de 400 ms contra toque fantasma (js/main.js bloquearToque) e formulário de "Criar mundo novo" */
+#veu-toque { position: fixed; inset: 0; z-index: 9999; background: transparent; }
+.mundos-novo-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.mundos-novo-form[hidden] { display: none; }
+.mundos-novo-form .mundos-nome { flex: 1 1 100%; min-width: 0; }
+.mundos-novo-form .botao { flex: 1 1 0; min-width: 0; }
+.escolher-novo { display: flex; gap: 6px; flex: 0 0 auto; width: min(100%, 420px); flex-wrap: wrap; }
+.escolher-novo-nome { flex: 1 1 100%; min-width: 0; box-sizing: border-box; min-height: 44px; padding: 6px 12px; font-family: inherit; font-size: 1.1rem; font-weight: 700; color: #3a3a55; border: 3px solid #cdd6f0; border-radius: 14px; }
+.escolher-novo .botao { flex: 1 1 0; min-width: 0; min-height: 44px; }
+.mundo-apagar { min-height: 44px; background: #f3f3f8; }
+.mundo-apagar-sim { background: #ffd9e8; border-color: #f7a8c6; }
+.versoes-apagar-todas { min-height: 44px; background: #f3f3f8; }
+.versao-apagar { background: #f3f3f8; }
+.versao-apagar-sim { background: #ffd9e8; border-color: #f7a8c6; }
+/* 0.8.6 — cópias de segurança: onde está a cópia, apagar, nome do char */
+.versao-nuvem { grid-column: 1 / -1; font-size: 0.85rem; opacity: 0.8; }
+.versao-apagar, .versao-item > .versao-confirma { grid-column: 1 / -1; }
+.versao-apagar { min-height: 40px; width: 100%; box-sizing: border-box; }
+.versoes-sub { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.versoes-painel h2 { font-size: 1.2rem; }
+.versoes-apagar-todas { width: 100%; box-sizing: border-box; }
+.versoes-painel > .versao-confirma { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.versoes-painel > .versao-confirma .versao-confirma-texto { flex: 1 0 100%; font-weight: 700; }
+@media (max-height: 420px) { .em-jogo { width: min(92vw, 600px); gap: 4px; } .em-jogo-linha { flex-wrap: nowrap; padding: 3px 8px; gap: 6px; } .em-jogo-texto { font-size: 0.85rem; } .em-jogo .botao { min-height: 34px; font-size: 0.85rem; padding: 2px 8px; white-space: nowrap; } }
+/* quem assiste: o painel vai para a direita (o joystick fica embaixo à esquerda) */
+.painel-servidor.painel-espectador { left: auto; right: 14px; width: min(300px, calc(100vw - 170px)); }
+@media (max-height: 480px) { .painel-servidor.painel-espectador { width: min(300px, calc(100vw - 170px)); max-height: 70vh; } }
+.pergunta { background: #eef3ff; }
+.familia-trocar-botoes .botao { min-height: 44px; padding: 4px 8px; font-size: 0.95rem; min-width: 0; }
+/* paisagem: a tela Mundos rola inteira (a lista não fica espremida pelos campos de baixo) */
+@media (max-height: 520px) { .mundos-painel { overflow-y: auto; } .mundos-lista { flex: 0 0 auto; overflow: visible; } .mundos-acoes { flex: 0 0 auto; } }
+.mundos-entrar { display: flex; flex-wrap: wrap; gap: 6px; }
+.mundos-entrar input { flex: 1 1 100%; min-width: 0; box-sizing: border-box; }
+.mundos-entrar .botao { flex: 1 1 100%; }
+@media (max-height: 520px) { .mundos-entrar input { flex: 1 1 45%; } .mundos-entrar .botao { flex: 1 1 100%; } }
+@media (orientation: landscape) and (max-height: 520px) { .gato-botoes { flex-wrap: nowrap; gap: 4px; } .gato-botoes .botao { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 4px 2px; font-size: 0.8rem; } }
 </style>
 <script type="importmap">{
   "imports": {
@@ -2014,7 +2105,7 @@ if (typeof window !== "undefined") {
 import * as THREE10 from "three";
 
 // js/data.js
-var VERSION = "0.8.5";
+var VERSION = "0.8.6";
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
 var CORES_GATO = {
@@ -2231,11 +2322,19 @@ function gatoPadrao() {
     acessorio: { tipo: "lacinho", modelo: "classico", cor: "rosa", tamanho: "medio" }
   };
 }
+var TIPOS_CHAR = { gato: { nome: "Gato" } };
 var TIPOS_MUNDO = { floresta: { nome: "Floresta", tamanhos: [120], chars: ["gato"] } };
 function mundoAceita(registro, tipoChar) {
   const t = TIPOS_MUNDO[registro && registro.tipo || "floresta"];
   const r = registro && registro.regras && Array.isArray(registro.regras.chars) ? registro.regras.chars : null;
   return !!t && t.chars.includes(tipoChar) && (!r || r.includes(tipoChar));
+}
+function tiposDoMundo(registro) {
+  const t = TIPOS_MUNDO[registro && registro.tipo || "floresta"];
+  const r = registro && registro.regras && Array.isArray(registro.regras.chars) ? registro.regras.chars : null;
+  const ids = t ? t.chars.filter((c) => !r || r.includes(c)) : [];
+  const nomes = ids.map((c) => TIPOS_CHAR[c] ? TIPOS_CHAR[c].nome : c);
+  return nomes.length > 1 ? nomes.slice(0, -1).join(", ") + " e " + nomes[nomes.length - 1] : nomes[0] || "";
 }
 
 // js/save.js
@@ -2278,6 +2377,13 @@ function normalizarLook(look) {
   if (!look.tamanho) look.tamanho = "grande";
   return look;
 }
+var DONO_MAX = 20;
+function aplicarExtras(g, extras2) {
+  if (!extras2 || typeof extras2.dono !== "string") return;
+  const d = extras2.dono.trim().slice(0, DONO_MAX).trim();
+  if (d) g.dono = d;
+  else delete g.dono;
+}
 function lerBruto() {
   try {
     if (!temLocalStorage()) return null;
@@ -2298,7 +2404,9 @@ function lerBruto() {
         // 0.8.3: o mundo saiu do gato; ele guarda só a posição em cada mundo e qual é o atual
         ...g.posicoes && typeof g.posicoes === "object" && !Array.isArray(g.posicoes) ? { posicoes: g.posicoes } : {},
         ...typeof g.mundoAtual === "string" && g.mundoAtual ? { mundoAtual: g.mundoAtual } : {},
-        ...g.ficha && typeof g.ficha === "object" && !Array.isArray(g.ficha) ? { ficha: g.ficha } : {}
+        ...g.ficha && typeof g.ficha === "object" && !Array.isArray(g.ficha) ? { ficha: g.ficha } : {},
+        ...typeof g.dono === "string" && g.dono ? { dono: g.dono } : {}
+        // 0.8.6: apelido de quem é o char (até 20)
       }));
       let atual = dados.atual != null ? String(dados.atual) : null;
       if (!gatos.some((g) => g.id === atual)) {
@@ -2370,7 +2478,8 @@ var Save = {
     }
     return dados.gatos.length ? dados.gatos[0] : null;
   },
-  salvarGato(look, id) {
+  // `extras` (0.8.6): { dono } — o apelido do dono do char (até 20; vazio apaga)
+  salvarGato(look, id, extras2) {
     try {
       const dados = lerBruto() || { v: 3, atual: null, gatos: [], apagados: {} };
       if (!Array.isArray(dados.gatos)) dados.gatos = [];
@@ -2381,6 +2490,7 @@ var Save = {
         const g = dados.gatos.find((x) => x && x.id === alvo);
         if (g) {
           g.look = lookFinal;
+          aplicarExtras(g, extras2);
           g.atualizado = agora;
           if (gravar(dados)) {
             try {
@@ -2393,7 +2503,7 @@ var Save = {
         }
       }
       const novoIdGato = novoId();
-      dados.gatos.push({
+      const novo = {
         id: novoIdGato,
         look: lookFinal,
         criado: agora,
@@ -2401,7 +2511,9 @@ var Save = {
         mundo: null,
         formato: 2,
         tipo: "gato"
-      });
+      };
+      aplicarExtras(novo, extras2);
+      dados.gatos.push(novo);
       dados.atual = novoIdGato;
       if (gravar(dados)) {
         try {
@@ -2411,6 +2523,28 @@ var Save = {
         return novoIdGato;
       }
       return null;
+    } catch {
+      return null;
+    }
+  },
+  // 0.8.6: cópia do char (id novo, '<nome> (cópia)', mesma aparência, ficha e dono; sem posições nem mundo). Devolve o id novo ou null.
+  duplicar(id) {
+    try {
+      const dados = lerBruto();
+      const g = dados && id != null && dados.gatos.find((x) => x && x.id === String(id));
+      if (!g) return null;
+      const agora = agoraISO();
+      const nome = (String(g.look.nome || "Gatinho") + " (c\xF3pia)").slice(0, 30);
+      const novo = { id: novoId(), look: { ...JSON.parse(JSON.stringify(g.look)), nome }, criado: agora, atualizado: agora, mundo: null, formato: 2, tipo: g.tipo || "gato" };
+      if (g.ficha) novo.ficha = JSON.parse(JSON.stringify(g.ficha));
+      if (g.dono) novo.dono = g.dono;
+      dados.gatos.push(novo);
+      if (!gravar(dados)) return null;
+      try {
+        Save.aoMudar?.(novo.id);
+      } catch {
+      }
+      return novo.id;
     } catch {
       return null;
     }
@@ -2503,6 +2637,36 @@ var Save = {
       return false;
     }
   },
+  // 0.8.6: o mundo foi apagado: os chars que estavam nele ficam sem mundo atual e sem posição nele (o Jogar resolve na próxima vez)
+  esquecerMundo(mundoId) {
+    try {
+      const dados = lerBruto();
+      if (!dados || !mundoId) return [];
+      const mudados = [];
+      for (const g of dados.gatos) {
+        const temPos = g.posicoes && Object.prototype.hasOwnProperty.call(g.posicoes, mundoId);
+        if (g.mundoAtual !== mundoId && !temPos) continue;
+        if (g.mundoAtual === mundoId) delete g.mundoAtual;
+        if (temPos) {
+          g.posicoes = { ...g.posicoes };
+          delete g.posicoes[mundoId];
+        }
+        g.formato = 2;
+        g.atualizado = agoraISO();
+        mudados.push(g.id);
+      }
+      if (!mudados.length || !gravar(dados)) return [];
+      for (const id of mudados) {
+        try {
+          Save.aoMudar?.(id);
+        } catch {
+        }
+      }
+      return mudados;
+    } catch {
+      return [];
+    }
+  },
   definirMundoAtual(id, mundoId) {
     try {
       const dados = lerBruto();
@@ -2555,7 +2719,8 @@ var Save = {
 };
 
 // js/menu.js
-function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, continuar }) {
+function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, continuar, observarEmJogo: observarEmJogo2 }) {
+  let morto = false;
   const tela = document.createElement("div");
   tela.className = "tela tela-menu";
   const titulo = document.createElement("h1");
@@ -2607,6 +2772,53 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
     nuvemSinal.textContent = sinal;
   }
   atualizarSinal();
+  const emJogo = document.createElement("div");
+  emJogo.className = "em-jogo";
+  emJogo.hidden = true;
+  tela.appendChild(emJogo);
+  let ultimoEmJogo = null;
+  let soltarEmJogo = null;
+  function atualizarEmJogo(lista) {
+    if (morto) return;
+    const chave = JSON.stringify(lista);
+    if (chave === ultimoEmJogo) return;
+    ultimoEmJogo = chave;
+    while (emJogo.firstChild) {
+      emJogo.removeChild(emJogo.firstChild);
+    }
+    if (!lista || lista.length === 0) {
+      emJogo.hidden = true;
+      return;
+    }
+    emJogo.hidden = false;
+    const itens = lista.slice(0, 3);
+    for (const item of itens) {
+      const linha = document.createElement("div");
+      linha.className = "em-jogo-linha";
+      const texto = document.createElement("span");
+      texto.className = "em-jogo-texto";
+      texto.textContent = "\u{1F7E2} " + item.charNome + " est\xE1 no " + (item.mundoNome || "mundo");
+      linha.appendChild(texto);
+      if (continuar) {
+        const btnEntrar = document.createElement("button");
+        btnEntrar.className = "botao em-jogo-entrar";
+        btnEntrar.type = "button";
+        btnEntrar.textContent = "Entrar com " + continuar.charNome;
+        btnEntrar.addEventListener("click", () => aoEscolher("em-jogo-entrar", item));
+        linha.appendChild(btnEntrar);
+      }
+      const btnAssistir = document.createElement("button");
+      btnAssistir.className = "botao em-jogo-assistir";
+      btnAssistir.type = "button";
+      btnAssistir.textContent = "Assistir";
+      btnAssistir.addEventListener("click", () => aoEscolher("em-jogo-assistir", item));
+      linha.appendChild(btnAssistir);
+      emJogo.appendChild(linha);
+    }
+  }
+  if (typeof observarEmJogo2 === "function") {
+    soltarEmJogo = observarEmJogo2(atualizarEmJogo);
+  }
   const botoes = document.createElement("div");
   botoes.className = "botao-grupo";
   tela.appendChild(botoes);
@@ -2631,7 +2843,6 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
     b.addEventListener("click", () => aoEscolher(acao));
     linhaMeia.appendChild(b);
   }
-  let morto = false;
   const versao = document.createElement("div");
   versao.className = "versao";
   versao.textContent = "v" + VERSION;
@@ -2649,6 +2860,7 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
     morto = true;
     soltarInstalar();
     soltarControle();
+    if (soltarEmJogo) soltarEmJogo();
     while (container.firstChild) {
       container.removeChild(container.firstChild);
     }
@@ -3884,7 +4096,7 @@ function anguloMaisCurto(atual, alvo, dt) {
 function hexCss(hex) {
   return "#" + (hex >>> 0).toString(16).padStart(6, "0");
 }
-function criarCreator({ container, scene: scene2, gatoInicial, aoSalvar, aoVoltar }) {
+function criarCreator({ container, scene: scene2, gatoInicial, donoInicial, aoSalvar, aoVoltar }) {
   const padrao = gatoPadrao();
   let look = Object.assign({}, padrao, gatoInicial || {});
   look.partes = Object.assign({}, padrao.partes, gatoInicial && gatoInicial.partes || {});
@@ -3946,10 +4158,41 @@ function criarCreator({ container, scene: scene2, gatoInicial, aoSalvar, aoVolta
     let nome = String(look.nome || "").trim();
     if (!nome) nome = "Avel\xE3";
     if (nome.length > NOME_MAX) nome = nome.slice(0, NOME_MAX);
-    if (typeof aoSalvar === "function") aoSalvar(Object.assign({}, look, { nome }));
+    if (typeof aoSalvar === "function") aoSalvar(Object.assign({}, look, { nome }), donoInput.value.trim().slice(0, 20));
   });
   topo.appendChild(btnSalvar);
   tela.appendChild(topo);
+  const donoLinha = document.createElement("div");
+  donoLinha.className = "creator-dono-linha";
+  const donoWrap = document.createElement("label");
+  donoWrap.className = "creator-dono-wrap";
+  const donoRotulo = document.createElement("span");
+  donoRotulo.className = "creator-dono-rotulo";
+  donoRotulo.textContent = "Dono";
+  const donoInput = document.createElement("input");
+  donoInput.type = "text";
+  donoInput.maxLength = 20;
+  donoInput.className = "creator-dono";
+  donoInput.placeholder = "um apelido";
+  donoInput.value = String(donoInicial || "");
+  donoInput.setAttribute("autocomplete", "off");
+  donoInput.setAttribute("aria-label", "Dono do gatinho");
+  escutar(donoInput, "keydown", (e) => {
+    if (e.key === "Enter") {
+      try {
+        donoInput.blur();
+      } catch (err) {
+      }
+    }
+  });
+  const donoDica = document.createElement("span");
+  donoDica.className = "creator-dono-dica";
+  donoDica.textContent = "um apelido, n\xE3o o nome de verdade";
+  donoWrap.appendChild(donoRotulo);
+  donoWrap.appendChild(donoInput);
+  donoWrap.appendChild(donoDica);
+  donoLinha.appendChild(donoWrap);
+  tela.appendChild(donoLinha);
   const corpo2 = document.createElement("div");
   corpo2.className = "creator-corpo";
   tela.appendChild(corpo2);
@@ -4306,7 +4549,7 @@ function formatarData(criado) {
   const mes = String(d.getMonth() + 1).padStart(2, "0");
   return "Criado em " + dia3 + "/" + mes;
 }
-function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar, aoCopias }) {
+function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar, aoCopias, aoDuplicar }) {
   const elemento = document.createElement("div");
   elemento.className = "tela tela-gatos";
   const titulo = document.createElement("h2");
@@ -4340,7 +4583,7 @@ function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar, aoCopias }
       info.className = "gato-info";
       const nomeEl = document.createElement("div");
       nomeEl.className = "gato-nome";
-      nomeEl.textContent = nome;
+      nomeEl.textContent = nome + (gato.dono ? " \xB7 do " + gato.dono : "");
       info.appendChild(nomeEl);
       info.appendChild(criarBolinhas(look));
       const dataEl = document.createElement("div");
@@ -4369,6 +4612,14 @@ function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar, aoCopias }
         btnCopias.textContent = "C\xF3pias";
         btnCopias.addEventListener("click", () => aoCopias(gato.id, nome));
         botoes.appendChild(btnCopias);
+      }
+      if (aoDuplicar) {
+        const btnDuplicar = document.createElement("button");
+        btnDuplicar.className = "botao gato-duplicar";
+        btnDuplicar.type = "button";
+        btnDuplicar.textContent = "Duplicar";
+        btnDuplicar.addEventListener("click", () => aoDuplicar(gato.id));
+        botoes.appendChild(btnDuplicar);
       }
       const btnApagar = document.createElement("button");
       btnApagar.className = "botao gato-apagar";
@@ -5658,10 +5909,10 @@ function desenharNevoa(ctx, mapa, W) {
     }
   }
   mctx.putImageData(imgData, 0, 0);
-  const saida = document.createElement("canvas");
-  saida.width = W;
-  saida.height = W;
-  const ctx2 = saida.getContext("2d");
+  const saida2 = document.createElement("canvas");
+  saida2.width = W;
+  saida2.height = W;
+  const ctx2 = saida2.getContext("2d");
   const e = W / L;
   ctx2.imageSmoothingEnabled = true;
   ctx2.imageSmoothingQuality = "high";
@@ -5679,8 +5930,8 @@ function desenharNevoa(ctx, mapa, W) {
   ctx2.fillStyle = pattern;
   ctx2.fillRect(0, 0, W, W);
   ctx2.globalCompositeOperation = "source-over";
-  mapa.nevoaCache.set(W, { v, canvas: saida });
-  ctx.drawImage(saida, 0, 0);
+  mapa.nevoaCache.set(W, { v, canvas: saida2 });
+  ctx.drawImage(saida2, 0, 0);
 }
 var _nuvem = null;
 function texturaNuvem() {
@@ -8313,15 +8564,15 @@ function estadoDoCiclo(def) {
     aguaRaso: new THREE9.Color(def.aguaRaso)
   };
 }
-function misturarEstado(de, para, k, saida) {
+function misturarEstado(de, para, k, saida2) {
   for (const chave in para) {
     const v = para[chave];
     if (v instanceof THREE9.Color) {
-      saida[chave].lerpColors(de[chave], para[chave], k);
+      saida2[chave].lerpColors(de[chave], para[chave], k);
     } else if (v instanceof THREE9.Vector3) {
-      saida[chave].lerpVectors(de[chave], para[chave], k);
+      saida2[chave].lerpVectors(de[chave], para[chave], k);
     } else {
-      saida[chave] = de[chave] + (para[chave] - de[chave]) * k;
+      saida2[chave] = de[chave] + (para[chave] - de[chave]) * k;
     }
   }
 }
@@ -9241,6 +9492,7 @@ function paraDoc(x) {
   if (x.posicoes) d.posicoes = limpar(x.posicoes);
   if (x.mundoAtual) d.mundoAtual = x.mundoAtual;
   if (x.ficha) d.ficha = limpar(x.ficha);
+  if (x.dono) d.dono = String(x.dono).slice(0, 20);
   return d;
 }
 function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
@@ -9469,6 +9721,19 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     await sincronizar({ forcar: true });
     return novo;
   }
+  async function verificarCodigo(texto) {
+    const c = normalizarCodigo(texto);
+    if (noArquivo || !c) return "invalido";
+    try {
+      return await comTempo(async () => {
+        const b = await iniciar();
+        await garantirMembro(b, c, await login(b));
+        return "ok";
+      });
+    } catch (e) {
+      return e && e.codigoInvalido ? "invalido" : "sem-rede";
+    }
+  }
   async function entrarFamilia(texto) {
     if (noArquivo) return false;
     const c = normalizarCodigo(texto);
@@ -9491,6 +9756,30 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     await sincronizar({ forcar: true });
     return true;
   }
+  async function sairFamilia() {
+    if (noArquivo || !codigo) return true;
+    const c = codigo;
+    try {
+      await comTempo(async () => {
+        const b = await iniciar();
+        const uid = await login(b);
+        await b.fs.deleteDoc(b.fs.doc(b.db, "familias", c, "membros", uid));
+      });
+    } catch {
+    }
+    codigo = "";
+    pendentes.clear();
+    jaSincronizou = false;
+    ultima = 0;
+    ultimaTentativa = 0;
+    try {
+      localStorage.removeItem(CHAVE_FAMILIA);
+      localStorage.removeItem(CHAVE_PUBLICO);
+    } catch {
+    }
+    mudar("fora");
+    return true;
+  }
   Save.aoMudar = (id) => {
     if (codigo && !noArquivo) {
       pendentes.add(id);
@@ -9509,11 +9798,11 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     const c = await conexao();
     return garantirPublico(c, codigo);
   }
-  return { conexao, ganchos, publico, garantirPublico: publicoGarantido, estado: () => estado, codigo: () => codigo, ultima: () => ultima, criarFamilia, entrarFamilia, sincronizar, enviarPendentes };
+  return { conexao, ganchos, publico, garantirPublico: publicoGarantido, estado: () => estado, codigo: () => codigo, ultima: () => ultima, criarFamilia, entrarFamilia, verificarCodigo, sairFamilia, pendentes: () => pendentes.size, sincronizar, enviarPendentes };
 }
 
 // js/familia.js
-function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes2 }) {
+function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes2, saida: saida2 }) {
   const raiz = document.createElement("div");
   raiz.className = "tela tela-familia";
   const painel = document.createElement("div");
@@ -9526,6 +9815,7 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
   btnVoltar.addEventListener("click", () => aoVoltar());
   raiz.appendChild(btnVoltar);
   let linhaSituacao = null;
+  let destruida = false;
   function textoSituacao() {
     const estado = nuvem2.estado();
     if (estado === "ok") {
@@ -9592,7 +9882,109 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
       }
     });
   }
+  async function trocar(acao, codigoNovo) {
+    const codigoAtual = nuvem2.codigo();
+    const blocoTrocar = painel.querySelector(".familia-trocar");
+    if (!blocoTrocar) return;
+    const blocoBotoes = blocoTrocar.querySelector(".familia-trocar-botoes");
+    const blocoEntrar = blocoTrocar.querySelector(".familia-entrar-bloco");
+    const linhaMsg = blocoTrocar.querySelector(".familia-troca-msg");
+    if (!blocoBotoes || !linhaMsg) return;
+    const botoes = Array.from(blocoBotoes.querySelectorAll("button"));
+    botoes.forEach((b) => {
+      b.disabled = true;
+    });
+    if (blocoEntrar) {
+      const bEntrar = blocoEntrar.querySelector("button");
+      if (bEntrar) bEntrar.disabled = true;
+    }
+    linhaMsg.textContent = "Guardando tudo na nuvem\u2026";
+    let pendencias = [];
+    try {
+      const resultado = await saida2.preparar();
+      if (resultado && Array.isArray(resultado.pendencias)) {
+        pendencias = resultado.pendencias;
+      }
+    } catch (err) {
+      pendencias = ["N\xE3o deu para guardar tudo na nuvem."];
+    }
+    if (destruida) return;
+    const blocoConfirma = document.createElement("div");
+    blocoConfirma.className = "familia-confirma";
+    const pTexto = document.createElement("p");
+    pTexto.className = "familia-confirma-texto";
+    let textoConfirma = "";
+    let rotuloSim = "Sim";
+    if (pendencias.length > 0) {
+      textoConfirma = "Tem coisa que ainda n\xE3o foi para a nuvem \u2014 sair mesmo assim?";
+      rotuloSim = "Sair mesmo assim";
+    } else {
+      if (acao === "sair") {
+        textoConfirma = "Sair da fam\xEDlia? Os gatinhos e os mundos dela saem deste aparelho. Com o c\xF3digo " + formatarCodigo(codigoAtual) + " eles voltam.";
+      } else if (acao === "entrar") {
+        textoConfirma = "Entrar na outra fam\xEDlia? Os gatinhos e os mundos da fam\xEDlia de agora saem deste aparelho (com o c\xF3digo " + formatarCodigo(codigoAtual) + " eles voltam).";
+      } else {
+        textoConfirma = "Criar uma fam\xEDlia nova? Os gatinhos e os mundos da fam\xEDlia de agora saem deste aparelho (com o c\xF3digo " + formatarCodigo(codigoAtual) + " eles voltam).";
+      }
+    }
+    pTexto.textContent = textoConfirma;
+    blocoConfirma.appendChild(pTexto);
+    const btnSim = document.createElement("button");
+    btnSim.className = "botao familia-sim";
+    btnSim.type = "button";
+    btnSim.textContent = rotuloSim;
+    const btnNao = document.createElement("button");
+    btnNao.className = "botao familia-nao";
+    btnNao.type = "button";
+    btnNao.textContent = "Ficar";
+    blocoConfirma.appendChild(btnSim);
+    blocoConfirma.appendChild(btnNao);
+    blocoBotoes.style.display = "none";
+    if (blocoEntrar) blocoEntrar.style.display = "none";
+    blocoTrocar.appendChild(blocoConfirma);
+    btnNao.addEventListener("click", () => {
+      if (destruida) return;
+      desenhar();
+    });
+    btnSim.addEventListener("click", async () => {
+      if (destruida) return;
+      linhaMsg.textContent = "Saindo\u2026";
+      try {
+        await saida2.sair();
+      } catch (err) {
+      }
+      if (destruida) return;
+      if (acao === "sair") {
+        desenhar();
+      } else if (acao === "entrar") {
+        const ok = await nuvem2.entrarFamilia(codigoNovo);
+        if (destruida) return;
+        if (!ok) {
+          desenhar();
+          const nova = painel.querySelector(".familia-situacao");
+          if (nova) {
+            nova.textContent = "N\xE3o deu certo. Voc\xEA pode voltar com o c\xF3digo " + formatarCodigo(codigoAtual) + ".";
+          }
+        } else {
+          desenhar();
+        }
+      } else {
+        const c = await nuvem2.criarFamilia();
+        if (destruida) return;
+        if (c === null) {
+          desenhar();
+          const nova = painel.querySelector(".familia-situacao");
+          if (nova) {
+            nova.textContent = "N\xE3o deu certo. Voc\xEA pode voltar com o c\xF3digo " + formatarCodigo(codigoAtual) + ".";
+          }
+        } else {
+          desenhar();
+        }
+      }
+    });
+  }
   function desenhar() {
+    if (destruida) return;
     while (painel.firstChild) {
       painel.removeChild(painel.firstChild);
     }
@@ -9625,6 +10017,7 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
         btnCriar.disabled = true;
         linhaSit2.textContent = "Criando\u2026";
         const resultado = await nuvem2.criarFamilia();
+        if (destruida) return;
         if (resultado === null) {
           linhaSit2.textContent = "N\xE3o deu certo. Confira a internet e tente de novo.";
           btnCriar.disabled = false;
@@ -9666,6 +10059,7 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
         btnEntrar.disabled = true;
         linhaSit2.textContent = "Entrando\u2026";
         const ok = await nuvem2.entrarFamilia(campo.value);
+        if (destruida) return;
         if (ok) {
           desenhar();
         } else {
@@ -9714,9 +10108,97 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
       nuvem2.sincronizar({ forcar: true });
     });
     painel.appendChild(btnSinc);
+    const detalhes = document.createElement("details");
+    detalhes.className = "familia-trocar";
+    const summary = document.createElement("summary");
+    summary.textContent = "Trocar de fam\xEDlia";
+    detalhes.appendChild(summary);
+    const blocoBotoes = document.createElement("div");
+    blocoBotoes.className = "familia-trocar-botoes";
+    const btnSair = document.createElement("button");
+    btnSair.className = "botao familia-sair";
+    btnSair.type = "button";
+    btnSair.textContent = "Sair da fam\xEDlia";
+    btnSair.addEventListener("click", () => {
+      trocar("sair");
+    });
+    blocoBotoes.appendChild(btnSair);
+    const btnEntrarOutra = document.createElement("button");
+    btnEntrarOutra.className = "botao familia-entrar-outra";
+    btnEntrarOutra.type = "button";
+    btnEntrarOutra.textContent = "Entrar em outra fam\xEDlia";
+    blocoBotoes.appendChild(btnEntrarOutra);
+    const blocoEntrar = document.createElement("div");
+    blocoEntrar.className = "familia-entrar-bloco";
+    blocoEntrar.style.display = "none";
+    const campoEntrar = document.createElement("input");
+    campoEntrar.className = "familia-campo";
+    campoEntrar.type = "text";
+    campoEntrar.maxLength = 9;
+    campoEntrar.autocomplete = "off";
+    campoEntrar.autocapitalize = "characters";
+    campoEntrar.spellcheck = false;
+    campoEntrar.placeholder = "ABCD-EFGH";
+    campoEntrar.addEventListener("input", () => {
+      campoEntrar.value = campoEntrar.value.toUpperCase();
+    });
+    blocoEntrar.appendChild(campoEntrar);
+    const btnConfirmarEntrar = document.createElement("button");
+    btnConfirmarEntrar.className = "botao-grande";
+    btnConfirmarEntrar.type = "button";
+    btnConfirmarEntrar.textContent = "Entrar";
+    btnConfirmarEntrar.addEventListener("click", async () => {
+      const normalizado = normalizarCodigo(campoEntrar.value);
+      if (normalizado === "") {
+        linhaMsg.textContent = "Esse c\xF3digo n\xE3o parece certo.";
+        return;
+      }
+      if (normalizado === normalizarCodigo(nuvem2.codigo())) {
+        linhaMsg.textContent = "Essa j\xE1 \xE9 a sua fam\xEDlia.";
+        return;
+      }
+      btnConfirmarEntrar.disabled = true;
+      linhaMsg.textContent = "Conferindo\u2026";
+      const r = await nuvem2.verificarCodigo(campoEntrar.value);
+      if (destruida) return;
+      if (r === "invalido") {
+        linhaMsg.textContent = "C\xF3digo n\xE3o encontrado.";
+        btnConfirmarEntrar.disabled = false;
+      } else if (r === "sem-rede") {
+        linhaMsg.textContent = "Sem internet agora. Tente de novo.";
+        btnConfirmarEntrar.disabled = false;
+      } else {
+        btnConfirmarEntrar.disabled = false;
+        trocar("entrar", campoEntrar.value);
+      }
+    });
+    blocoEntrar.appendChild(btnConfirmarEntrar);
+    const btnCriarNova = document.createElement("button");
+    btnCriarNova.className = "botao familia-criar-nova";
+    btnCriarNova.type = "button";
+    btnCriarNova.textContent = "Criar fam\xEDlia nova";
+    btnCriarNova.addEventListener("click", () => {
+      trocar("criar");
+    });
+    blocoBotoes.appendChild(btnCriarNova);
+    detalhes.appendChild(blocoBotoes);
+    detalhes.appendChild(blocoEntrar);
+    const linhaMsg = document.createElement("p");
+    linhaMsg.className = "familia-troca-msg";
+    linhaMsg.textContent = "";
+    detalhes.appendChild(linhaMsg);
+    btnEntrarOutra.addEventListener("click", () => {
+      if (blocoEntrar.style.display === "none") {
+        blocoEntrar.style.display = "";
+      } else {
+        blocoEntrar.style.display = "none";
+      }
+    });
+    painel.appendChild(detalhes);
     adicionarCopias();
   }
   function aoEstado() {
+    if (destruida) return;
     if (linhaSituacao) {
       linhaSituacao.textContent = textoSituacao();
     }
@@ -9728,6 +10210,7 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
     atualizar() {
     },
     destruir() {
+      destruida = true;
       raiz.parentNode?.removeChild(raiz);
     },
     aoEstado
@@ -9787,6 +10270,7 @@ function extras(d) {
   if (typeof d.mundoAtual === "string" && d.mundoAtual) r.mundoAtual = d.mundoAtual;
   if (d.ficha && typeof d.ficha === "object") r.ficha = copia(d.ficha);
   if (typeof d.tipo === "string" && d.tipo) r.tipo = d.tipo;
+  if (typeof d.dono === "string" && d.dono) r.dono = d.dono;
   return r;
 }
 function criarVersoes({ nuvem: nuvem2 }) {
@@ -9846,7 +10330,7 @@ function criarVersoes({ nuvem: nuvem2 }) {
         motivo: String(motivo || "manual"),
         versaoJogo: VERSION,
         formato: 1,
-        dados: copia({ look: g.look, mundo: g.mundo || null, criado: g.criado || "", atualizado: g.atualizado || "", formato: g.formato || 1, posicoes: g.posicoes, mundoAtual: g.mundoAtual, ficha: g.ficha, tipo: g.tipo })
+        dados: copia({ look: g.look, mundo: g.mundo || null, criado: g.criado || "", atualizado: g.atualizado || "", formato: g.formato || 1, posicoes: g.posicoes, mundoAtual: g.mundoAtual, ficha: g.ficha, tipo: g.tipo, dono: g.dono })
       };
       const tudo = lerTudo();
       tudo[g.id] = [v, ...doGato(g.id)].slice(0, POR_GATO);
@@ -9887,6 +10371,37 @@ function criarVersoes({ nuvem: nuvem2 }) {
     } catch {
       return [];
     }
+  }
+  async function apagarNaNuvem(gatoId, ids) {
+    const c = nuvem2.codigo();
+    if (!c || location.protocol === "file:") return true;
+    try {
+      const b = await comTempo2(nuvem2.conexao());
+      const col = b.fs.collection(b.db, "familias", c, "chars", gatoId, "versoes");
+      const refs = ids ? ids.map((id) => b.fs.doc(col, id)) : (await comTempo2(b.fs.getDocs(col))).docs.map((d) => d.ref);
+      for (let i = 0; i < refs.length; i += 400) {
+        const lote = b.fs.writeBatch(b.db);
+        for (const r of refs.slice(i, i + 400)) lote.delete(r);
+        await comTempo2(lote.commit());
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  async function apagar(gatoId, versaoId) {
+    const tudo = lerTudo();
+    tudo[gatoId] = doGato(gatoId).filter((v) => v.id !== versaoId);
+    gravarJson(CHAVE_LOCAL, tudo);
+    gravarJson(CHAVE_FILA, lerJson(CHAVE_FILA, []).filter((x) => !(x.versao && x.versao.id === versaoId)));
+    return apagarNaNuvem(gatoId, [versaoId]);
+  }
+  async function apagarTodas(gatoId) {
+    const tudo = lerTudo();
+    delete tudo[gatoId];
+    gravarJson(CHAVE_LOCAL, tudo);
+    gravarJson(CHAVE_FILA, lerJson(CHAVE_FILA, []).filter((x) => x.gatoId !== gatoId));
+    return apagarNaNuvem(gatoId, null);
   }
   function restaurar2(gatoId, versao) {
     try {
@@ -9984,7 +10499,7 @@ function criarVersoes({ nuvem: nuvem2 }) {
     }
   } catch {
   }
-  return { guardar, listar, restaurar: restaurar2, exportarTexto, baixarCopia, importarTexto, enviar };
+  return { guardar, listar, restaurar: restaurar2, apagar, apagarTodas, exportarTexto, baixarCopia, importarTexto, enviar };
 }
 
 // js/versoes-tela.js
@@ -9996,8 +10511,14 @@ var MOTIVOS = {
   "antes-restaurar": "Antes de voltar no tempo",
   "restaurado": "Voltou no tempo",
   "versao-nova": "Antes do jogo novo",
-  "antes-importar": "Antes de abrir uma c\xF3pia"
+  "antes-importar": "Antes de abrir uma c\xF3pia",
+  "antes-sair": "Antes de sair da fam\xEDlia"
 };
+function textoOnde(onde) {
+  if (onde === "aqui") return "\u{1F4F1} neste aparelho";
+  if (onde === "nuvem") return "\u2601\uFE0F na nuvem";
+  return "\u{1F4F1} neste aparelho e \u2601\uFE0F na nuvem";
+}
 function textoMotivo(motivo) {
   if (motivo && MOTIVOS[motivo]) {
     return MOTIVOS[motivo];
@@ -10022,13 +10543,22 @@ function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
   painel.className = "painel versoes-painel";
   raiz.appendChild(painel);
   const titulo = document.createElement("h2");
-  titulo.textContent = "C\xF3pias de " + gato.nome;
+  titulo.textContent = "C\xF3pias de seguran\xE7a (para voltar no tempo)";
   painel.appendChild(titulo);
+  const sub = document.createElement("p");
+  sub.className = "versoes-sub";
+  sub.textContent = gato.nome;
+  painel.appendChild(sub);
   const btnGuardar = document.createElement("button");
   btnGuardar.className = "botao-grande versoes-guardar";
   btnGuardar.type = "button";
   btnGuardar.textContent = "Guardar uma c\xF3pia agora";
   painel.appendChild(btnGuardar);
+  const btnApagarTodas = document.createElement("button");
+  btnApagarTodas.className = "botao versoes-apagar-todas";
+  btnApagarTodas.type = "button";
+  btnApagarTodas.textContent = "Apagar todas as c\xF3pias";
+  painel.appendChild(btnApagarTodas);
   const aviso = document.createElement("p");
   aviso.className = "versoes-aviso";
   aviso.textContent = "";
@@ -10095,10 +10625,10 @@ function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
     motivo.className = "versao-motivo";
     motivo.textContent = textoMotivo(versao.motivo);
     item.appendChild(motivo);
-    if (versao.ondeFica && versao.ondeFica !== "aqui") {
+    if (versao.ondeFica) {
       const nuvem2 = document.createElement("span");
       nuvem2.className = "versao-nuvem";
-      nuvem2.textContent = "\u2601\uFE0F";
+      nuvem2.textContent = textoOnde(versao.ondeFica);
       item.appendChild(nuvem2);
     }
     const btnVoltarTempo = document.createElement("button");
@@ -10106,6 +10636,11 @@ function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
     btnVoltarTempo.type = "button";
     btnVoltarTempo.textContent = "Voltar para esta";
     item.appendChild(btnVoltarTempo);
+    const btnApagar = document.createElement("button");
+    btnApagar.className = "botao versao-apagar";
+    btnApagar.type = "button";
+    btnApagar.textContent = "Apagar esta c\xF3pia";
+    item.appendChild(btnApagar);
     btnVoltarTempo.addEventListener("click", () => {
       if (destruida) {
         return;
@@ -10147,6 +10682,51 @@ function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
         carregar();
       });
     });
+    btnApagar.addEventListener("click", () => {
+      if (destruida) {
+        return;
+      }
+      const confirma = document.createElement("div");
+      confirma.className = "versao-confirma";
+      const texto = document.createElement("span");
+      texto.className = "versao-confirma-texto";
+      texto.textContent = "Apagar mesmo? N\xE3o d\xE1 para desfazer.";
+      confirma.appendChild(texto);
+      const btnSim = document.createElement("button");
+      btnSim.className = "botao versao-apagar-sim";
+      btnSim.type = "button";
+      btnSim.textContent = "Apagar";
+      confirma.appendChild(btnSim);
+      const btnNao = document.createElement("button");
+      btnNao.className = "botao versao-apagar-nao";
+      btnNao.type = "button";
+      btnNao.textContent = "N\xE3o";
+      confirma.appendChild(btnNao);
+      item.replaceChild(confirma, btnApagar);
+      btnNao.addEventListener("click", () => {
+        if (destruida) {
+          return;
+        }
+        item.replaceChild(btnApagar, confirma);
+      });
+      btnSim.addEventListener("click", () => {
+        if (destruida) {
+          return;
+        }
+        versoes2.apagar(gato.id, versao.id).then((ok) => {
+          if (destruida) {
+            return;
+          }
+          aviso.textContent = ok ? "C\xF3pia apagada." : "Apagada aqui. Sem internet, na nuvem ela ainda fica.";
+          carregar();
+        }).catch(() => {
+          if (destruida) {
+            return;
+          }
+          aviso.textContent = "N\xE3o deu certo.";
+        });
+      });
+    });
     return item;
   }
   btnGuardar.addEventListener("click", () => {
@@ -10156,6 +10736,53 @@ function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
     versoes2.guardar(gato.id, "manual");
     aviso.textContent = "C\xF3pia guardada!";
     carregar();
+  });
+  btnApagarTodas.addEventListener("click", () => {
+    if (destruida) {
+      return;
+    }
+    const confirma = document.createElement("div");
+    confirma.className = "versao-confirma";
+    const texto = document.createElement("span");
+    texto.className = "versao-confirma-texto";
+    texto.textContent = "Apagar mesmo? N\xE3o d\xE1 para desfazer.";
+    confirma.appendChild(texto);
+    const btnSim = document.createElement("button");
+    btnSim.className = "botao versao-apagar-sim";
+    btnSim.type = "button";
+    btnSim.textContent = "Apagar";
+    confirma.appendChild(btnSim);
+    const btnNao = document.createElement("button");
+    btnNao.className = "botao versao-apagar-nao";
+    btnNao.type = "button";
+    btnNao.textContent = "N\xE3o";
+    confirma.appendChild(btnNao);
+    painel.replaceChild(confirma, btnApagarTodas);
+    btnNao.addEventListener("click", () => {
+      if (destruida) {
+        return;
+      }
+      painel.replaceChild(btnApagarTodas, confirma);
+    });
+    btnSim.addEventListener("click", () => {
+      if (destruida) {
+        return;
+      }
+      versoes2.apagarTodas(gato.id).then((ok) => {
+        if (destruida) {
+          return;
+        }
+        aviso.textContent = ok ? "C\xF3pias apagadas." : "Apagadas aqui. Sem internet, na nuvem elas ainda ficam.";
+        painel.replaceChild(btnApagarTodas, confirma);
+        carregar();
+      }).catch(() => {
+        if (destruida) {
+          return;
+        }
+        aviso.textContent = "N\xE3o deu certo.";
+        painel.replaceChild(btnApagarTodas, confirma);
+      });
+    });
   });
   container.appendChild(raiz);
   carregar();
@@ -10380,7 +11007,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     const w = lerTudo().mundos[id];
     return w ? copia2(w) : null;
   };
-  const online = () => !!nuvem2.codigo() && location.protocol !== "file:";
+  const online2 = () => !!nuvem2.codigo() && location.protocol !== "file:";
   function alterar(id, fn) {
     try {
       const t = lerTudo();
@@ -10396,7 +11023,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     return Array.isArray(l) ? l : [];
   };
   async function enviarVersoes() {
-    if (enviando || !online()) return;
+    if (enviando || !online2()) return;
     let fila = lerJson2(CHAVE_FILA2, []);
     if (!Array.isArray(fila) || !fila.length) return;
     enviando = true;
@@ -10435,7 +11062,7 @@ function criarMundos({ nuvem: nuvem2 }) {
       const tudo = lerJson2(CHAVE_VERSOES, {});
       tudo[id] = [v, ...doMundo(id)].slice(0, POR_MUNDO);
       gravarJson2(CHAVE_VERSOES, tudo);
-      if (online()) {
+      if (online2()) {
         const fila = lerJson2(CHAVE_FILA2, []);
         fila.push({ mundoId: id, versao: v });
         gravarJson2(CHAVE_FILA2, fila.slice(-FILA_MAX2));
@@ -10450,7 +11077,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     try {
       const locais = doMundo(id);
       let remotas = [];
-      if (online() && pegar(id)?.registro.subido) {
+      if (online2() && pegar(id)?.registro.subido) {
         try {
           const b = await comTempo3(nuvem2.conexao());
           const q = b.fs.query(b.fs.collection(b.db, "mundos", id, "versoes"), b.fs.orderBy("quando", "desc"), b.fs.limit(NA_LISTA2));
@@ -10466,6 +11093,43 @@ function criarMundos({ nuvem: nuvem2 }) {
     } catch {
       return [];
     }
+  }
+  const souOrigem = (id) => {
+    const w = pegar(id);
+    return !!w && (!w.registro.familia || w.registro.familia === nuvem2.publico());
+  };
+  async function apagarVersoesNaNuvem(id, ids) {
+    if (!online2() || !pegar(id)?.registro.subido) return true;
+    try {
+      const b = await comTempo3(nuvem2.conexao());
+      await garantirUsuario(b);
+      const col = b.fs.collection(b.db, "mundos", id, "versoes");
+      const refs = ids ? ids.map((v) => b.fs.doc(col, v)) : (await comTempo3(b.fs.getDocs(col))).docs.map((d) => d.ref);
+      for (let i = 0; i < refs.length; i += 400) {
+        const lote = b.fs.writeBatch(b.db);
+        for (const r of refs.slice(i, i + 400)) lote.delete(r);
+        await comTempo3(lote.commit());
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  async function apagarVersao(id, versaoId) {
+    if (!souOrigem(id)) return false;
+    const tudo = lerJson2(CHAVE_VERSOES, {});
+    tudo[id] = doMundo(id).filter((v) => v.id !== versaoId);
+    gravarJson2(CHAVE_VERSOES, tudo);
+    gravarJson2(CHAVE_FILA2, lerJson2(CHAVE_FILA2, []).filter((x) => !(x.versao && x.versao.id === versaoId)));
+    return apagarVersoesNaNuvem(id, [versaoId]);
+  }
+  async function apagarVersoes(id) {
+    if (!souOrigem(id)) return false;
+    const tudo = lerJson2(CHAVE_VERSOES, {});
+    delete tudo[id];
+    gravarJson2(CHAVE_VERSOES, tudo);
+    gravarJson2(CHAVE_FILA2, lerJson2(CHAVE_FILA2, []).filter((x) => x.mundoId !== id));
+    return apagarVersoesNaNuvem(id, null);
   }
   function paraRemoto(e) {
     const d = {};
@@ -10519,7 +11183,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     });
   }
   function sincronizar(id, { forcar = false, emJogo = false } = {}) {
-    if (!online() || !pegar(id)) return Promise.resolve(false);
+    if (!online2() || !pegar(id)) return Promise.resolve(false);
     if (andamento.has(id)) return andamento.get(id);
     if (!forcar && Date.now() - (ultimaSync.get(id) || 0) < INTERVALO) return Promise.resolve(false);
     if (emJogo && !pegar(id).pendente) return Promise.resolve(false);
@@ -10567,7 +11231,7 @@ function criarMundos({ nuvem: nuvem2 }) {
       };
       t.mundos[id] = { registro, estado: estado ? { ...copia2(estado), atualizado: estado.atualizado || agoraISO4(), formato: 1 } : null, pendente: true };
       gravarTudo(t);
-      if (online()) sincronizar(id, { forcar: true });
+      if (online2()) sincronizar(id, { forcar: true });
       return copia2(registro);
     } catch {
       return null;
@@ -10589,10 +11253,10 @@ function criarMundos({ nuvem: nuvem2 }) {
       return false;
     }
   }
-  async function entrarComCodigo(texto) {
+  async function entrarComCodigo(texto, nomeFamilia = "") {
     const cod = normalizarCodigo(texto);
     if (!cod) throw new Error("C\xF3digo n\xE3o encontrado");
-    if (!online()) throw new Error("Primeiro ligue a nuvem no \u2601\uFE0F");
+    if (!online2()) throw new Error("Primeiro ligue a nuvem no \u2601\uFE0F");
     const b = await comTempo3(nuvem2.conexao());
     await garantirUsuario(b);
     const pub = nuvem2.publico() || await comTempo3(nuvem2.garantirPublico());
@@ -10602,7 +11266,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     const fam = nuvem2.codigo();
     if (!pegar(id)) {
       const lote = b.fs.writeBatch(b.db);
-      lote.set(b.fs.doc(b.db, "mundos", id, "familias", pub), { nome: "", codigo: cod });
+      lote.set(b.fs.doc(b.db, "mundos", id, "familias", pub), { nome: String(nomeFamilia || "").trim().slice(0, 30), codigo: cod });
       lote.set(b.fs.doc(b.db, "familias", fam, "mundos", id), { nome: "", codigo: cod });
       try {
         await comTempo3(lote.commit());
@@ -10620,7 +11284,7 @@ function criarMundos({ nuvem: nuvem2 }) {
   }
   async function obter(id) {
     if (pegar(id)) return pegar(id).registro;
-    if (!online()) return null;
+    if (!online2()) return null;
     try {
       const b = await comTempo3(nuvem2.conexao());
       await garantirUsuario(b);
@@ -10630,9 +11294,26 @@ function criarMundos({ nuvem: nuvem2 }) {
       t.mundos[id] = { registro: { ...m.data(), id, subido: true }, estado: null, pendente: false };
       gravarTudo(t);
       return copia2(t.mundos[id].registro);
-    } catch {
+    } catch (e) {
+      if (ehPermissao2(e)) apagarIndice(id);
       return null;
     }
+  }
+  async function apagarIndice(id) {
+    try {
+      const b = await comTempo3(nuvem2.conexao());
+      await comTempo3(b.fs.deleteDoc(b.fs.doc(b.db, "familias", nuvem2.codigo(), "mundos", id)));
+    } catch {
+    }
+  }
+  function esquecer(id) {
+    const t = lerTudo();
+    delete t.mundos[id];
+    gravarTudo(t);
+    const vs = lerJson2(CHAVE_VERSOES, {});
+    delete vs[id];
+    gravarJson2(CHAVE_VERSOES, vs);
+    gravarJson2(CHAVE_FILA2, lerJson2(CHAVE_FILA2, []).filter((x) => x.mundoId !== id));
   }
   function linha(w) {
     const r = w.registro, pub = nuvem2.publico(), fam = nuvem2.codigo();
@@ -10641,16 +11322,116 @@ function criarMundos({ nuvem: nuvem2 }) {
   }
   const listarLocal = () => Object.values(lerTudo().mundos).map(linha).sort((a, b) => a.nome < b.nome ? -1 : 1);
   async function listar() {
-    if (online()) {
+    if (online2()) {
       try {
         const b = await comTempo3(nuvem2.conexao());
         await garantirUsuario(b);
         const snap = await comTempo3(b.fs.getDocs(b.fs.collection(b.db, "familias", nuvem2.codigo(), "mundos")));
-        for (const d of snap.docs) await obter(d.id);
+        const pub = nuvem2.publico();
+        for (const d of snap.docs) {
+          await obter(d.id);
+          const w = pegar(d.id), cod = d.data().codigo;
+          if (w && w.registro.familia === pub && typeof cod === "string" && cod && cod !== w.registro.codigo) alterar(d.id, (x) => {
+            x.registro.codigo = cod;
+          });
+        }
+        for (const l of listarLocal()) if (!l.eSeu) await verificar(l.id);
       } catch {
       }
     }
     return listarLocal();
+  }
+  async function convidadas(id) {
+    try {
+      const b = await comTempo3(nuvem2.conexao());
+      await garantirUsuario(b);
+      const snap = await comTempo3(b.fs.getDocs(b.fs.collection(b.db, "mundos", id, "familias")));
+      return snap.docs.map((d) => ({ publico: d.id, nome: String(d.data().nome || "") })).sort((a, b2) => a.nome < b2.nome ? -1 : a.nome > b2.nome ? 1 : a.publico < b2.publico ? -1 : 1);
+    } catch {
+      return [];
+    }
+  }
+  async function tirarConvidada(id, publico) {
+    const w = pegar(id);
+    if (!w || !online2() || w.registro.familia !== nuvem2.publico()) throw new Error("S\xF3 a fam\xEDlia que criou o mundo pode tirar algu\xE9m.");
+    const b = await comTempo3(nuvem2.conexao());
+    await garantirUsuario(b);
+    const velho = w.registro.codigo;
+    const novo = gerarCodigo();
+    const lote = b.fs.writeBatch(b.db);
+    lote.delete(b.fs.doc(b.db, "mundos", id, "familias", publico));
+    lote.update(b.fs.doc(b.db, "mundos", id), { codigo: novo });
+    lote.set(b.fs.doc(b.db, "convites", novo), { mundo: id });
+    lote.delete(b.fs.doc(b.db, "convites", velho));
+    await comTempo3(lote.commit());
+    alterar(id, (x) => {
+      x.registro.codigo = novo;
+    });
+    try {
+      const ref = b.fs.doc(b.db, "familias", nuvem2.codigo(), "mundos", id);
+      await comTempo3(b.fs.deleteDoc(ref));
+      await comTempo3(b.fs.setDoc(ref, { nome: String(w.registro.nome).slice(0, 30), codigo: novo }));
+    } catch {
+    }
+    return novo;
+  }
+  async function sairDoMundo(id) {
+    const w = pegar(id);
+    if (!w || !online2()) throw new Error("Primeiro ligue a nuvem no \u2601\uFE0F");
+    if (w.registro.familia === nuvem2.publico()) throw new Error("Este mundo \xE9 da sua fam\xEDlia.");
+    const b = await comTempo3(nuvem2.conexao());
+    await garantirUsuario(b);
+    const pub = nuvem2.publico() || await comTempo3(nuvem2.garantirPublico());
+    await comTempo3(b.fs.deleteDoc(b.fs.doc(b.db, "mundos", id, "familias", pub)));
+    await apagarIndice(id);
+    esquecer(id);
+    return true;
+  }
+  async function verificar(id) {
+    const w = pegar(id);
+    if (!w || !online2() || !w.registro.subido || !w.registro.familia || w.registro.familia === nuvem2.publico()) return "ok";
+    try {
+      const b = await comTempo3(nuvem2.conexao());
+      await garantirUsuario(b);
+      const m = await comTempo3(b.fs.getDoc(b.fs.doc(b.db, "mundos", id)));
+      if (m.exists()) return "ok";
+      throw Object.assign(new Error("sumiu"), { code: "permission-denied" });
+    } catch (e) {
+      if (!ehPermissao2(e)) return "desconhecido";
+      esquecer(id);
+      apagarIndice(id);
+      return "revogado";
+    }
+  }
+  async function apagar(id) {
+    const w = pegar(id);
+    if (!w) throw new Error("Mundo n\xE3o encontrado.");
+    if (!souOrigem(id)) throw new Error("S\xF3 a fam\xEDlia que criou o mundo pode apagar.");
+    if (listarLocal().filter((m) => m.eSeu).length <= 1) throw new Error("Este \xE9 o \xFAnico mundo da fam\xEDlia: n\xE3o d\xE1 para apagar.");
+    if (w.registro.subido) {
+      if (!online2()) throw new Error("Primeiro ligue a internet: o mundo tamb\xE9m est\xE1 na nuvem.");
+      const v = guardarVersao(id, "antes-apagar");
+      const naFila = () => !!v && lerJson2(CHAVE_FILA2, []).some((x) => x.versao && x.versao.id === v.id);
+      for (let i = 0; i < 6 && naFila(); i++) {
+        await enviarVersoes();
+        if (naFila()) await new Promise((r) => setTimeout(r, 500));
+      }
+      const b = await comTempo3(nuvem2.conexao());
+      await garantirUsuario(b);
+      const conv = await convidadas(id);
+      const lote = b.fs.writeBatch(b.db);
+      for (const c of conv) lote.delete(b.fs.doc(b.db, "mundos", id, "familias", c.publico));
+      lote.delete(b.fs.doc(b.db, "convites", w.registro.codigo));
+      lote.delete(b.fs.doc(b.db, "mundos", id));
+      lote.delete(b.fs.doc(b.db, "familias", nuvem2.codigo(), "mundos", id));
+      await comTempo3(lote.commit());
+    }
+    const t = lerTudo();
+    delete t.mundos[id];
+    gravarTudo(t);
+    gravarJson2(CHAVE_FILA2, lerJson2(CHAVE_FILA2, []).filter((x) => x.mundoId !== id));
+    Save.esquecerMundo(id);
+    return true;
   }
   async function restaurar2(id, versao) {
     try {
@@ -10664,7 +11445,7 @@ function criarMundos({ nuvem: nuvem2 }) {
         x.pendente = true;
       });
       guardarVersao(id, "restaurado");
-      if (online() && w.registro.subido) {
+      if (online2() && w.registro.subido) {
         try {
           const b = await comTempo3(nuvem2.conexao());
           await comTempo3(b.fs.setDoc(b.fs.doc(b.db, "mundos", id, "estado", "principal"), paraRemoto(estado)));
@@ -10829,13 +11610,18 @@ function criarMundos({ nuvem: nuvem2 }) {
   function juntar(versoes2) {
     if (juntando) return juntando;
     const pub = nuvem2.publico();
-    if (!online() || !pub || lerJson2(CHAVE_JUNTOU + pub, null)) return Promise.resolve(false);
+    if (!online2() || !pub || lerJson2(CHAVE_JUNTOU + pub, null)) return Promise.resolve(false);
     juntando = comTempo3(fazerJuntar(versoes2, pub), 4e4).catch(() => false).finally(() => {
       juntando = null;
     });
     return juntando;
   }
-  const api = { criar: criar3, entrarComCodigo, listar, listarLocal, pegar, obter, salvarEstado, sincronizar, guardarVersao, listarVersoes, restaurar: restaurar2, enviarVersoes, mundoDoGato, mundo1, migrarSave07, juntar, juntando: () => juntando, precisaJuntar: () => online() && !lerJson2(CHAVE_JUNTOU + (nuvem2.publico() || ""), null), ganchos, formatarCodigo, minhaFamilia: () => nuvem2.codigo() };
+  const api = { criar: criar3, entrarComCodigo, listar, listarLocal, pegar, obter, salvarEstado, sincronizar, guardarVersao, listarVersoes, apagar, apagarVersao, apagarVersoes, restaurar: restaurar2, enviarVersoes, mundoDoGato, mundo1, migrarSave07, juntar, juntando: () => juntando, precisaJuntar: () => online2() && !lerJson2(CHAVE_JUNTOU + (nuvem2.publico() || ""), null), ganchos, formatarCodigo, minhaFamilia: () => nuvem2.codigo(), convidadas, tirarConvidada, sairDoMundo, verificar, esquecer, reiniciar: () => {
+    ultimaSync.clear();
+    andamento.clear();
+    usuarioOk = "";
+    juntando = null;
+  } };
   return api;
 }
 
@@ -10847,8 +11633,14 @@ var MOTIVOS2 = {
   "antes-juntar": "Antes de juntar com a nuvem",
   "antes-restaurar": "Antes de voltar no tempo",
   "restaurado": "Voltou no tempo",
-  "antes-migrar": "Antes de mudar o jeito de guardar"
+  "antes-migrar": "Antes de mudar o jeito de guardar",
+  "antes-sair": "Antes de sair da fam\xEDlia"
 };
+function textoOnde2(onde) {
+  if (onde === "aqui") return "\u{1F4F1} neste aparelho";
+  if (onde === "nuvem") return "\u2601\uFE0F na nuvem";
+  return "\u{1F4F1} neste aparelho e \u2601\uFE0F na nuvem";
+}
 function textoMotivo2(motivo) {
   if (motivo && MOTIVOS2[motivo]) {
     return MOTIVOS2[motivo];
@@ -10866,7 +11658,7 @@ function dataCurta2(iso) {
   const min = String(d.getMinutes()).padStart(2, "0");
   return dia3 + "/" + mes + " " + hora + ":" + min;
 }
-function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoServidor, aoVoltar }) {
+function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoAssistir, aoServidor, aoVoltar }) {
   const raiz = document.createElement("div");
   raiz.className = "tela tela-mundos";
   const painel = document.createElement("div");
@@ -10888,17 +11680,32 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
   const novo = document.createElement("div");
   novo.className = "mundos-novo";
   acoes.appendChild(novo);
-  const inputNome = document.createElement("input");
-  inputNome.className = "mundos-nome";
-  inputNome.type = "text";
-  inputNome.maxLength = 30;
-  inputNome.placeholder = "Nome do mundo";
-  novo.appendChild(inputNome);
   const btnCriar = document.createElement("button");
   btnCriar.className = "botao mundos-criar";
   btnCriar.type = "button";
   btnCriar.textContent = "Criar mundo novo";
   novo.appendChild(btnCriar);
+  const formNovo = document.createElement("div");
+  formNovo.className = "mundos-novo-form";
+  formNovo.hidden = true;
+  novo.appendChild(formNovo);
+  const inputNome = document.createElement("input");
+  inputNome.className = "mundos-nome";
+  inputNome.type = "text";
+  inputNome.maxLength = 30;
+  inputNome.placeholder = "Nome do mundo";
+  inputNome.setAttribute("aria-label", "Nome do mundo novo");
+  formNovo.appendChild(inputNome);
+  const btnCriarOk = document.createElement("button");
+  btnCriarOk.className = "botao mundos-criar-ok";
+  btnCriarOk.type = "button";
+  btnCriarOk.textContent = "Criar";
+  formNovo.appendChild(btnCriarOk);
+  const btnCriarCancelar = document.createElement("button");
+  btnCriarCancelar.className = "botao mundos-criar-cancelar";
+  btnCriarCancelar.type = "button";
+  btnCriarCancelar.textContent = "Cancelar";
+  formNovo.appendChild(btnCriarCancelar);
   const entrar2 = document.createElement("div");
   entrar2.className = "mundos-entrar";
   acoes.appendChild(entrar2);
@@ -10908,6 +11715,12 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
   inputCodigo.maxLength = 12;
   inputCodigo.placeholder = "C\xF3digo do convite";
   entrar2.appendChild(inputCodigo);
+  const inputFamiliaNome = document.createElement("input");
+  inputFamiliaNome.className = "mundos-familia-nome";
+  inputFamiliaNome.type = "text";
+  inputFamiliaNome.maxLength = 30;
+  inputFamiliaNome.placeholder = "Nome da sua fam\xEDlia neste mundo \u2014 um apelido";
+  entrar2.appendChild(inputFamiliaNome);
   const btnEntrar = document.createElement("button");
   btnEntrar.className = "botao mundos-entrar-btn";
   btnEntrar.type = "button";
@@ -10927,6 +11740,7 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
     avisoEl.textContent = texto;
   }
   let ultimaLista = "";
+  let pelosMenosDois = false;
   function desenhar(listaMundos) {
     if (destruida) {
       return;
@@ -10934,6 +11748,7 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
     const chave = JSON.stringify(listaMundos) + (atual ? atual() : "");
     if (chave === ultimaLista) return;
     ultimaLista = chave;
+    pelosMenosDois = Array.isArray(listaMundos) && listaMundos.filter((x) => x.eSeu).length > 1;
     while (lista.firstChild) {
       lista.removeChild(lista.firstChild);
     }
@@ -10969,7 +11784,7 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
       const btnJogar = document.createElement("button");
       btnJogar.className = "botao mundo-jogar";
       btnJogar.type = "button";
-      btnJogar.textContent = "Jogar aqui";
+      btnJogar.textContent = "Jogar";
       btnJogar.addEventListener("click", () => {
         if (destruida) {
           return;
@@ -10978,18 +11793,36 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
       });
       topo.appendChild(btnJogar);
     }
-    if (m.subido && aoServidor) {
-      const btnServidor = document.createElement("button");
-      btnServidor.className = "botao mundo-servidor";
-      btnServidor.type = "button";
-      btnServidor.textContent = "Abrir sem gato (servidor)";
-      btnServidor.addEventListener("click", () => {
-        if (destruida) {
-          return;
-        }
-        aoServidor(m.id);
-      });
-      item.appendChild(btnServidor);
+    if (m.subido && (aoAssistir || aoServidor)) {
+      const botoes = document.createElement("div");
+      botoes.className = "mundo-botoes";
+      if (aoAssistir) {
+        const btnAssistir = document.createElement("button");
+        btnAssistir.className = "botao mundo-assistir";
+        btnAssistir.type = "button";
+        btnAssistir.textContent = "Assistir";
+        btnAssistir.addEventListener("click", () => {
+          if (destruida) {
+            return;
+          }
+          aoAssistir(m.id);
+        });
+        botoes.appendChild(btnAssistir);
+      }
+      if (aoServidor) {
+        const btnServidor = document.createElement("button");
+        btnServidor.className = "botao mundo-servidor";
+        btnServidor.type = "button";
+        btnServidor.textContent = "Servir";
+        btnServidor.addEventListener("click", () => {
+          if (destruida) {
+            return;
+          }
+          aoServidor(m.id);
+        });
+        botoes.appendChild(btnServidor);
+      }
+      item.appendChild(botoes);
     }
     if (m.eSeu) {
       const codigo = document.createElement("p");
@@ -11001,10 +11834,30 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
       }
       item.appendChild(codigo);
     }
+    if (m.eSeu && m.subido) {
+      const btnConvidadas = document.createElement("button");
+      btnConvidadas.className = "botao mundo-convidadas";
+      btnConvidadas.type = "button";
+      btnConvidadas.textContent = "Fam\xEDlias convidadas";
+      item.appendChild(btnConvidadas);
+      let blocoConvidadas = null;
+      btnConvidadas.addEventListener("click", () => {
+        if (destruida) {
+          return;
+        }
+        if (blocoConvidadas) {
+          blocoConvidadas.parentNode?.removeChild(blocoConvidadas);
+          blocoConvidadas = null;
+          return;
+        }
+        blocoConvidadas = montarBlocoConvidadas(m);
+        item.appendChild(blocoConvidadas);
+      });
+    }
     const btnCopias = document.createElement("button");
     btnCopias.className = "botao mundo-copias";
     btnCopias.type = "button";
-    btnCopias.textContent = "C\xF3pias do mundo";
+    btnCopias.textContent = "C\xF3pias de seguran\xE7a (para voltar no tempo)";
     item.appendChild(btnCopias);
     let blocoVersoes = null;
     btnCopias.addEventListener("click", () => {
@@ -11019,7 +11872,223 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
       blocoVersoes = montarBlocoVersoes(m);
       item.appendChild(blocoVersoes);
     });
+    if (m.eSeu && pelosMenosDois) {
+      const btnApagar = document.createElement("button");
+      btnApagar.className = "botao mundo-apagar";
+      btnApagar.type = "button";
+      btnApagar.textContent = "Apagar este mundo";
+      item.appendChild(btnApagar);
+      btnApagar.addEventListener("click", () => {
+        if (destruida) {
+          return;
+        }
+        const confirma = document.createElement("div");
+        confirma.className = "convidada-confirma";
+        const texto = document.createElement("span");
+        texto.className = "convidada-confirma-texto";
+        texto.textContent = "Apagar o " + m.nome + "? Os gatinhos que estavam nele v\xE3o para outro mundo na pr\xF3xima vez.";
+        confirma.appendChild(texto);
+        const btnSim = document.createElement("button");
+        btnSim.className = "botao mundo-apagar-sim";
+        btnSim.type = "button";
+        btnSim.textContent = "Apagar";
+        confirma.appendChild(btnSim);
+        const btnNao = document.createElement("button");
+        btnNao.className = "botao mundo-apagar-nao";
+        btnNao.type = "button";
+        btnNao.textContent = "N\xE3o";
+        confirma.appendChild(btnNao);
+        item.replaceChild(confirma, btnApagar);
+        btnNao.addEventListener("click", () => {
+          if (destruida) {
+            return;
+          }
+          item.replaceChild(btnApagar, confirma);
+        });
+        btnSim.addEventListener("click", () => {
+          if (destruida) {
+            return;
+          }
+          mundos2.apagar(m.id).then(() => {
+            if (destruida) {
+              return;
+            }
+            aviso("Mundo apagado.");
+            recarregar();
+          }).catch((e) => {
+            if (destruida) {
+              return;
+            }
+            aviso(e.message || "N\xE3o deu certo.");
+            item.replaceChild(btnApagar, confirma);
+          });
+        });
+      });
+    }
+    if (!m.eSeu) {
+      const btnSair = document.createElement("button");
+      btnSair.className = "botao mundo-sair";
+      btnSair.type = "button";
+      btnSair.textContent = "Sair do mundo";
+      item.appendChild(btnSair);
+      btnSair.addEventListener("click", () => {
+        if (destruida) {
+          return;
+        }
+        const confirma = document.createElement("div");
+        confirma.className = "convidada-confirma";
+        const texto = document.createElement("span");
+        texto.className = "convidada-confirma-texto";
+        texto.textContent = "Sair de " + m.nome + "? Sua fam\xEDlia perde o acesso; para voltar, \xE9 preciso o c\xF3digo do convite de novo.";
+        confirma.appendChild(texto);
+        const btnSim = document.createElement("button");
+        btnSim.className = "botao convidada-sim";
+        btnSim.type = "button";
+        btnSim.textContent = "Sair";
+        confirma.appendChild(btnSim);
+        const btnNao = document.createElement("button");
+        btnNao.className = "botao convidada-nao";
+        btnNao.type = "button";
+        btnNao.textContent = "N\xE3o";
+        confirma.appendChild(btnNao);
+        item.replaceChild(confirma, btnSair);
+        btnNao.addEventListener("click", () => {
+          if (destruida) {
+            return;
+          }
+          item.replaceChild(btnSair, confirma);
+        });
+        btnSim.addEventListener("click", () => {
+          if (destruida) {
+            return;
+          }
+          mundos2.sairDoMundo(m.id).then(() => {
+            if (destruida) {
+              return;
+            }
+            aviso("Voc\xEA saiu do mundo.");
+            recarregar();
+          }).catch((e) => {
+            if (destruida) {
+              return;
+            }
+            aviso(e.message || "N\xE3o deu certo.");
+          });
+        });
+      });
+    }
     return item;
+  }
+  function montarBlocoConvidadas(m) {
+    const bloco = document.createElement("div");
+    bloco.className = "mundo-convidadas-bloco";
+    const listaConvidadas = document.createElement("div");
+    listaConvidadas.className = "convidadas-lista";
+    bloco.appendChild(listaConvidadas);
+    function carregarConvidadas() {
+      if (destruida) {
+        return;
+      }
+      while (listaConvidadas.firstChild) {
+        listaConvidadas.removeChild(listaConvidadas.firstChild);
+      }
+      const procurando = document.createElement("p");
+      procurando.className = "versoes-vazio";
+      procurando.textContent = "Procurando\u2026";
+      listaConvidadas.appendChild(procurando);
+      mundos2.convidadas(m.id).then((itens) => {
+        if (destruida) {
+          return;
+        }
+        while (listaConvidadas.firstChild) {
+          listaConvidadas.removeChild(listaConvidadas.firstChild);
+        }
+        if (!itens || itens.length === 0) {
+          const vazio = document.createElement("p");
+          vazio.className = "versoes-vazio";
+          vazio.textContent = "Nenhuma fam\xEDlia convidada ainda.";
+          listaConvidadas.appendChild(vazio);
+          return;
+        }
+        for (const c of itens) {
+          listaConvidadas.appendChild(montarItemConvidada(c, m));
+        }
+      }).catch(() => {
+        if (destruida) {
+          return;
+        }
+        while (listaConvidadas.firstChild) {
+          listaConvidadas.removeChild(listaConvidadas.firstChild);
+        }
+        const vazio = document.createElement("p");
+        vazio.className = "versoes-vazio";
+        vazio.textContent = "Nenhuma fam\xEDlia convidada ainda.";
+        listaConvidadas.appendChild(vazio);
+      });
+    }
+    function montarItemConvidada(c, mundo) {
+      const item = document.createElement("div");
+      item.className = "convidada-item";
+      const nomeEl = document.createElement("span");
+      nomeEl.className = "convidada-nome";
+      nomeEl.textContent = c.nome || "Fam\xEDlia sem nome";
+      item.appendChild(nomeEl);
+      const btnTirar = document.createElement("button");
+      btnTirar.className = "botao convidada-tirar";
+      btnTirar.type = "button";
+      btnTirar.textContent = "Tirar";
+      item.appendChild(btnTirar);
+      btnTirar.addEventListener("click", () => {
+        if (destruida) {
+          return;
+        }
+        const nomeExibicao = c.nome || "Fam\xEDlia sem nome";
+        const confirma = document.createElement("div");
+        confirma.className = "convidada-confirma";
+        const texto = document.createElement("span");
+        texto.className = "convidada-confirma-texto";
+        texto.textContent = "Tirar " + nomeExibicao + "? O c\xF3digo do mundo vai mudar. Quem ainda est\xE1 no mundo vai precisar do c\xF3digo novo.";
+        confirma.appendChild(texto);
+        const btnSim = document.createElement("button");
+        btnSim.className = "botao convidada-sim";
+        btnSim.type = "button";
+        btnSim.textContent = "Tirar";
+        confirma.appendChild(btnSim);
+        const btnNao = document.createElement("button");
+        btnNao.className = "botao convidada-nao";
+        btnNao.type = "button";
+        btnNao.textContent = "N\xE3o";
+        confirma.appendChild(btnNao);
+        item.replaceChild(confirma, btnTirar);
+        btnNao.addEventListener("click", () => {
+          if (destruida) {
+            return;
+          }
+          item.replaceChild(btnTirar, confirma);
+        });
+        btnSim.addEventListener("click", () => {
+          if (destruida) {
+            return;
+          }
+          mundos2.tirarConvidada(mundo.id, c.publico).then((novo2) => {
+            if (destruida) {
+              return;
+            }
+            aviso("Pronto! O c\xF3digo novo do mundo \xE9 " + mundos2.formatarCodigo(novo2) + ".");
+            carregarConvidadas();
+            recarregar();
+          }).catch((e) => {
+            if (destruida) {
+              return;
+            }
+            aviso(e.message || "N\xE3o deu certo.");
+          });
+        });
+      });
+      return item;
+    }
+    carregarConvidadas();
+    return bloco;
   }
   function montarBlocoVersoes(m) {
     const bloco = document.createElement("div");
@@ -11029,6 +12098,60 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
     btnGuardar.type = "button";
     btnGuardar.textContent = "Guardar uma c\xF3pia agora";
     bloco.appendChild(btnGuardar);
+    if (m.eSeu) {
+      const btnApagarTodas = document.createElement("button");
+      btnApagarTodas.className = "botao versoes-apagar-todas";
+      btnApagarTodas.type = "button";
+      btnApagarTodas.textContent = "Apagar todas as c\xF3pias";
+      bloco.appendChild(btnApagarTodas);
+      btnApagarTodas.addEventListener("click", () => {
+        if (destruida) {
+          return;
+        }
+        const confirma = document.createElement("div");
+        confirma.className = "versao-confirma";
+        const texto = document.createElement("span");
+        texto.className = "versao-confirma-texto";
+        texto.textContent = "Apagar mesmo? N\xE3o d\xE1 para desfazer.";
+        confirma.appendChild(texto);
+        const btnSim = document.createElement("button");
+        btnSim.className = "botao versao-apagar-sim";
+        btnSim.type = "button";
+        btnSim.textContent = "Apagar";
+        confirma.appendChild(btnSim);
+        const btnNao = document.createElement("button");
+        btnNao.className = "botao versao-apagar-nao";
+        btnNao.type = "button";
+        btnNao.textContent = "N\xE3o";
+        confirma.appendChild(btnNao);
+        bloco.replaceChild(confirma, btnApagarTodas);
+        btnNao.addEventListener("click", () => {
+          if (destruida) {
+            return;
+          }
+          bloco.replaceChild(btnApagarTodas, confirma);
+        });
+        btnSim.addEventListener("click", () => {
+          if (destruida) {
+            return;
+          }
+          mundos2.apagarVersoes(m.id).then((ok) => {
+            if (destruida) {
+              return;
+            }
+            aviso(ok ? "C\xF3pias apagadas." : "Apagadas aqui. Sem internet, na nuvem elas ainda ficam.");
+            bloco.replaceChild(btnApagarTodas, confirma);
+            carregarVersoes();
+          }).catch(() => {
+            if (destruida) {
+              return;
+            }
+            aviso("N\xE3o deu certo.");
+            bloco.replaceChild(btnApagarTodas, confirma);
+          });
+        });
+      });
+    }
     const listaVersoes = document.createElement("div");
     listaVersoes.className = "versoes-lista";
     bloco.appendChild(listaVersoes);
@@ -11084,10 +12207,10 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
       motivo.className = "versao-motivo";
       motivo.textContent = textoMotivo2(versao.motivo);
       item.appendChild(motivo);
-      if (versao.ondeFica && versao.ondeFica !== "aqui") {
+      if (versao.ondeFica) {
         const nuvem2 = document.createElement("span");
         nuvem2.className = "versao-nuvem";
-        nuvem2.textContent = "\u2601\uFE0F";
+        nuvem2.textContent = textoOnde2(versao.ondeFica);
         item.appendChild(nuvem2);
       }
       if (mundo.eSeu) {
@@ -11143,6 +12266,57 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
             });
           });
         });
+        const btnApagarCopia = document.createElement("button");
+        btnApagarCopia.className = "botao versao-apagar";
+        btnApagarCopia.type = "button";
+        btnApagarCopia.textContent = "Apagar esta c\xF3pia";
+        item.appendChild(btnApagarCopia);
+        btnApagarCopia.addEventListener("click", () => {
+          if (destruida) {
+            return;
+          }
+          const confirma = document.createElement("div");
+          confirma.className = "versao-confirma";
+          const texto = document.createElement("span");
+          texto.className = "versao-confirma-texto";
+          texto.textContent = "Apagar mesmo? N\xE3o d\xE1 para desfazer.";
+          confirma.appendChild(texto);
+          const btnSim = document.createElement("button");
+          btnSim.className = "botao versao-apagar-sim";
+          btnSim.type = "button";
+          btnSim.textContent = "Apagar";
+          confirma.appendChild(btnSim);
+          const btnNao = document.createElement("button");
+          btnNao.className = "botao versao-apagar-nao";
+          btnNao.type = "button";
+          btnNao.textContent = "N\xE3o";
+          confirma.appendChild(btnNao);
+          item.replaceChild(confirma, btnApagarCopia);
+          btnNao.addEventListener("click", () => {
+            if (destruida) {
+              return;
+            }
+            item.replaceChild(btnApagarCopia, confirma);
+          });
+          btnSim.addEventListener("click", () => {
+            if (destruida) {
+              return;
+            }
+            mundos2.apagarVersao(mundo.id, versao.id).then((ok) => {
+              if (destruida) {
+                return;
+              }
+              aviso(ok ? "C\xF3pia apagada." : "Apagada aqui. Sem internet, na nuvem ela ainda fica.");
+              carregarVersoes();
+            }).catch(() => {
+              if (destruida) {
+                return;
+              }
+              aviso("N\xE3o deu certo.");
+              item.replaceChild(btnApagarCopia, confirma);
+            });
+          });
+        });
       }
       return item;
     }
@@ -11174,13 +12348,29 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
     if (destruida) {
       return;
     }
+    inputNome.value = "Mundo " + (mundos2.listarLocal().length + 1);
+    formNovo.hidden = false;
+    btnCriar.hidden = true;
+  });
+  btnCriarCancelar.addEventListener("click", () => {
+    if (destruida) {
+      return;
+    }
+    formNovo.hidden = true;
+    btnCriar.hidden = false;
+  });
+  btnCriarOk.addEventListener("click", () => {
+    if (destruida) {
+      return;
+    }
     const nome = inputNome.value.trim();
     if (!nome) {
       aviso("Escreva um nome para o mundo.");
       return;
     }
     mundos2.criar({ nome });
-    inputNome.value = "";
+    formNovo.hidden = true;
+    btnCriar.hidden = false;
     aviso("Mundo criado!");
     recarregar();
   });
@@ -11193,14 +12383,20 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
       aviso("Escreva o c\xF3digo do convite.");
       return;
     }
+    const nomeFamilia = inputFamiliaNome.value.trim();
+    if (!nomeFamilia) {
+      aviso("Escreva o nome da sua fam\xEDlia neste mundo (um apelido).");
+      return;
+    }
     btnEntrar.disabled = true;
     aviso("Procurando\u2026");
-    mundos2.entrarComCodigo(codigo).then((r) => {
+    mundos2.entrarComCodigo(codigo, nomeFamilia).then((r) => {
       if (destruida) {
         return;
       }
       aviso("Pronto! Voc\xEA entrou em " + r.nome + ".");
       inputCodigo.value = "";
+      inputFamiliaNome.value = "";
       recarregar();
     }).catch((e) => {
       if (destruida) {
@@ -11228,7 +12424,7 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
 }
 
 // js/escolher-mundo.js
-function criarEscolherMundo({ container, nome, carregar, aoEscolher, aoCriar, aoVoltar }) {
+function criarEscolherMundo({ container, nome, carregar, aoEscolher, aoAssistir, aoServir, aoCriar, sugestaoNome, aoVoltar }) {
   const raiz = document.createElement("div");
   raiz.className = "tela tela-escolher-mundo";
   const titulo = document.createElement("h2");
@@ -11243,7 +12439,37 @@ function criarEscolherMundo({ container, nome, carregar, aoEscolher, aoCriar, ao
   btnCriar.className = "botao escolher-criar";
   btnCriar.textContent = "+ Criar mundo novo";
   btnCriar.addEventListener("click", () => {
-    if (aoCriar) aoCriar();
+    btnCriar.hidden = true;
+    const divNovo = document.createElement("div");
+    divNovo.className = "escolher-novo";
+    const inputNome = document.createElement("input");
+    inputNome.type = "text";
+    inputNome.className = "escolher-novo-nome";
+    inputNome.maxLength = 30;
+    inputNome.value = String(sugestaoNome || "Mundo novo");
+    inputNome.setAttribute("aria-label", "Nome do mundo novo");
+    divNovo.appendChild(inputNome);
+    const btnConfirmar = document.createElement("button");
+    btnConfirmar.type = "button";
+    btnConfirmar.className = "botao escolher-novo-criar";
+    btnConfirmar.textContent = "Criar";
+    btnConfirmar.addEventListener("click", () => {
+      let nomeFinal = inputNome.value.trim();
+      if (!nomeFinal) nomeFinal = String(sugestaoNome || "Mundo novo");
+      if (aoCriar) aoCriar(nomeFinal);
+      btnConfirmar.disabled = true;
+    });
+    divNovo.appendChild(btnConfirmar);
+    const btnCancelar = document.createElement("button");
+    btnCancelar.type = "button";
+    btnCancelar.className = "botao escolher-novo-cancelar";
+    btnCancelar.textContent = "Cancelar";
+    btnCancelar.addEventListener("click", () => {
+      divNovo.remove();
+      btnCriar.hidden = false;
+    });
+    divNovo.appendChild(btnCancelar);
+    raiz.insertBefore(divNovo, btnVoltar);
   });
   raiz.appendChild(btnCriar);
   const btnVoltar = document.createElement("button");
@@ -11273,15 +12499,42 @@ function criarEscolherMundo({ container, nome, carregar, aoEscolher, aoCriar, ao
       return;
     }
     for (const m of mundos2) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "botao-grande escolher-item";
-      const rotulo = "\u{1F30D} " + m.nome + (m.eSeu ? "" : " \xB7 convidado");
-      btn.textContent = rotulo;
-      btn.addEventListener("click", () => {
+      const linha = document.createElement("div");
+      linha.className = "escolher-linha";
+      const btnJogar = document.createElement("button");
+      btnJogar.type = "button";
+      btnJogar.className = "botao-grande escolher-item";
+      btnJogar.textContent = "\u{1F30D} " + m.nome + (m.eSeu ? "" : " \xB7 convidado");
+      btnJogar.addEventListener("click", () => {
         if (vivo && aoEscolher) aoEscolher(m.id);
       });
-      lista.appendChild(btn);
+      linha.appendChild(btnJogar);
+      if (m.aceita === false) {
+        btnJogar.classList.add("apagado");
+        btnJogar.disabled = true;
+        btnJogar.setAttribute("aria-disabled", "true");
+        const aviso = document.createElement("p");
+        aviso.className = "escolher-aviso";
+        aviso.textContent = m.para ? "Este mundo \xE9 para " + m.para : "Este mundo n\xE3o \xE9 para este bichinho";
+        linha.appendChild(aviso);
+      }
+      const btnAssistir = document.createElement("button");
+      btnAssistir.type = "button";
+      btnAssistir.className = "botao escolher-assistir";
+      btnAssistir.textContent = "\u{1F440} Assistir";
+      btnAssistir.addEventListener("click", () => {
+        if (vivo && aoAssistir) aoAssistir(m.id);
+      });
+      linha.appendChild(btnAssistir);
+      const btnServir = document.createElement("button");
+      btnServir.type = "button";
+      btnServir.className = "botao escolher-servir";
+      btnServir.textContent = "\u{1F5A5}\uFE0F Servir";
+      btnServir.addEventListener("click", () => {
+        if (vivo && aoServir) aoServir(m.id);
+      });
+      linha.appendChild(btnServir);
+      lista.appendChild(linha);
     }
   }
   mostrarVazio("Procurando\u2026");
@@ -11349,6 +12602,9 @@ function eleger(presencas, gestor, agora) {
     if (agora - p.t < VIVA) {
       candidatos.push(p);
     }
+  }
+  if (candidatos.some((p) => p.papel !== "espectador")) {
+    for (let i = candidatos.length - 1; i >= 0; i--) if (candidatos[i].papel === "espectador") candidatos.splice(i, 1);
   }
   if (candidatos.length === 0) {
     return null;
@@ -11422,7 +12678,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
   let offsetLigado = false;
   const agoraServ = () => Date.now() + offset;
   const ref = (st, caminho) => st.D.ref(st.con.rtdb, "mundos/" + st.mundoId + "/" + caminho);
-  const nada = () => {
+  const nada2 = () => {
   };
   async function conectar() {
     const con = await comTempo4(nuvem2.conexao());
@@ -11433,7 +12689,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
         D.onValue(D.ref(con.rtdb, ".info/serverTimeOffset"), (s) => {
           const v = s.val();
           if (typeof v === "number") offset = v;
-        }, nada);
+        }, nada2);
       } catch {
         offsetLigado = false;
       }
@@ -11445,7 +12701,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
     return g && g.uid !== st.con.uid && agoraServ() - g.t <= MORTO ? "jogador" : "gestor";
   }
   const souGestorGravado = (st) => !!(st.gestor && st.gestor.uid === st.con.uid);
-  async function iniciar({ mapa, gato, mundoId, semGato = false, char = "" }) {
+  async function iniciar({ mapa, gato, mundoId, semGato = false, char = "", papel = "" }) {
     sair2();
     const minha = sessao;
     let st = null;
@@ -11457,11 +12713,13 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
         pc = window.matchMedia("(pointer: fine)").matches;
       } catch {
       }
+      const papelMeu = papel === "espectador" || papel === "servidor" || papel === "jogador" ? papel : semGato ? "servidor" : "jogador";
       st = {
         mapa,
         gato,
         mundoId,
-        semGato: !!semGato,
+        papelMeu,
+        semGato: papelMeu !== "jogador",
         char: String(char || "").slice(0, 40),
         con,
         D: con.m.database,
@@ -11500,7 +12758,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
       try {
         if (navigator.getBattery) navigator.getBattery().then((b) => {
           st.carregando = !!b.charging;
-        }, nada);
+        }, nada2);
       } catch {
       }
       ligar(st);
@@ -11518,22 +12776,22 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
   function publicarPresenca(st) {
     try {
       const D = st.D;
-      const doc = { nome: st.semGato ? "mundo" : String(st.gato.nome || "Gatinho").slice(0, 30), nota: nota(st), gato: !st.semGato, t: D.serverTimestamp() };
+      const doc = { nome: st.semGato ? st.papelMeu === "espectador" ? "espectador" : "mundo" : String(st.gato.nome || "Gatinho").slice(0, 30), nota: nota(st), gato: !st.semGato, t: D.serverTimestamp() };
       if (!st.semGato && st.lookJson.length <= 2e3) doc.look = st.lookJson;
-      doc.papel = st.semGato ? "servidor" : "jogador";
+      doc.papel = st.papelMeu;
       if (!st.semGato && st.char) doc.char = st.char;
       if (st.avocado) doc.avocado = true;
       const t0 = performance.now();
       D.set(ref(st, "presenca/" + st.con.uid), doc).then(() => {
         const ms = performance.now() - t0;
         st.rtt = st.rtt == null ? ms : st.rtt * 0.7 + ms * 0.3;
-      }, nada);
+      }, nada2);
     } catch {
     }
   }
   function registrarDesconexao(st) {
     const D = st.D, eu = st.con.uid;
-    for (const c of ["gestor", "gatos/" + eu, "pedidos/" + eu, "presenca/" + eu]) D.onDisconnect(ref(st, c)).remove().catch(nada);
+    for (const c of ["gestor", "gatos/" + eu, "pedidos/" + eu, "presenca/" + eu]) D.onDisconnect(ref(st, c)).remove().catch(nada2);
   }
   function ligar(st) {
     const D = st.D, eu = st.con.uid;
@@ -11551,15 +12809,15 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
       }
     };
     st.unsub.push(
-      D.onChildAdded(gatos, receber, nada),
-      D.onChildChanged(gatos, receber, nada),
+      D.onChildAdded(gatos, receber, nada2),
+      D.onChildChanged(gatos, receber, nada2),
       D.onChildRemoved(gatos, (snap) => {
         const r = st.remotos.get(snap.key);
         if (r) {
           descartarRemoto(st, r);
           st.remotos.delete(snap.key);
         }
-      }, nada),
+      }, nada2),
       D.onValue(ref(st, "presenca"), (snap) => {
         const m = /* @__PURE__ */ new Map();
         snap.forEach((c) => {
@@ -11568,25 +12826,25 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
         });
         st.presencas = m;
         st.visto.presenca = true;
-      }, nada),
+      }, nada2),
       D.onValue(ref(st, "gestor"), (snap) => {
         const v = snap.val();
         st.gestor = v && typeof v === "object" && typeof v.uid === "string" && typeof v.t === "number" ? { uid: v.uid, t: v.t } : null;
         st.visto.gestor = true;
-      }, nada),
+      }, nada2),
       D.onValue(ref(st, "dinamico"), (snap) => {
         const v = snap.val();
         st.dinamico = v && typeof v === "object" ? v : null;
         seguirCiclo(st);
-      }, nada),
+      }, nada2),
       D.onValue(ref(st, "bichos"), (snap) => {
         const v = snap.val();
         if (typeof v !== "string") return;
         st.bichosTexto = v;
         if (papelDe(st) === "jogador" && st.mapa.animais) st.mapa.animais.espelho(v);
-      }, nada),
-      D.onChildAdded(ref(st, "pedidos"), tratarPedido, nada),
-      D.onChildChanged(ref(st, "pedidos"), tratarPedido, nada)
+      }, nada2),
+      D.onChildAdded(ref(st, "pedidos"), tratarPedido, nada2),
+      D.onChildChanged(ref(st, "pedidos"), tratarPedido, nada2)
     );
     let jaConectou = false;
     st.unsub.push(D.onValue(D.ref(st.con.rtdb, ".info/connected"), (s) => {
@@ -11596,7 +12854,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
         publicarPresenca(st);
       }
       jaConectou = true;
-    }, nada));
+    }, nada2));
     st.timers.push(setInterval(() => {
       if (S === st) publicarPresenca(st);
     }, PRESENCA));
@@ -11625,7 +12883,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
     comTempo4(D.runTransaction(ref(st, "gestor"), (cur) => {
       if (cur && cur.uid !== eu && (morto ? agoraServ() - cur.t <= MORTO : cur.uid !== base)) return void 0;
       return { uid: eu, t: D.serverTimestamp() };
-    }), 4e3).catch(nada).finally(() => {
+    }), 4e3).catch(nada2).finally(() => {
       st.tomando = false;
     });
   }
@@ -11633,7 +12891,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
     try {
       if (S !== st) return;
       st.nPedido = Math.max(st.nPedido + 1, Math.round(agoraServ()));
-      st.D.set(ref(st, "pedidos/" + st.con.uid), { ...corpo2, n: st.nPedido }).catch(nada);
+      st.D.set(ref(st, "pedidos/" + st.con.uid), { ...corpo2, n: st.nPedido }).catch(nada2);
     } catch {
     }
   }
@@ -11662,7 +12920,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
     try {
       if (!souGestorGravado(st) || !st.mapa.animais) return;
       st.ultBichos = performance.now();
-      st.D.set(ref(st, "bichos"), st.mapa.animais.serializar()).catch(nada);
+      st.D.set(ref(st, "bichos"), st.mapa.animais.serializar()).catch(nada2);
     } catch {
     }
   }
@@ -11700,7 +12958,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
       doc.n = st.n;
     }
     if (sub) doc.sub = sub;
-    st.D.set(ref(st, "gatos/" + st.con.uid), doc).catch(nada);
+    st.D.set(ref(st, "gatos/" + st.con.uid), doc).catch(nada2);
   }
   function vigiarGato(st) {
     const cat = st.mapa.cat;
@@ -11760,7 +13018,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
       r.nome = criarNome(look.nome || "Gatinho");
       r.nome.position.y = (Number.isFinite(alto) ? alto : 0.6) + 0.18;
       r.grupo.add(r.nome);
-    }).catch(nada);
+    }).catch(nada2);
   }
   function criarNome(texto) {
     const c = document.createElement("canvas");
@@ -11872,7 +13130,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
       if (souGestorGravado(st)) {
         if (mapa.ciclo !== st.cicloGravado) {
           st.cicloGravado = mapa.ciclo;
-          st.D.set(ref(st, "dinamico"), { ciclo: String(mapa.ciclo || "dia").slice(0, 12) }).catch(nada);
+          st.D.set(ref(st, "dinamico"), { ciclo: String(mapa.ciclo || "dia").slice(0, 12) }).catch(nada2);
         }
         if (agora - st.ultBichos >= BICHOS && outrosVivos(st) > 0) publicarBichos(st);
       }
@@ -11894,6 +13152,21 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
       const r = st.remotos.get(p.uid);
       return { uid: p.uid, nome: p.nome, gato: p.gato, nota: p.nota, avocado: p.avocado, papel: p.papel, char: p.char, gestor: !!(st.gestor && st.gestor.uid === p.uid), eu: p.uid === st.con.uid, atrasoMs: r && r.atraso != null ? Math.max(0, Math.round(r.atraso)) : null };
     }).sort((a, b) => a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : a.uid < b.uid ? -1 : 1);
+  }
+  function jogadores() {
+    const st = S;
+    if (!st) return [];
+    const agora = agoraServ();
+    return [...st.presencas.values()].filter((p) => p.papel === "jogador" && p.char && p.uid !== st.con.uid && agora - p.t < VIVA).map((p) => ({ uid: p.uid, char: p.char, nome: p.nome })).sort((a, b) => a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : a.uid < b.uid ? -1 : 1);
+  }
+  function posicaoChar(charId) {
+    const st = S;
+    if (!st || !charId) return null;
+    const p = jogadores().find((j) => j.char === charId);
+    const r = p && st.remotos.get(p.uid);
+    const u = r && r.buf[r.buf.length - 1];
+    if (!u) return null;
+    return r.cat && r.grupo.visible ? { x: r.grupo.position.x, y: r.grupo.position.y, z: r.grupo.position.z, r: r.grupo.rotation.y, sub: u.sub } : { x: u.x, y: u.y, z: u.z, r: u.r, sub: u.sub };
   }
   function avocar(ligar2) {
     const st = S;
@@ -11935,9 +13208,9 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
       }
       const D = st.D, eu = st.con.uid;
       const caminhos = ["gestor", "gatos/" + eu, "pedidos/" + eu, "presenca/" + eu];
-      for (const c of caminhos) D.onDisconnect(ref(st, c)).cancel().catch(nada);
-      const apaga = st.gestor && st.gestor.uid === eu ? D.remove(ref(st, "gestor")).catch(nada) : Promise.resolve();
-      return apaga.then(() => Promise.all(caminhos.slice(1).map((c) => D.remove(ref(st, c)).catch(nada)))).then(nada, nada);
+      for (const c of caminhos) D.onDisconnect(ref(st, c)).cancel().catch(nada2);
+      const apaga = st.gestor && st.gestor.uid === eu ? D.remove(ref(st, "gestor")).catch(nada2) : Promise.resolve();
+      return apaga.then(() => Promise.all(caminhos.slice(1).map((c) => D.remove(ref(st, c)).catch(nada2)))).then(nada2, nada2);
     } catch {
       return Promise.resolve();
     }
@@ -11950,6 +13223,8 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
     presentes,
     avocar,
     pedirCiclo,
+    jogadores,
+    posicaoChar,
     ativo: () => !!S && S.pronto,
     papel: () => S ? papelDe(S) : "gestor",
     nota: () => S ? Math.round(((S.notaBase || 0) + (S.avocado ? 1e3 : 0)) * 10) / 10 : null,
@@ -12052,6 +13327,304 @@ function criarPainelServidor({ aoAssumir }) {
   return { elemento, atualizar, destruir };
 }
 
+// js/painel-espectador.js
+function criarPainelEspectador({ aoSeguir }) {
+  const elemento = document.createElement("div");
+  elemento.id = "painel-espectador";
+  elemento.className = "painel-servidor painel-espectador";
+  const titulo = document.createElement("div");
+  titulo.className = "ps-titulo";
+  elemento.appendChild(titulo);
+  const lista = document.createElement("div");
+  lista.className = "pe-lista";
+  elemento.appendChild(lista);
+  const botaoLivre = document.createElement("button");
+  botaoLivre.type = "button";
+  botaoLivre.className = "botao pe-livre";
+  botaoLivre.textContent = "C\xE2mera livre";
+  botaoLivre.addEventListener("click", () => {
+    try {
+      aoSeguir(null);
+    } catch (e) {
+    }
+  });
+  elemento.appendChild(botaoLivre);
+  let ultimoTitulo = null;
+  let ultimaChaveLista = null;
+  let ultimoBotaoLivreAria = null;
+  function montarLista(jogadores, seguindo) {
+    lista.textContent = "";
+    if (!jogadores || jogadores.length === 0) {
+      const p = document.createElement("p");
+      p.className = "ps-vazio";
+      p.textContent = "Ningu\xE9m est\xE1 jogando agora";
+      lista.appendChild(p);
+      return;
+    }
+    for (const j of jogadores) {
+      const botao = document.createElement("button");
+      botao.type = "button";
+      botao.className = "botao pe-seguir-item";
+      botao.textContent = "Seguir: " + j.nome;
+      const ehSeguido = j.char === seguindo;
+      botao.setAttribute("aria-pressed", String(ehSeguido));
+      if (ehSeguido) {
+        botao.classList.add("ligado");
+      }
+      botao.addEventListener("click", () => {
+        try {
+          aoSeguir(j.char);
+        } catch (e) {
+        }
+      });
+      lista.appendChild(botao);
+    }
+  }
+  function atualizar({ mundo, jogadores, seguindo }) {
+    const novoTitulo = mundo ? "Assistindo: " + mundo : "Assistindo";
+    if (novoTitulo !== ultimoTitulo) {
+      titulo.textContent = novoTitulo;
+      ultimoTitulo = novoTitulo;
+    }
+    const chaveLista = jogadores ? jogadores.map((j) => j.char + "|" + j.nome).join(";") + "|" + (seguindo == null ? "null" : seguindo) : "vazio";
+    if (chaveLista !== ultimaChaveLista) {
+      montarLista(jogadores, seguindo);
+      ultimaChaveLista = chaveLista;
+    }
+    const livreAtivo = seguindo == null || seguindo === "";
+    const novoAria = String(livreAtivo);
+    if (novoAria !== ultimoBotaoLivreAria) {
+      botaoLivre.setAttribute("aria-pressed", novoAria);
+      if (livreAtivo) {
+        botaoLivre.classList.add("ligado");
+      } else {
+        botaoLivre.classList.remove("ligado");
+      }
+      ultimoBotaoLivreAria = novoAria;
+    }
+  }
+  let destruido = false;
+  function destruir() {
+    if (destruido) return;
+    destruido = true;
+    elemento.remove();
+  }
+  return { elemento, atualizar, destruir };
+}
+
+// js/online.js
+var RENOVA = 1e4;
+var VIVO = 3e4;
+var CONFERE = 5e3;
+var TEMPO3 = 5e3;
+var nada = () => {
+};
+function comTempo5(p, ms = TEMPO3) {
+  let t;
+  return Promise.race([p, new Promise((_, rej) => {
+    t = setTimeout(() => rej(new Error("tempo")), ms);
+  })]).finally(() => clearTimeout(t));
+}
+function criarOnline({ nuvem: nuvem2 }) {
+  let offset = 0;
+  let offsetLigado = false;
+  let J = null;
+  let sessao = 0;
+  const agoraServ = () => Date.now() + offset;
+  const possivel = () => !!nuvem2.codigo() && location.protocol !== "file:";
+  const refOnline = (con, charId) => con.m.database.ref(con.rtdb, "familias/" + nuvem2.codigo() + "/online/" + (charId === void 0 ? "" : charId));
+  async function conectar() {
+    if (!possivel()) throw new Error("sem-familia");
+    const con = await comTempo5(nuvem2.conexao());
+    if (!offsetLigado) {
+      offsetLigado = true;
+      const D = con.m.database;
+      try {
+        D.onValue(D.ref(con.rtdb, ".info/serverTimeOffset"), (s) => {
+          const v = s.val();
+          if (typeof v === "number") offset = v;
+        }, nada);
+      } catch {
+        offsetLigado = false;
+      }
+    }
+    return con;
+  }
+  const limparEntrada = (charId, v, uidMeu) => ({ char: charId, uid: String(v.uid), mundo: String(v.mundo || ""), nome: String(v.nome || ""), t: v.t, eu: v.uid === uidMeu });
+  const vivo = (v) => v && typeof v === "object" && typeof v.uid === "string" && typeof v.t === "number" && agoraServ() - v.t < VIVO;
+  async function jogando(charId, { mundo, nome, aoTomado } = {}) {
+    await parar();
+    const minha = ++sessao;
+    try {
+      const con = await conectar();
+      if (minha !== sessao) return false;
+      const D = con.m.database, ref = refOnline(con, charId);
+      const j = { charId, ref, con, timer: null, unsub: [], tomado: false, minha };
+      const grava = () => D.set(ref, { uid: con.uid, mundo: String(mundo || "").slice(0, 40), nome: String(nome || "").slice(0, 30), t: D.serverTimestamp() });
+      await comTempo5(grava());
+      if (minha !== sessao) {
+        D.remove(ref).catch(nada);
+        return false;
+      }
+      J = j;
+      D.onDisconnect(ref).remove().catch(nada);
+      j.timer = setInterval(() => {
+        if (J === j && !j.tomado) grava().catch(nada);
+      }, RENOVA);
+      j.unsub.push(D.onValue(ref, (snap) => {
+        const v = snap.val();
+        if (J !== j || j.tomado || !v || typeof v !== "object" || v.uid === con.uid) return;
+        j.tomado = true;
+        clearInterval(j.timer);
+        try {
+          if (aoTomado) aoTomado(limparEntrada(charId, v, con.uid));
+        } catch {
+        }
+      }, nada));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  function parar() {
+    const j = J;
+    sessao++;
+    J = null;
+    if (!j) return Promise.resolve();
+    try {
+      clearInterval(j.timer);
+      for (const u of j.unsub) {
+        try {
+          u();
+        } catch {
+        }
+      }
+      const D = j.con.m.database;
+      D.onDisconnect(j.ref).cancel().catch(nada);
+      return j.tomado ? Promise.resolve() : comTempo5(D.remove(j.ref)).then(nada, nada);
+    } catch {
+      return Promise.resolve();
+    }
+  }
+  function observar(cb) {
+    let morto = false, ultimo = null, timer = null, off = nada;
+    (async () => {
+      try {
+        const con = await conectar();
+        if (morto) return;
+        const D = con.m.database;
+        const emitir = () => {
+          if (morto) return;
+          const lista = [];
+          if (ultimo) {
+            for (const [k, v] of Object.entries(ultimo)) if (vivo(v) && v.uid !== con.uid) lista.push(limparEntrada(k, v, con.uid));
+          }
+          lista.sort((a, b) => a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : a.char < b.char ? -1 : 1);
+          try {
+            cb(lista);
+          } catch {
+          }
+        };
+        off = D.onValue(refOnline(con), (snap) => {
+          ultimo = snap.val();
+          emitir();
+        }, nada);
+        timer = setInterval(emitir, CONFERE);
+      } catch {
+      }
+    })();
+    return () => {
+      morto = true;
+      clearInterval(timer);
+      try {
+        off();
+      } catch {
+      }
+    };
+  }
+  async function consultar(charId, ms = 4e3) {
+    try {
+      const con = await conectar();
+      const snap = await comTempo5(con.m.database.get(refOnline(con, charId)), ms);
+      const v = snap.val();
+      return vivo(v) && v.uid !== con.uid ? limparEntrada(charId, v, con.uid) : null;
+    } catch {
+      return null;
+    }
+  }
+  async function posicaoAoVivo(mundo, uid, ms = 1500) {
+    try {
+      const con = await conectar();
+      const v = (await comTempo5(con.m.database.get(con.m.database.ref(con.rtdb, "mundos/" + mundo + "/gatos/" + uid)), ms)).val();
+      return v && typeof v.x === "number" && typeof v.z === "number" ? { x: v.x, z: v.z, r: typeof v.r === "number" ? v.r : 0, y: v.y || 0, sub: v.sub || "" } : null;
+    } catch {
+      return null;
+    }
+  }
+  return { jogando, parar, observar, consultar, posicaoAoVivo, ativo: () => !!J && !J.tomado, meuUid: () => J ? J.con.uid : null };
+}
+
+// js/familia-saida.js
+var ESPERA = (ms) => new Promise((r) => setTimeout(r, ms));
+var FILAS = ["gatinho-versoes-pendentes", "gatinho-versoes-mundos-pendentes"];
+var APAGA = [SAVE_KEY, "gatinho-mundos", "gatinho-versoes", "gatinho-versoes-mundos", "gatinho-ultimo", ...FILAS];
+var ID_LOCAL12 = "mlocal0001";
+function criarSaida({ nuvem: nuvem2, versoes: versoes2, mundos: mundos2, Save: Save2 }) {
+  const filaCheia = () => FILAS.some((k) => {
+    try {
+      const f = JSON.parse(localStorage.getItem(k));
+      return Array.isArray(f) && f.length > 0;
+    } catch {
+      return false;
+    }
+  });
+  async function preparar() {
+    const pendencias = [];
+    try {
+      if (!nuvem2.codigo()) return { pendencias };
+      for (const g of Save2.listar()) versoes2.guardar(g.id, "antes-sair");
+      const locais = mundos2.listarLocal().filter((m) => m.id !== ID_LOCAL12);
+      for (const m of locais) mundos2.guardarVersao(m.id, "antes-sair");
+      const ok = await nuvem2.sincronizar({ forcar: true });
+      if (!ok || nuvem2.estado() !== "ok" || nuvem2.pendentes()) pendencias.push("chars");
+      await Promise.all(locais.map((m) => mundos2.sincronizar(m.id, { forcar: true })));
+      for (const m of locais) {
+        const w = mundos2.pegar(m.id);
+        if (w && (!w.registro.subido || w.pendente)) {
+          pendencias.push("mundos");
+          break;
+        }
+      }
+      for (let i = 0; i < 4 && filaCheia(); i++) {
+        await Promise.all([versoes2.enviar(), mundos2.enviarVersoes()]);
+        if (filaCheia()) await ESPERA(800);
+      }
+      if (filaCheia()) pendencias.push("c\xF3pias");
+    } catch {
+      pendencias.push("nuvem");
+    }
+    return { pendencias };
+  }
+  async function sair2() {
+    try {
+      await nuvem2.sairFamilia();
+      try {
+        for (const k of APAGA) localStorage.removeItem(k);
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith("gatinho-juntou-")) localStorage.removeItem(k);
+        }
+      } catch {
+      }
+      mundos2.reiniciar();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return { preparar, sair: sair2 };
+}
+
 // js/main.js
 document.title = "Avel\xE3, o gatinho sobrevivente \u2014 v" + VERSION;
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {
@@ -12118,6 +13691,15 @@ var mundos = null;
 var aovivo = null;
 var servidorMundo = null;
 var painelServidor = null;
+var online = null;
+var saida = null;
+var espectando = false;
+var painelEspectador = null;
+var seguirChar = null;
+var seguirAchou = false;
+var seguirAte = 0;
+var camYEsp = 0;
+var semSalvarChar = false;
 var tInicio = Date.now();
 var telaAtual = null;
 var telaObj = null;
@@ -12137,6 +13719,19 @@ var ultimoInput = { dx: 0, dy: 0, correndo: false, agachado: false };
 var emCriador = false;
 var camAlvo = null;
 var camAltura = 1.6;
+var veuToque = null;
+var veuToqueT = 0;
+function bloquearToque() {
+  if (!veuToque) {
+    veuToque = document.createElement("div");
+    veuToque.id = "veu-toque";
+  }
+  document.body.appendChild(veuToque);
+  clearTimeout(veuToqueT);
+  veuToqueT = setTimeout(() => {
+    veuToque.remove();
+  }, 400);
+}
 function limparUI() {
   if (!uiRoot) return;
   while (uiRoot.firstChild) uiRoot.removeChild(uiRoot.firstChild);
@@ -12164,7 +13759,7 @@ function salvarMundoAgora() {
 }
 function gravarSalvo(idGato, idMundo, m) {
   if (!idMundo) return;
-  Save.salvarPosicao(idGato, idMundo, { x: m.x, z: m.z, rot: m.rot, agachado: m.agachado, sub: m.sub || null, zoom: m.zoom });
+  if (!semSalvarChar) Save.salvarPosicao(idGato, idMundo, { x: m.x, z: m.z, rot: m.rot, agachado: m.agachado, sub: m.sub || null, zoom: m.zoom });
   mundos.salvarEstado(idMundo, { descoberto: m.descoberto, cavernas: m.cavernas, arvores: m.arvores, ciclo: m.ciclo, mobs: m.mobs });
 }
 function montarSalvo(idGato) {
@@ -12179,6 +13774,12 @@ function montarSalvoMundo(idMundo) {
 function aoSairDaPagina() {
   if (telaAtual === "mapa") salvarMundoAgora();
 }
+window.addEventListener("pagehide", () => {
+  try {
+    online?.parar();
+  } catch (e) {
+  }
+});
 window.addEventListener("pagehide", aoSairDaPagina);
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") aoSairDaPagina();
@@ -12233,10 +13834,19 @@ function desmontarMapa() {
   }
   idMundoMapa = null;
   aovivo.sair();
+  online?.parar();
   if (painelServidor) {
     painelServidor.destruir();
     painelServidor = null;
   }
+  if (painelEspectador) {
+    painelEspectador.destruir();
+    painelEspectador = null;
+  }
+  espectando = false;
+  seguirChar = null;
+  seguirAchou = false;
+  semSalvarChar = false;
   servidorMundo = null;
   if (camera) camera.far = 200;
   document.body.classList.remove("em-servidor");
@@ -12254,7 +13864,7 @@ function desmontarMapa() {
     zoomAtual = null;
   }
   capaMini = null;
-  document.body.classList.remove("em-mapa", "em-sub");
+  document.body.classList.remove("em-mapa", "em-sub", "em-espectador");
   trocando = false;
   if (mapaAtual && scene) {
     try {
@@ -12292,6 +13902,7 @@ function irPara(nome, opcoes) {
   telaObj = null;
   telaAtual = null;
   limparUI();
+  bloquearToque();
   if (nome === "menu") {
     const aoEscolher = (acao, dado) => {
       if (acao === "continuar") {
@@ -12307,10 +13918,15 @@ function irPara(nome, opcoes) {
         mostrarSobre();
       } else if (acao === "familia") {
         irPara("familia");
+      } else if (acao === "em-jogo-entrar" && dado) {
+        const u2 = parContinuar();
+        jogar(u2 ? u2.char : Save.atual()?.id, dado.mundo);
+      } else if (acao === "em-jogo-assistir" && dado) {
+        assistir(dado.mundo, dado.char);
       }
     };
     const u = parContinuar();
-    telaObj = criarMenu({ container: uiRoot, scene, aoEscolher, nuvem, continuar: u ? { charNome: u.charNome, mundoNome: u.mundoNome } : null });
+    telaObj = criarMenu({ container: uiRoot, scene, aoEscolher, nuvem, continuar: u ? { charNome: u.charNome, mundoNome: u.mundoNome } : null, observarEmJogo });
     telaAtual = "menu";
     if (nuvem && Date.now() - tInicio > 1500) nuvem.sincronizar();
   } else if (nome === "gatos") {
@@ -12322,15 +13938,18 @@ function irPara(nome, opcoes) {
           jogar(id);
         }
       },
-      aoEditar: (id) => irPara("criador", { gato: Save.pegar(id)?.look || null, id }),
+      aoEditar: (id) => irPara("criador", { gato: Save.pegar(id)?.look || null, id, dono: Save.pegar(id)?.dono || "" }),
       aoNovo: () => irPara("criador", { gato: null, id: null, voltarPara: "gatos" }),
       aoCopias: (id, nome2) => irPara("versoes", { id, nome: nome2 }),
+      aoDuplicar: (id) => {
+        if (Save.duplicar(id)) irPara("gatos");
+      },
       aoVoltar: () => irPara("menu")
     });
     telaAtual = "gatos";
     if (nuvem && Date.now() - tInicio > 1500) nuvem.sincronizar();
   } else if (nome === "familia") {
-    telaObj = criarTelaFamilia({ container: uiRoot, nuvem, versoes, aoVoltar: () => irPara("menu") });
+    telaObj = criarTelaFamilia({ container: uiRoot, nuvem, versoes, saida, aoVoltar: () => irPara("menu") });
     telaAtual = "familia";
   } else if (nome === "mundos") {
     const g = Save.atual();
@@ -12342,6 +13961,7 @@ function irPara(nome, opcoes) {
       aoJogar: (idMundo) => {
         if (g) jogar(g.id, idMundo);
       },
+      aoAssistir: (idMundo) => assistir(idMundo),
       aoServidor: (idMundo) => abrirServidor(idMundo),
       aoVoltar: () => irPara("menu")
     });
@@ -12352,12 +13972,17 @@ function irPara(nome, opcoes) {
     telaObj = criarEscolherMundo({
       container: uiRoot,
       nome: g?.look?.nome || "Avel\xE3",
-      carregar: async () => (await mundos.listar()).filter((m) => mundoAceita(m, tipo)),
+      carregar: async () => (await mundos.listar()).map((m) => ({ ...m, aceita: mundoAceita(m, tipo), para: tiposDoMundo(m) })),
+      // 0.8.6: os que não são do tipo do char aparecem apagados
       aoEscolher: (idMundo) => jogar(g.id, idMundo),
-      aoCriar: () => {
-        const r = mundos.criar({ nome: "Mundo " + (mundos.listarLocal().length + 1) });
+      aoAssistir: (idMundo) => assistir(idMundo),
+      aoServir: (idMundo) => abrirServidor(idMundo),
+      sugestaoNome: "Mundo " + (mundos.listarLocal().length + 1),
+      aoCriar: (nomeMundo) => {
+        const r = mundos.criar({ nome: nomeMundo });
         if (r) jogar(g.id, r.id);
       },
+      // 0.8.6: só depois de pedir o nome (a tela cuida)
       aoVoltar: () => irPara("gatos")
     });
     telaAtual = "escolher";
@@ -12366,8 +13991,8 @@ function irPara(nome, opcoes) {
     telaAtual = "versoes";
   } else if (nome === "criador") {
     const idGato = opcoes.id ?? null;
-    const aoSalvar = (gato) => {
-      const id = Save.salvarGato(gato, idGato);
+    const aoSalvar = (gato, dono) => {
+      const id = Save.salvarGato(gato, idGato, { dono });
       if (id) Save.escolher(id);
       jogar(id, void 0, { usarAtual: true });
     };
@@ -12376,6 +14001,7 @@ function irPara(nome, opcoes) {
       container: uiRoot,
       scene,
       gatoInicial: opcoes.gato || null,
+      donoInicial: opcoes.dono || "",
       aoSalvar,
       aoVoltar
     });
@@ -12383,7 +14009,12 @@ function irPara(nome, opcoes) {
   } else if (nome === "mapa") {
     const gato = opcoes.gato || gatoPadrao();
     opcoesMapaAtual = { gato };
-    const servidor = opcoes.servidor || null;
+    const servidor = opcoes.servidor || opcoes.espectador || null;
+    espectando = !!opcoes.espectador;
+    seguirChar = espectando ? opcoes.seguir || null : null;
+    seguirAchou = false;
+    seguirAte = 0;
+    camYEsp = 0;
     servidorMundo = servidor;
     idGatoMapa = servidor ? null : opcoes.id ?? null;
     idMundoMapa = servidor || null;
@@ -12391,7 +14022,7 @@ function irPara(nome, opcoes) {
     const salvo = servidor ? montarSalvoMundo(servidor) : idGatoMapa ? montarSalvo(idGatoMapa) : null;
     if (!salvo) idMundoMapa = null;
     const zIni = Number.isFinite(salvo?.zoom) ? salvo.zoom : ZOOM_INICIAL;
-    zoomAtual = servidor ? criarZoom({ min: 40, max: 190, inicial: 110 }) : criarZoom({ min: 3, max: 16, inicial: zIni });
+    zoomAtual = espectando ? criarZoom({ min: 3, max: 28, inicial: 10 }) : servidor ? criarZoom({ min: 40, max: 190, inicial: 110 }) : criarZoom({ min: 3, max: 16, inicial: zIni });
     distCam = zoomAtual.get();
     tempoSalvar = 0;
     document.body.classList.add("em-mapa");
@@ -12400,11 +14031,12 @@ function irPara(nome, opcoes) {
       camera.far = 400;
       camera.updateProjectionMatrix();
     }
+    if (espectando) document.body.classList.add("em-espectador");
     mapaAtual = criarMapa(scene, gato, salvo);
     if (servidor) {
       mapaAtual.semGato = true;
       mapaAtual.gatoGroup.visible = false;
-      scene.fog = null;
+      if (!espectando) scene.fog = null;
       mapaAtual.focoMundo = { x: 0, z: 0 };
     }
     if (mapaAtual && mapaAtual.gatoGroup && scene) {
@@ -12428,7 +14060,7 @@ function irPara(nome, opcoes) {
     hud.id = "hud";
     const nomeEl = document.createElement("div");
     nomeEl.className = "hud-nome";
-    nomeEl.textContent = servidor ? "Servidor do mundo" : gato.nome || "Gatinho";
+    nomeEl.textContent = espectando ? "Assistindo" : servidor ? "Servidor do mundo" : gato.nome || "Gatinho";
     hud.appendChild(nomeEl);
     const minimapa = document.createElement("canvas");
     minimapa.id = "minimapa";
@@ -12482,22 +14114,29 @@ function irPara(nome, opcoes) {
     aoVivoEl.className = "hud-aovivo";
     aoVivoEl.hidden = true;
     hud.appendChild(aoVivoEl);
-    if (servidor) {
+    if (espectando) {
+      painelEspectador = criarPainelEspectador({ aoSeguir: (c) => {
+        seguirChar = c || null;
+        seguirAchou = false;
+        seguirAte = 0;
+      } });
+      hud.appendChild(painelEspectador.elemento);
+    } else if (servidor) {
       painelServidor = criarPainelServidor({ aoAssumir: () => aovivo.avocar() });
       hud.appendChild(painelServidor.elemento);
     }
     uiRoot.appendChild(hud);
-    if (!servidor) {
+    if (!servidor || espectando) {
       inputAtual = criarInput(uiRoot, { agachado: !!salvo?.agachado });
       inputAtual.onPular(() => {
-        if (alvoAtivo() && !trocando) alvoAtivo().acao("pular");
+        if (alvoAtivo() && !trocando && !espectando) alvoAtivo().acao("pular");
       });
       inputAtual.onAcao(() => {
-        if (alvoAtivo() && !trocando) alvoAtivo().usarAcao();
+        if (alvoAtivo() && !trocando && !espectando) alvoAtivo().usarAcao();
       });
     }
     telaAtual = "mapa";
-    iniciarAoVivo(mapaNovo, gato, servidor);
+    iniciarAoVivo(mapaNovo, gato, servidor, espectando);
   }
 }
 var entrando = false;
@@ -12554,6 +14193,28 @@ async function jogar(id, mundoId, { usarAtual = false } = {}) {
       avisar2("Esse mundo n\xE3o aceita esse tipo de gatinho.");
       return;
     }
+    if (await mundos.verificar(mundoId) === "revogado") {
+      avisar2(AVISO_REVOGADO);
+      if (telaAtual === "mundos") irPara("mundos");
+      return;
+    }
+    const nomeChar = g.look?.nome || "O gatinho";
+    const comNuvem = !!nuvem.codigo() && location.protocol !== "file:";
+    if (comNuvem) {
+      const o = await online.consultar(g.id);
+      if (o) {
+        const r = await perguntar(nomeChar + " est\xE1 brincando no outro aparelho \u2014 assistir ou jogar por aqui?", [["assistir", "Assistir"], ["aqui", "Jogar por aqui"], ["voltar", "Voltar"]]);
+        if (r === "assistir") {
+          await entrarEspectador(o.mundo || mundoId, g.id);
+          return;
+        }
+        if (r !== "aqui") return;
+        if (o.mundo === mundoId) {
+          const p = await online.posicaoAoVivo(mundoId, o.uid);
+          if (p && !p.sub) Save.salvarPosicao(g.id, mundoId, { ...g.posicoes && g.posicoes[mundoId] || {}, x: p.x, z: p.z, rot: p.r, agachado: false, sub: null });
+        }
+      }
+    }
     if (g.mundoAtual !== mundoId) Save.definirMundoAtual(g.id, mundoId);
     try {
       localStorage.setItem(LER_ULTIMO, JSON.stringify({ char: g.id, mundo: mundoId }));
@@ -12562,29 +14223,111 @@ async function jogar(id, mundoId, { usarAtual = false } = {}) {
     if (nuvem.codigo() && location.protocol !== "file:") {
       await Promise.race([mundos.sincronizar(mundoId, { forcar: true }), espera(w.estado || !w.registro.subido ? 1500 : 6e3)]);
     }
+    if (comNuvem && w.registro.subido) {
+      await Promise.race([online.jogando(g.id, { mundo: mundoId, nome: nomeChar, aoTomado: () => {
+        if (telaAtual !== "mapa" || idGatoMapa !== g.id) return;
+        avisar2(nomeChar + " foi jogar em outro aparelho");
+        semSalvarChar = true;
+        entrarEspectador(mundoId, g.id);
+      } }), espera(1500)]);
+    }
     irPara("mapa", { gato: g.look, id: g.id, mundo: mundoId });
   } finally {
     entrando = false;
   }
 }
-async function iniciarAoVivo(mapa, gato, servidor) {
+function perguntar(texto, botoes) {
+  return new Promise((resolve) => {
+    const div = document.createElement("div");
+    div.className = "tela pausa pergunta";
+    const p = document.createElement("p");
+    p.className = "pergunta-texto";
+    p.textContent = texto;
+    div.appendChild(p);
+    for (const [valor, rotulo] of botoes) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "botao-grande pergunta-botao";
+      b.dataset.valor = valor;
+      b.textContent = rotulo;
+      b.addEventListener("click", () => {
+        div.remove();
+        resolve(valor);
+      });
+      div.appendChild(b);
+    }
+    uiRoot.appendChild(div);
+    bloquearToque();
+  });
+}
+function observarEmJogo(cb) {
+  let ultima = [];
+  const emitir = () => cb(ultima.map((e) => ({ char: e.char, charNome: e.nome || "Gatinho", mundo: e.mundo, mundoNome: mundos.pegar(e.mundo)?.registro.nome || "" })));
+  const parar = online.observar((lista) => {
+    ultima = lista;
+    emitir();
+    for (const e of lista) if (!mundos.pegar(e.mundo)) mundos.obter(e.mundo).then((r) => {
+      if (r && ultima === lista) emitir();
+    });
+  });
+  return () => {
+    ultima = [];
+    parar();
+  };
+}
+async function prepararMundoSemChar(mundoId, verbo) {
+  await esperarJuntar();
+  if (mundoId && !mundos.pegar(mundoId)) await mundos.obter(mundoId);
+  let w = mundoId && mundos.pegar(mundoId);
+  if (w && await mundos.verificar(mundoId) === "revogado") {
+    avisar2(AVISO_REVOGADO);
+    if (telaAtual === "mundos") irPara("mundos");
+    return false;
+  }
+  if (w && nuvem.codigo() && location.protocol !== "file:") {
+    await Promise.race([mundos.sincronizar(mundoId, { forcar: true }), espera(w.estado || !w.registro.subido ? 1500 : 6e3)]);
+    w = mundos.pegar(mundoId);
+  }
+  if (!w || !w.registro.subido || !nuvem.codigo()) {
+    avisar2("Para " + verbo + ", o mundo precisa estar na nuvem (\u2601\uFE0F).");
+    return false;
+  }
+  return true;
+}
+async function entrarEspectador(mundoId, seguir) {
+  if (!await prepararMundoSemChar(mundoId, "assistir")) return;
+  irPara("mapa", { gato: gatoPadrao(), espectador: mundoId, seguir: seguir || null });
+}
+async function assistir(mundoId, seguir) {
+  if (entrando) return;
+  entrando = true;
+  try {
+    await entrarEspectador(mundoId, seguir);
+  } finally {
+    entrando = false;
+  }
+}
+async function iniciarAoVivo(mapa, gato, servidor, espectador) {
   try {
     const id = idMundoMapa;
     const w = id && mundos.pegar(id);
     if (!nuvem.codigo() || location.protocol === "file:" || !w || !w.registro.subido) return;
-    const ok = await aovivo.iniciar({ mapa, gato, mundoId: id, semGato: !!servidor, char: idGatoMapa || "" });
+    const ok = await aovivo.iniciar({ mapa, gato, mundoId: id, semGato: !!servidor, char: idGatoMapa || "", papel: espectador ? "espectador" : servidor ? "servidor" : "jogador" });
     if (ok && mapaAtual !== mapa) aovivo.sair();
   } catch (e) {
   }
 }
-function abrirServidor(idMundo) {
-  const w = mundos.pegar(idMundo);
-  if (!w || !w.registro.subido || !nuvem.codigo()) {
-    avisar2("Para abrir sem gato, o mundo precisa estar na nuvem (\u2601\uFE0F).");
-    return;
+async function abrirServidor(idMundo) {
+  if (entrando) return;
+  entrando = true;
+  try {
+    if (!await prepararMundoSemChar(idMundo, "servir")) return;
+    irPara("mapa", { gato: gatoPadrao(), servidor: idMundo });
+  } finally {
+    entrando = false;
   }
-  irPara("mapa", { gato: gatoPadrao(), servidor: idMundo });
 }
+var AVISO_REVOGADO = "Este mundo n\xE3o est\xE1 mais dispon\xEDvel.";
 function avisar2(texto) {
   const d = document.createElement("div");
   d.className = "aviso";
@@ -12609,12 +14352,14 @@ function atualizarHudAoVivo(ms) {
   const n = i.gatos + (servidorMundo ? 0 : 1);
   el.textContent = "ao vivo \xB7 " + n + (n === 1 ? " gato" : " gatos") + (i.atrasoMs != null ? " \xB7 " + i.atrasoMs + " ms" : "") + (i.papel === "gestor" ? " \xB7 \u{1F451}" : "");
   el.hidden = false;
+  if (painelEspectador) painelEspectador.atualizar({ mundo: mundos.pegar(idMundoMapa)?.registro.nome || "", jogadores: aovivo.jogadores().map((j) => ({ char: j.char, nome: j.nome })), seguindo: seguirChar });
   if (painelServidor) {
     const p = aovivo.presentes(), g = p.find((x) => x.gestor);
     painelServidor.atualizar({ mundo: mundos.pegar(idMundoMapa)?.registro.nome || "", gestorNome: g ? g.gato ? g.nome : "servidor \xB7 " + g.nome : "", souGestor: i.papel === "gestor", gatos: p.filter((x) => x.gato).map((x) => ({ nome: x.nome, atrasoMs: x.eu ? null : x.atrasoMs })), assumido: aovivo.avocado() });
   }
 }
 function mostrarTelaSimples(div) {
+  bloquearToque();
   if (telaObj && typeof telaObj.destruir === "function") {
     try {
       telaObj.destruir();
@@ -12763,6 +14508,31 @@ function desenharMinimapa() {
   desenharNevoa(ctx, alvo, canvas.width);
   desenharGato(ctx, alvo, canvas.width);
 }
+function atualizarCameraEspectador(dt, estado) {
+  const f = mapaAtual.focoMundo;
+  let alvo = null;
+  if (seguirChar) {
+    alvo = aovivo.posicaoChar(seguirChar);
+    if (!alvo) {
+      if (!seguirAchou && !seguirAte && aovivo.ativo()) seguirAte = performance.now() + 8e3;
+      if (seguirAchou || seguirAte && performance.now() > seguirAte) seguirChar = null;
+    }
+  }
+  if (alvo) {
+    if (!alvo.sub) {
+      const k = seguirAchou ? Math.min(1, dt * 8) : 1;
+      f.x += (alvo.x - f.x) * k;
+      f.z += (alvo.z - f.z) * k;
+    }
+    seguirAchou = true;
+  } else {
+    const v = 3 + distCam * 0.8;
+    const lim = (Number.isFinite(mapaAtual.LIMITE) ? mapaAtual.LIMITE : 60) - 1;
+    f.x = Math.max(-lim, Math.min(lim, f.x + estado.dx * v * dt));
+    f.z = Math.max(-lim, Math.min(lim, f.z + estado.dy * v * dt));
+  }
+  camYEsp += (mapaAtual.mundo.altura(f.x, f.z) - camYEsp) * Math.min(1, dt * 6);
+}
 if (renderer) {
   renderer.setAnimationLoop((tempoMs) => {
     const dt = ultimoTempo ? Math.min((tempoMs - ultimoTempo) / 1e3, 0.1) : 0;
@@ -12793,18 +14563,20 @@ if (renderer) {
     if (telaAtual === "mapa" && !pausado && mapaAtual) {
       const alvo = alvoAtivo();
       const estado = inputAtual && !trocando ? inputAtual.estado() : { dx: 0, dy: 0, correndo: false };
+      const estadoMapa = espectando ? { dx: 0, dy: 0, correndo: false } : estado;
       try {
         if (!trocando) {
-          if (mapaAtual.sub) mapaAtual.sub.atualizar(dt, estado, tempoSegundos);
-          else atualizarMapa(mapaAtual, dt, estado, tempoSegundos);
+          if (mapaAtual.sub) mapaAtual.sub.atualizar(dt, estadoMapa, tempoSegundos);
+          else atualizarMapa(mapaAtual, dt, estadoMapa, tempoSegundos);
         }
+        if (espectando) atualizarCameraEspectador(dt, estado);
       } catch (e) {
       }
       if (camera && alvo.gatoGroup) {
         const g = servidorMundo ? mapaAtual.focoMundo : alvo.gatoGroup.position;
         if (zoomAtual) distCam += (zoomAtual.get() - distCam) * Math.min(1, dt * 10);
         alvo.ajustarZoom(distCam);
-        const cy = servidorMundo ? 0 : alvo.camY;
+        const cy = espectando ? camYEsp : servidorMundo ? 0 : alvo.camY;
         camera.position.set(g.x, cy + 0.3 + 0.8 * distCam, g.z + 0.6 * distCam);
         camera.lookAt(g.x, cy + 0.3, g.z);
       }
@@ -12836,6 +14608,8 @@ nuvem = criarNuvem({
 });
 versoes = criarVersoes({ nuvem });
 mundos = criarMundos({ nuvem });
+online = criarOnline({ nuvem });
+saida = criarSaida({ nuvem, versoes, mundos, Save });
 mundos.migrarSave07(versoes);
 nuvem.ganchos.depoisSync = () => {
   mundos.juntar(versoes);
@@ -12894,6 +14668,25 @@ window.GATINHO = {
   },
   get aovivo() {
     return aovivo;
+  },
+  get online() {
+    return online;
+  },
+  assistir,
+  abrirServidor,
+  get espectando() {
+    return espectando;
+  },
+  get seguindo() {
+    return seguirChar;
+  },
+  get foco() {
+    return mapaAtual && mapaAtual.focoMundo ? { x: mapaAtual.focoMundo.x, z: mapaAtual.focoMundo.z } : null;
+  },
+  seguir(c) {
+    seguirChar = c || null;
+    seguirAchou = false;
+    seguirAte = 0;
   },
   get servidor() {
     return servidorMundo;
