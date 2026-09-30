@@ -26,7 +26,7 @@ function hexVertices(x, y) {
 var VERSION, TILE, COLS, ROWS, GRID, GCOLS, GROWS, MAP_W, MAP_H, ROAD_W, HEX_APOTHEM, HEX_R, SPEEDS, LEVEL_CAP, MAP_LEVEL_CAP, WAVE_GOLD, WAVE_CURVE_T, WAVE_CURVE, DIFFICULTY, DIFFICULTY_ORDER, MAP_HP, SLOT_LEVELS, SIM_DT, WAVE_INTERVAL, WAVES_PER_MAP, START_LIVES, SELL_RATIO, LVL_DMG, FIRE_DOT_DUR, LVL_UPG, TIER_HP, TIER_REW, TIER_SPEED, TIER_COLOR, DENSITY, HP_FLOOR, TOWERS_BASE, TOWERS, CHAIN_FALLOFF, W, ROCKETS, TANK_W, HOWITZER_W, WIRE_W, WIRE_THICK_W, STAKES_W, STEEL_PLATE_W, FOG_W, FLASH_W, NEW_W, NW, FIRE, RANGE_MUL, FAMILIES, FAM_INFO, FAM, weapon, BASES, A, SUP_COST, ATK_COST, ADDONS, ENEMIES, RES, THEMES, MAPS;
 var init_data = __esm({
   "js/core/data.js"() {
-    VERSION = "6.31.0";
+    VERSION = "6.31.1";
     TILE = 40;
     COLS = 48;
     ROWS = 30;
@@ -1117,6 +1117,7 @@ ${(e.stack || "").split("\n").slice(1, 4).join("\n")}`);
     TD.step(2);
     assert(G._cine && G._cine.type === "enter", "chegada: cena n\xE3o come\xE7ou");
     assert(G._effSpeed() === 0.5, "chegada: tempo n\xE3o caiu para 0,5\xD7");
+    assert(TD.ui.classList.contains("cine") && getComputedStyle($("#topbar")).pointerEvents === "none", "chegada: HUD n\xE3o sumiu");
     assert(TD.world._goal.dist === 9, "chegada: c\xE2mera n\xE3o aproximou");
     TD.step(70);
     assert(G._cine.phase >= 1, "chegada: gesto n\xE3o aconteceu");
@@ -1128,6 +1129,7 @@ ${(e.stack || "").split("\n").slice(1, 4).join("\n")}`);
     assert(!G._cine, "chegada: cena n\xE3o terminou");
     assert(Math.abs(TD.world._goal.dist - goal0.dist) < 1e-6, "chegada: c\xE2mera n\xE3o voltou");
     assert(G._cineOverride == null, "chegada: velocidade n\xE3o voltou");
+    assert(!TD.ui.classList.contains("cine"), "chegada: HUD n\xE3o voltou");
     b.dist = 200;
     TD.step(2);
     s._shooterId = t.id;
@@ -10829,6 +10831,7 @@ var Game = class {
     scene.phase = 0;
     this._cineGoalSaved = { yaw: this.world._goal.yaw, pitch: this.world._goal.pitch, dist: this.world._goal.dist, target: this.world._goal.target.clone() };
     this._cineOverride = 0.5;
+    this.app.ui.classList.add("cine");
     if (scene.type === "enter") {
       this.world.follow(() => this.big.pos(scene.uid) || (() => {
         const b = this.sim.enemyByUid.get(scene.uid);
@@ -10958,6 +10961,7 @@ var Game = class {
     }
     this._cine = null;
     this._cineGoalSaved = null;
+    this.app.ui.classList.remove("cine");
     if (this._cineNext) {
       const n = this._cineNext;
       this._cineNext = null;
@@ -11101,6 +11105,7 @@ var Game = class {
     }
   }
   destroy() {
+    this.app.ui.classList.remove("cine");
     for (let i = 0; i < this._ls.length; i++) {
       const [target, ev, fn, opts] = this._ls[i];
       target.removeEventListener(ev, fn, opts);

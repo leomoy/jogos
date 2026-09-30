@@ -982,6 +982,9 @@ h1.title.poster { text-transform: uppercase; }
   .lore-flowrow { flex-direction: column; }
   .lore-flowarrow { transform: rotate(90deg); }
 }
+
+/* 6.31.1: cinemática de chefe — esconde o HUD (fica o aviso com o nome) */
+#ui.cine > :not(#toast) { opacity: 0; pointer-events: none; }
 </style>
   <script type="importmap">
   {
@@ -1000,6 +1003,6 @@ h1.title.poster { text-transform: uppercase; }
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js');
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
   </script>
-  <script type="module" src="torre-6.31.0.js"></script>
+  <script type="module" src="torre-6.31.1.js"></script>
 </body>
 </html>
