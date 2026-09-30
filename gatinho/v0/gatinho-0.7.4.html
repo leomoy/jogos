@@ -1021,6 +1021,14 @@ canvas,
 .nuvem-icone { font-size: 1.5rem; line-height: 1; }
 .nuvem-sinal { position: absolute; right: -4px; bottom: -4px; min-width: 20px; height: 20px; border-radius: 10px; background: #ffffff; border: 2px solid #cdd6f0; font-size: 0.7rem; line-height: 16px; text-align: center; color: #3a3a55; box-sizing: border-box; }
 .nuvem-sinal:empty { display: none; }
+
+/* 18. Instalar e aviso sem internet (0.7.4) */
+.botao-instalar { position: absolute; top: 10px; left: 10px; width: 56px; height: 56px; min-width: 0; padding: 0; border-radius: 16px; border: 3px solid #cdd6f0; background: #ffffff; box-shadow: 0 3px 0 #cdd6f0; font-family: inherit; cursor: pointer; pointer-events: auto; display: flex; flex-direction: column; gap: 0; align-items: center; justify-content: center; }
+.botao-instalar[hidden] { display: none; }
+.instalar-icone { font-size: 1.4rem; line-height: 1; }
+.instalar-texto { font-size: 0.65rem; line-height: 1; color: #3a3a55; font-weight: 700; }
+@media (max-height: 520px) { .botao-instalar { top: 6px; left: 6px; width: 48px; height: 48px; } }
+
 .tela-familia { gap: 12px; padding: 16px; overflow: hidden; }
 .familia-painel { display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(100%, 420px); box-sizing: border-box; padding: 14px 16px; background: #ffffff; border: 3px solid #cdd6f0; border-radius: 18px; box-shadow: 0 4px 0 #cdd6f0; color: #3a3a55; }
 .familia-painel h2 { margin: 0; font-size: 1.5rem; color: #5b6bb0; }
@@ -1441,11 +1449,94 @@ var init_smoke = __esm({
   }
 });
 
+// js/instalar.js
+var evento = null;
+var ouvintes = /* @__PURE__ */ new Set();
+function avisar() {
+  for (const fn of ouvintes) {
+    try {
+      fn();
+    } catch (e) {
+    }
+  }
+}
+function podeInstalar() {
+  if (!evento) return false;
+  try {
+    const instalado = window.matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches;
+    return !instalado;
+  } catch (e) {
+    return true;
+  }
+}
+async function instalar() {
+  if (!evento) return;
+  const e = evento;
+  evento = null;
+  avisar();
+  try {
+    await e.prompt();
+    await e.userChoice;
+  } catch (err) {
+  }
+}
+function aoMudar(fn) {
+  ouvintes.add(fn);
+  return () => {
+    ouvintes.delete(fn);
+  };
+}
+async function semInternetPronto(versao) {
+  try {
+    if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
+      return false;
+    }
+    return await caches.has("gatinho-" + versao);
+  } catch (e) {
+    return false;
+  }
+}
+function aoControlar(fn) {
+  if (!navigator.serviceWorker) {
+    return () => {
+    };
+  }
+  try {
+    const handler = () => {
+      try {
+        fn();
+      } catch (e) {
+      }
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", handler);
+    return () => {
+      try {
+        navigator.serviceWorker.removeEventListener("controllerchange", handler);
+      } catch (e) {
+      }
+    };
+  } catch (e) {
+    return () => {
+    };
+  }
+}
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    evento = e;
+    avisar();
+  });
+  window.addEventListener("appinstalled", () => {
+    evento = null;
+    avisar();
+  });
+}
+
 // js/main.js
 import * as THREE10 from "three";
 
 // js/data.js
-var VERSION = "0.7.3";
+var VERSION = "0.7.4";
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
 var CORES_GATO = {
@@ -1936,6 +2027,25 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2 }) {
   nuvemBtn.appendChild(nuvemSinal);
   nuvemBtn.addEventListener("click", () => aoEscolher("familia"));
   tela.appendChild(nuvemBtn);
+  const instalarBtn = document.createElement("button");
+  instalarBtn.className = "botao-instalar";
+  instalarBtn.type = "button";
+  instalarBtn.setAttribute("aria-label", "Instalar o jogo");
+  const instalarIcone = document.createElement("span");
+  instalarIcone.className = "instalar-icone";
+  instalarIcone.textContent = "\u{1F4F2}";
+  instalarBtn.appendChild(instalarIcone);
+  const instalarTexto = document.createElement("span");
+  instalarTexto.className = "instalar-texto";
+  instalarTexto.textContent = "Instalar";
+  instalarBtn.appendChild(instalarTexto);
+  instalarBtn.addEventListener("click", () => instalar());
+  tela.appendChild(instalarBtn);
+  function atualizarInstalar() {
+    instalarBtn.hidden = !podeInstalar();
+  }
+  atualizarInstalar();
+  const soltarInstalar = aoMudar(atualizarInstalar);
   function atualizarSinal() {
     if (!nuvem2 || !nuvem2.codigo()) {
       nuvemSinal.textContent = "";
@@ -1970,10 +2080,18 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2 }) {
   versao.className = "versao";
   versao.textContent = "v" + VERSION;
   tela.appendChild(versao);
+  async function atualizarPronto() {
+    const pronto = await semInternetPronto(VERSION);
+    versao.textContent = "v" + VERSION + (pronto ? " \xB7 \u2708\uFE0F sem internet \u2713" : "");
+  }
+  atualizarPronto();
+  const soltarControle = aoControlar(atualizarPronto);
   container.appendChild(tela);
   function atualizar() {
   }
   function destruir() {
+    soltarInstalar();
+    soltarControle();
     while (container.firstChild) {
       container.removeChild(container.firstChild);
     }
