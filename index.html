@@ -5,48 +5,88 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jogos</title>
 <style>
-  :root { --bg: #f4f1ea; --fg: #222; --card: #fff; --line: #ddd; --acc: #7c4dff; }
-  @media (prefers-color-scheme: dark) { :root { --bg: #16161d; --fg: #eee; --card: #22222c; --line: #33333f; --acc: #b39dff; } }
+  :root { --bg: #f4f1ea; --fg: #222; --card: #fff; --line: #e2ddd2; --acc: #7c4dff; --acc2: #ede7ff; --muted: #6b6b6b; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #16161d; --fg: #eee; --card: #22222c; --line: #33333f; --acc: #b39dff; --acc2: #2e2946; --muted: #a0a0ad; } }
+  * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
-  main { max-width: 640px; margin: 0 auto; padding: 24px 16px; }
-  h1 { margin: 0 0 16px; }
-  .jogo { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
-  .jogo h2 { margin: 0 0 4px; font-size: 1.2rem; }
-  .jogo p { margin: 0 0 12px; opacity: .8; }
-  a.btn { display: inline-block; background: var(--acc); color: #fff; text-decoration: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; }
-  small { opacity: .6; }
-  ul.versoes { list-style: none; padding: 0; margin: 16px 0 0; }
+  main { max-width: 680px; margin: 0 auto; padding: 28px 16px 40px; }
+  h1 { margin: 0; font-size: 1.9rem; }
+  .sub { margin: 4px 0 24px; color: var(--muted); }
+  .jogo { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .topo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .jogo h2 { margin: 0; font-size: 1.25rem; }
+  .versao { background: var(--acc2); color: var(--acc); font-weight: 700; font-size: .85rem; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+  .desc { margin: 8px 0 14px; color: var(--muted); }
+  .acoes { display: flex; gap: 10px 16px; flex-wrap: wrap; align-items: center; }
+  a.btn { display: inline-block; background: var(--acc); color: #fff; text-decoration: none; padding: 11px 22px; border-radius: 10px; font-weight: 700; }
+  a.link { color: var(--acc); text-decoration: none; font-size: .92rem; }
+  .novidades { margin: 14px 0 0; padding: 12px 14px; background: var(--acc2); border-radius: 10px; font-size: .95rem; }
+  .novidades b { color: var(--acc); }
+  details.cortina { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+  details.cortina summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; color: var(--muted); font-weight: 600; padding: 4px 0; }
+  details.cortina summary::-webkit-details-marker { display: none; }
+  details.cortina summary::before { content: '▸'; transition: transform .2s; }
+  details.cortina[open] summary::before { transform: rotate(90deg); }
+  details.cortina summary .n { background: var(--line); color: var(--fg); border-radius: 999px; font-size: .78rem; padding: 1px 8px; }
+  ul.versoes { list-style: none; padding: 0; margin: 6px 0 0; }
   ul.versoes li { padding: 10px 0; border-top: 1px solid var(--line); }
+  ul.versoes li:first-child { border-top: 0; }
   ul.versoes a { color: var(--acc); text-decoration: none; }
-  ul.versoes span { opacity: .75; font-size: .92rem; }
+  ul.versoes span { color: var(--muted); font-size: .92rem; }
+  .nota { color: var(--muted); font-size: .85rem; margin: 6px 0 0; }
 </style>
 </head>
 <body>
 <main>
   <h1>Jogos</h1>
-  <div class="jogo">
-    <h2>Torre — tower defense</h2>
-    <p>A evolução do jogo, versão por versão (a 6 é a atual). Funciona no celular e no PC.</p>
-    <a class="btn" href="torre/">Jogar a versão atual (6.31.0)</a>
-    <ul class="versoes">
-    <li><a href="torre/v6/"><b>6.31 — Cinemáticas dos chefes</b></a><br><span>Quando um chefe chega, o tempo desacelera e a câmera vai até ele; quando morre, a câmera acompanha o tiro da torre que o derrubou. Para mandar a alguém: <a href="torre/v6/torre-6.31.0.html">baixar o arquivo único para jogar sem internet</a>. Em desenvolvimento.</span></li>
-    <li><a href="torre/v6/"><b>6.30 — Instala e joga offline</b></a><br><span>Abre pelo navegador com o Three.js pela CDN e pode ser instalado na tela inicial (PWA): depois da primeira visita, joga sem internet. Para mandar a alguém: <a href="torre/v6/torre-6.31.0.html">baixar o arquivo único para jogar sem internet</a>. Em desenvolvimento.</span></li>
-    <li><a href="torre/v6/torre-6.29.1.html"><b>6.29 — Chegada e bala de prata dos chefes</b></a><br><span>1916 contra a Horda do Vazio: torres de frente e retaguarda, bloqueios, inimigos que atacam torres, modelos e efeitos novos, relatório da partida; três domínios (solo, aéreo, espectral), resistências simples, suportes em ciclos, dificuldade agora definida por quantas torres completas vencem (calibrada com o bot), líderes e o Senhor do Vazio chegam de fora do mapa e só morrem por um tiro direto marcado como "bala de prata".</span></li>
-    <li><a href="torre/v5/Torres-v5.html"><b>5 — Um arquivo, celular e PC</b></a><br><span>O jogo inteiro num só arquivo, com toque e layout para celular.</span></li>
-    <li><a href="torre/v4/index.html"><b>4 — Jogabilidade</b></a><br><span>Famílias de dano e resistências, addons novos (antiaéreo, ácido, piche, minas), estrada que alarga e afunila.</span></li>
-    <li><a href="torre/v3/index.html"><b>3 — Visual e Escala</b></a><br><span>Visual PBR, câmera livre, estrada larga, torres-base com addons, vozes das torres e dos chefes.</span></li>
-    <li><a href="torre/v2/index.html"><b>2 — 3D e Horda</b></a><br><span>Primeira versão em 3D (Three.js): 3–4× mais inimigos e tiros na tela.</span></li>
-    <li><a href="torre/v1/index.html"><b>1 — O começo</b></a><br><span>2D (Phaser): 10 mapas, 10 torres, 20 inimigos.</span></li>
-    </ul>
-  </div>
-  <div class="jogo">
-    <h2>Avelã, o gatinho sobrevivente</h2>
-    <p>O jogo da Luísa: ela escreve a história, decide como se joga e dirige a arte. Funciona no celular e no PC.</p>
-    <a class="btn" href="gatinho/">Jogar a versão atual (0.8.2) — dá para instalar e jogar sem internet</a>
-    <ul class="versoes">
-    <li><a href="gatinho/v0/gatinho-0.8.2.html"><b>0.7 — Os mesmos gatinhos no celular e no computador</b></a><br><span>Cópias de cada gatinho (dá para voltar no tempo) e cópia de tudo num arquivo. Código da família (☁️ no menu) guarda os gatinhos na nuvem e leva para outro aparelho, sem nenhum dado pessoal. Joga com o celular deitado ou em pé. Árvores grandes para subir pelos galhos, com mirante no topo. Cavernas para entrar e explorar. Ratos, peixes, cervos e jacarés que fogem se virem o gatinho (à noite enxergam menos); o bote pega ratos e peixes. O mapa vai se abrindo conforme o gatinho anda. Instala na tela inicial e joga sem internet; pular em pedras e troncos, relevo e rio no leito. Botões de dia, anoitecendo e noite; cauda mais fina; tamanho do laço e da gravata. Floresta maior com rio correndo, travessias, vento nas árvores, zoom e mapa completo; o mundo fica salvo; andar, correr, pular, esgueirar e se esconder nos arbustos. Vários gatinhos salvos (jogar, editar, apagar) e tamanho pequeno, médio ou grande. Pular, bote, esconder, deitar e lamber refeitos; cauda de gato de verdade. Galope, pulo, bote, comer, susto, farejar e olhar em volta, aproveitados de animações de raposa. Tela de montar refeita para o celular: amostras grandes em faixas, sem janelas por cima; lacinho na cabeça. Gatinho 3D animado: cor, padrão (sólido, rajado, face/corpo, meias, malhado, pontas), cor de cada parte, olhos e gravatinha ou lacinho. Modo Brincar para ver ele sentar, miar, pular, esconder, deitar e se lamber. Em desenvolvimento.</span></li>
-    </ul>
-  </div>
+  <p class="sub">Feitos em casa. Funcionam no celular e no PC; os mais novos instalam na tela inicial e jogam sem internet.</p>
+
+  <!-- CARTAO:gatinho — ao publicar: trocar a versão no selo, no link do arquivo único e nas novidades; a novidade anterior desce para a cortina -->
+  <article class="jogo">
+    <div class="topo"><h2>Avelã, o gatinho sobrevivente</h2><span class="versao">v0.8.2</span></div>
+    <p class="desc">O jogo da Luísa: ela escreve a história, decide como se joga e dirige a arte.</p>
+    <div class="acoes">
+      <a class="btn" href="gatinho/">▶ Jogar</a>
+      <a class="link" href="gatinho/v0/gatinho-0.8.2.html">arquivo único (abre com internet)</a>
+    </div>
+    <p class="novidades"><b>Novidades da 0.8:</b> cópias de cada gatinho — dá para voltar no tempo — e cópia de tudo num arquivo.</p>
+    <details class="cortina">
+      <summary>Versões anteriores <span class="n">7</span></summary>
+      <ul class="versoes">
+        <li><b>0.7 — Nuvem, deitado e instalar</b><br><span>Código da família (☁️ no menu) guarda os gatinhos na nuvem e leva para outro aparelho, sem nenhum dado pessoal. Joga com o celular deitado ou em pé. Botão Instalar e aviso quando já dá para jogar sem internet.</span></li>
+        <li><b>0.6 — Árvores, cavernas, bichos, dia e noite</b><br><span>Árvores grandes para subir pelos galhos, com mirante no topo. Cavernas para explorar. Ratos, peixes, cervos e jacarés que fogem se virem o gatinho (à noite enxergam menos); o bote pega ratos e peixes. O mapa vai se abrindo conforme o gatinho anda. Instala na tela inicial e joga sem internet; pular em pedras e troncos. Dia, anoitecendo e noite; cauda mais fina; tamanho do laço e da gravata.</span></li>
+        <li><b>0.5 — Vários gatinhos e a floresta</b><br><span>Meus gatinhos (jogar, editar, apagar) e tamanho pequeno, médio ou grande. Pular, bote, esconder, deitar e lamber refeitos; esgueirar. Floresta com relevo, rio correndo, travessias, vento nas árvores, zoom e mapa completo; o mundo fica salvo.</span></li>
+        <li><b>0.4 — Animações de verdade</b><br><span>Galope, pulo, bote, comer, susto, farejar e olhar em volta, aproveitados de animações de raposa.</span></li>
+        <li><b>0.3 — Montar no celular</b><br><span>Tela de montar refeita para o celular: amostras grandes em faixas, sem janelas por cima; lacinho na cabeça.</span></li>
+        <li><b>0.2 — Gatinho 3D</b><br><span>Gatinho 3D animado: cor, padrão (sólido, rajado, face/corpo, meias, malhado, pontas), cor de cada parte, olhos e gravatinha ou lacinho. Modo Brincar para ver ele sentar, miar, pular, esconder, deitar e se lamber.</span></li>
+        <li><b>0.1 — O começo</b><br><span>Menu, criar e editar o gatinho, mapa de teste com joystick.</span></li>
+      </ul>
+      <p class="nota">O jogo publicado é sempre o mais novo; as versões 0.x anteriores ficam só na descrição.</p>
+    </details>
+  </article>
+
+  <!-- CARTAO:torre — ao publicar: idem (selo, arquivo único, novidades; a anterior desce para a cortina) -->
+  <article class="jogo">
+    <div class="topo"><h2>Torre — tower defense</h2><span class="versao">v6.31.0</span></div>
+    <p class="desc">1916 contra a Horda do Vazio. Hobby e aprendizado: onde o método nasceu.</p>
+    <div class="acoes">
+      <a class="btn" href="torre/">▶ Jogar</a>
+      <a class="link" href="torre/v6/torre-6.31.0.html">arquivo único para jogar sem internet</a>
+    </div>
+    <p class="novidades"><b>Novidades da 6.31:</b> cinemáticas dos chefes — quando um chefe chega, o tempo desacelera e a câmera vai até ele; quando morre, a câmera acompanha o tiro da torre que o derrubou.</p>
+    <details class="cortina">
+      <summary>Versões anteriores <span class="n">7</span></summary>
+      <ul class="versoes">
+        <li><a href="torre/v6/torre-6.30.1.html"><b>6.30 — Instala e joga offline</b></a><br><span>Abre pelo navegador com o Three.js pela CDN e pode ser instalado na tela inicial (PWA): depois da primeira visita, joga sem internet.</span></li>
+        <li><a href="torre/v6/torre-6.29.1.html"><b>6.29 — Chegada e bala de prata dos chefes</b></a><br><span>1916 contra a Horda do Vazio: torres de frente e retaguarda, bloqueios, inimigos que atacam torres, modelos e efeitos novos, relatório da partida; três domínios (solo, aéreo, espectral), resistências simples, suportes em ciclos, dificuldade agora definida por quantas torres completas vencem (calibrada com o bot), líderes e o Senhor do Vazio chegam de fora do mapa e só morrem por um tiro direto marcado como "bala de prata".</span></li>
+        <li><a href="torre/v5/Torres-v5.html"><b>5 — Um arquivo, celular e PC</b></a><br><span>O jogo inteiro num só arquivo, com toque e layout para celular.</span></li>
+        <li><a href="torre/v4/index.html"><b>4 — Jogabilidade</b></a><br><span>Famílias de dano e resistências, addons novos (antiaéreo, ácido, piche, minas), estrada que alarga e afunila.</span></li>
+        <li><a href="torre/v3/index.html"><b>3 — Visual e Escala</b></a><br><span>Visual PBR, câmera livre, estrada larga, torres-base com addons, vozes das torres e dos chefes.</span></li>
+        <li><a href="torre/v2/index.html"><b>2 — 3D e Horda</b></a><br><span>Primeira versão em 3D (Three.js): 3–4× mais inimigos e tiros na tela.</span></li>
+        <li><a href="torre/v1/index.html"><b>1 — O começo</b></a><br><span>2D (Phaser): 10 mapas, 10 torres, 20 inimigos.</span></li>
+      </ul>
+    </details>
+  </article>
 </main>
 </body>
 </html>
