@@ -1,8 +1,8 @@
 // Service Worker do Gatinho (PWA): guarda o jogo e as bibliotecas da CDN na primeira abertura e serve do cache.
 // O build.mjs troca os dois marcadores abaixo (versão e lista de URLs) antes de gravar dist/pwa/sw.js.
 
-const VERSAO = "0.7.4";
-const CDN = ["https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.js","https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/dist/rapier.mjs","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-app.js","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-auth.js","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-firestore.js","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-app-check.js","https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/loaders/GLTFLoader.js","https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/utils/BufferGeometryUtils.js","https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/utils/SkeletonUtils.js"];
+const VERSAO = "0.8.2";
+const CDN = ["https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.js","https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/dist/rapier.mjs","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-app.js","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-auth.js","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-firestore.js","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-app-check.js","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-database.js","https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/loaders/GLTFLoader.js","https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/utils/BufferGeometryUtils.js","https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/utils/SkeletonUtils.js"];
 
 const CACHE = 'gatinho-' + VERSAO;
 const ARQUIVOS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];

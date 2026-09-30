@@ -1043,6 +1043,166 @@ canvas,
 @media (max-height: 520px) { .tela-familia { gap: 6px; padding: 8px 16px; } .familia-painel { gap: 6px; padding: 8px 14px; } .familia-painel h2 { font-size: 1.15rem; } .familia-codigo { font-size: 1.7rem; } .familia-painel .botao-grande, .familia-painel .botao, .familia-voltar { min-height: 44px; padding: 6px 14px; font-size: 1rem; } .familia-campo { min-height: 44px; font-size: 1.3rem; } .botao-nuvem { top: 6px; right: 6px; width: 42px; height: 42px; } }
 /* paisagem: com o campo do código aberto, some a frase de apresentação para caber sem rolar */
 @media (max-height: 520px) { .familia-painel:has(.familia-bloco-codigo:not([style*="none"])) > p:first-of-type { display: none; } }
+
+/* 17. Mundo ao vivo (0.8.1) */
+.hud-aovivo { position:absolute; top:62px; left:50%; transform:translateX(-50%); padding:2px 8px; font-size:0.68rem; font-weight:700; color:#3a3a55; background:rgba(255,255,255,0.7); border-radius:10px; white-space:nowrap; pointer-events:none; }
+.hud-aovivo[hidden] { display:none; }
+.aviso { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:70; max-width:90vw; padding:10px 20px; font-size:1.1rem; font-weight:700; color:#3a3a55; background:#fff; border:3px solid #cdd6f0; border-radius:16px; box-shadow:0 4px 0 #cdd6f0; text-align:center; pointer-events:none; }
+.botao-visitar { background:#d7f2dd; border-color:#8fd3a0; box-shadow:0 5px 0 #8fd3a0; }
+
+/* versoes.css — tela "Cópias" */
+
+.tela-versoes {
+  gap: 12px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.versoes-painel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 420px);
+  max-height: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 3px solid #cdd6f0;
+  border-radius: 18px;
+  box-shadow: 0 4px 0 #cdd6f0;
+  color: #3a3a55;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.versoes-painel h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #5b6bb0;
+}
+
+.versoes-guardar {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.versoes-aviso {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.versoes-aviso:empty {
+  display: none;
+}
+
+.versoes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.versao-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 6px 10px;
+  border: 2px solid #cdd6f0;
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: #f6f8ff;
+}
+
+.versao-quando {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.versao-motivo {
+  font-size: 0.95rem;
+  min-width: 0;
+}
+
+.versao-nuvem {
+  grid-column: 3;
+}
+
+.versao-voltar-tempo,
+.versao-confirma {
+  grid-column: 1 / -1;
+}
+
+.versao-voltar-tempo {
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.versao-confirma {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.versao-confirma-texto {
+  flex: 1 1 100%;
+  font-size: 0.95rem;
+}
+
+.versao-sim,
+.versao-nao {
+  flex: 1;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.versoes-voltar {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.versoes-vazio {
+  margin: 0;
+  opacity: 0.7;
+  text-align: center;
+}
+
+@media (max-height: 520px) {
+  .tela-versoes {
+    gap: 6px;
+    padding: 8px 16px;
+  }
+
+  .versoes-painel {
+    gap: 6px;
+    padding: 8px 14px;
+  }
+
+  .versoes-painel h2 {
+    font-size: 1.15rem;
+  }
+
+  .versoes-guardar,
+  .versoes-voltar {
+    min-height: 44px;
+    padding: 6px 14px;
+    font-size: 1rem;
+  }
+}
+
+/* 0.8.2 — Família: botões de cópia; Cópias: botões menores no celular deitado */
+.familia-copias { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+@media (max-height: 520px) {
+  .familia-copias { flex-direction: row; gap: 8px; }
+  .familia-copias .botao { flex: 1 1 0; min-width: 0; }
+  .versao-voltar-tempo, .versao-sim, .versao-nao { min-height: 38px; padding: 4px 10px; font-size: 0.95rem; }
+}
 </style>
 <script type="importmap">{
   "imports": {
@@ -1053,6 +1213,7 @@ canvas,
     "firebase/auth": "https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-auth.js",
     "firebase/firestore": "https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-firestore.js",
     "firebase/app-check": "https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-app-check.js",
+    "firebase/database": "https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-database.js",
     "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js": "https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-app.js"
   }
 }</script>
@@ -1536,7 +1697,7 @@ if (typeof window !== "undefined") {
 import * as THREE10 from "three";
 
 // js/data.js
-var VERSION = "0.7.4";
+var VERSION = "0.8.2";
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
 var CORES_GATO = {
@@ -1807,7 +1968,8 @@ function lerBruto() {
         look: normalizarLook(g.look),
         criado: g.criado || "",
         atualizado: g.atualizado || "",
-        mundo: g.mundo || null
+        mundo: g.mundo || null,
+        formato: Number.isInteger(g.formato) ? g.formato : 1
       }));
       let atual = dados.atual != null ? String(dados.atual) : null;
       if (!gatos.some((g) => g.id === atual)) {
@@ -1833,7 +1995,8 @@ function lerBruto() {
           look,
           criado: dados.criado || agora,
           atualizado: dados.atualizado || agora,
-          mundo: null
+          mundo: null,
+          formato: 1
         }],
         apagados: {}
       };
@@ -1855,6 +2018,8 @@ function gravar(dados) {
 var Save = {
   aoMudar: null,
   // aviso de mudança (a nuvem escuta): (id) => void
+  aoSalvarMundo: null,
+  // 0.8.2: (id) => void, antes de gravar o mundo (as versões guardam a 'diario')
   listar() {
     const dados = lerBruto();
     if (!dados || !Array.isArray(dados.gatos)) return [];
@@ -1888,6 +2053,7 @@ var Save = {
         if (g) {
           g.look = lookFinal;
           g.atualizado = agora;
+          g.formato = 1;
           if (gravar(dados)) {
             try {
               Save.aoMudar?.(g.id);
@@ -1904,7 +2070,8 @@ var Save = {
         look: lookFinal,
         criado: agora,
         atualizado: agora,
-        mundo: null
+        mundo: null,
+        formato: 1
       });
       dados.atual = novoIdGato;
       if (gravar(dados)) {
@@ -1963,6 +2130,10 @@ var Save = {
       const alvo = String(id);
       const g = dados.gatos.find((x) => x && x.id === alvo);
       if (!g) return false;
+      try {
+        Save.aoSalvarMundo?.(alvo);
+      } catch {
+      }
       g.mundo = mundo && typeof mundo === "object" && !Array.isArray(mundo) ? mundo : null;
       g.atualizado = agoraISO();
       const ok = gravar(dados);
@@ -2008,7 +2179,7 @@ var Save = {
 };
 
 // js/menu.js
-function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2 }) {
+function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, aovivo: aovivo2 }) {
   const tela = document.createElement("div");
   tela.className = "tela tela-menu";
   const titulo = document.createElement("h1");
@@ -2076,6 +2247,18 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2 }) {
   criarBotao("Meus gatinhos", "gatos");
   criarBotao("Op\xE7\xF5es", "opcoes");
   criarBotao("Sobre", "sobre");
+  let morto = false;
+  if (aovivo2 && nuvem2 && nuvem2.codigo()) {
+    aovivo2.verificar().then((info) => {
+      if (!info || morto) return;
+      const b = document.createElement("button");
+      b.className = "botao-grande botao-visitar";
+      b.type = "button";
+      b.textContent = "\u{1F43E} Visitar o mundo de " + info.nome;
+      b.addEventListener("click", () => aoEscolher("visitar", info));
+      botoes.prepend(b);
+    });
+  }
   const versao = document.createElement("div");
   versao.className = "versao";
   versao.textContent = "v" + VERSION;
@@ -2090,6 +2273,7 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2 }) {
   function atualizar() {
   }
   function destruir() {
+    morto = true;
     soltarInstalar();
     soltarControle();
     while (container.firstChild) {
@@ -3745,11 +3929,11 @@ function criarBolinhas(look) {
 function formatarData(criado) {
   const d = new Date(criado);
   if (isNaN(d.getTime())) return "";
-  const dia = String(d.getDate()).padStart(2, "0");
+  const dia2 = String(d.getDate()).padStart(2, "0");
   const mes = String(d.getMonth() + 1).padStart(2, "0");
-  return "Criado em " + dia + "/" + mes;
+  return "Criado em " + dia2 + "/" + mes;
 }
-function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar }) {
+function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar, aoCopias }) {
   const elemento = document.createElement("div");
   elemento.className = "tela tela-gatos";
   const titulo = document.createElement("h2");
@@ -3805,6 +3989,14 @@ function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar }) {
       btnEditar.textContent = "Editar";
       btnEditar.addEventListener("click", () => aoEditar(gato.id));
       botoes.appendChild(btnEditar);
+      if (aoCopias) {
+        const btnCopias = document.createElement("button");
+        btnCopias.className = "botao gato-copias";
+        btnCopias.type = "button";
+        btnCopias.textContent = "C\xF3pias";
+        btnCopias.addEventListener("click", () => aoCopias(gato.id, nome));
+        botoes.appendChild(btnCopias);
+      }
       const btnApagar = document.createElement("button");
       btnApagar.className = "botao gato-apagar";
       btnApagar.type = "button";
@@ -8254,12 +8446,14 @@ function carregarFirebase() {
     import("firebase/app"),
     import("firebase/auth"),
     import("firebase/firestore"),
-    import("firebase/app-check")
-  ]).then(([appMod, authMod, firestoreMod, appCheckMod]) => ({
+    import("firebase/app-check"),
+    import("firebase/database")
+  ]).then(([appMod, authMod, firestoreMod, appCheckMod, databaseMod]) => ({
     app: appMod,
     auth: authMod,
     firestore: firestoreMod,
-    appCheck: appCheckMod
+    appCheck: appCheckMod,
+    database: databaseMod
   })).catch((erro) => {
     _cache = null;
     throw erro;
@@ -8392,9 +8586,11 @@ var CONFIG_REAL = {
   projectId: "gatinho-avela",
   storageBucket: "gatinho-avela.firebasestorage.app",
   messagingSenderId: "321141496950",
-  appId: "1:321141496950:web:01dbb7692a4c46c6081357"
+  appId: "1:321141496950:web:01dbb7692a4c46c6081357",
+  databaseURL: "https://gatinho-avela-default-rtdb.firebaseio.com"
+  // Realtime Database (0.8: mundos ao vivo)
 };
-var CONFIG_EMULADOR = { apiKey: "demo", projectId: "demo-gatinho", appId: "1:1:web:1" };
+var CONFIG_EMULADOR = { apiKey: "demo", projectId: "demo-gatinho", appId: "1:1:web:1", databaseURL: "http://127.0.0.1:9000?ns=demo-gatinho-default-rtdb" };
 function agoraISO2() {
   try {
     return (/* @__PURE__ */ new Date()).toISOString();
@@ -8446,7 +8642,7 @@ function comTempo(fn) {
 }
 function paraDoc(x) {
   if (x.apagado) return { apagado: true, atualizado: x.atualizado || agoraISO2() };
-  const d = { look: limpar(x.look || {}), mundo: x.mundo ? limpar(x.mundo) : null, atualizado: x.atualizado || agoraISO2() };
+  const d = { look: limpar(x.look || {}), mundo: x.mundo ? limpar(x.mundo) : null, atualizado: x.atualizado || agoraISO2(), formato: Number.isInteger(x.formato) ? x.formato : 1 };
   if (x.criado) d.criado = x.criado;
   return d;
 }
@@ -8462,6 +8658,13 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
   let timer = null;
   let base = null;
   const pendentes = /* @__PURE__ */ new Set();
+  const ganchos = { antesJuntar: null, depoisEnvio: null };
+  const avisar3 = (nome, ...a) => {
+    try {
+      if (ganchos[nome]) ganchos[nome](...a);
+    } catch {
+    }
+  };
   function mudar(novo) {
     estado = novo;
     if (novo === "ok") ultima = Date.now();
@@ -8485,11 +8688,13 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
       }
       const auth = m.auth.getAuth(app);
       const db = m.firestore.getFirestore(app);
+      const rtdb = m.database.getDatabase(app);
       if (local) {
         m.auth.connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
         m.firestore.connectFirestoreEmulator(db, "127.0.0.1", 8080);
+        m.database.connectDatabaseEmulator(rtdb, "127.0.0.1", 9e3);
       }
-      return { m, auth, db, fs: m.firestore };
+      return { m, auth, db, rtdb, fs: m.firestore };
     })();
     base.catch(() => {
       base = null;
@@ -8541,6 +8746,10 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     const bruto = lerBruto() || { v: 3, atual: null, gatos: [], apagados: {} };
     const r = mesclar({ gatos: bruto.gatos, apagados: bruto.apagados || {} }, remotos);
     if (r.mudouLocal) {
+      for (const g of bruto.gatos) {
+        const n = r.gatos.find((x) => x.id === g.id);
+        if (n && n.atualizado !== g.atualizado) avisar3("antesJuntar", g.id);
+      }
       const atual = r.gatos.some((g) => g.id === bruto.atual) ? bruto.atual : r.gatos.length ? r.gatos[0].id : null;
       gravar({ ...bruto, v: 3, gatos: r.gatos, apagados: r.apagados, atual });
       try {
@@ -8551,6 +8760,7 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     if (run.cancelado) return;
     await escrever(b, r.enviar);
     for (const id of marcados) pendentes.delete(id);
+    avisar3("depoisEnvio");
     jaSincronizou = true;
   }
   function sincronizar({ forcar = false } = {}) {
@@ -8663,11 +8873,16 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     }
   };
   if (codigo) iniciarTimer();
-  return { estado: () => estado, codigo: () => codigo, ultima: () => ultima, criarFamilia, entrarFamilia, sincronizar, enviarPendentes };
+  async function conexao() {
+    if (noArquivo || !codigo) throw new Error("sem-familia");
+    const b = await iniciar();
+    return { m: b.m, rtdb: b.rtdb, db: b.db, fs: b.fs, uid: await login(b) };
+  }
+  return { conexao, ganchos, estado: () => estado, codigo: () => codigo, ultima: () => ultima, criarFamilia, entrarFamilia, sincronizar, enviarPendentes };
 }
 
 // js/familia.js
-function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar }) {
+function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes2 }) {
   const raiz = document.createElement("div");
   raiz.className = "tela tela-familia";
   const painel = document.createElement("div");
@@ -8697,6 +8912,55 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar }) {
     if (estado === "codigo-invalido") return "Esse c\xF3digo n\xE3o funciona mais.";
     return "";
   }
+  function adicionarCopias() {
+    if (!versoes2) return;
+    const linhaCopias = document.createElement("p");
+    linhaCopias.className = "familia-situacao";
+    linhaCopias.textContent = "";
+    const btnBaixar = document.createElement("button");
+    btnBaixar.className = "botao";
+    btnBaixar.type = "button";
+    btnBaixar.textContent = "Baixar c\xF3pia de tudo";
+    btnBaixar.addEventListener("click", () => {
+      versoes2.baixarCopia();
+      linhaCopias.textContent = "C\xF3pia baixada.";
+    });
+    const linhaBotoes = document.createElement("div");
+    linhaBotoes.className = "familia-copias";
+    linhaBotoes.appendChild(btnBaixar);
+    painel.appendChild(linhaBotoes);
+    const inputArquivo = document.createElement("input");
+    inputArquivo.type = "file";
+    inputArquivo.accept = ".json,application/json";
+    inputArquivo.style.display = "none";
+    painel.appendChild(inputArquivo);
+    const btnAbrir = document.createElement("button");
+    btnAbrir.className = "botao";
+    btnAbrir.type = "button";
+    btnAbrir.textContent = "Abrir uma c\xF3pia";
+    btnAbrir.addEventListener("click", () => {
+      inputArquivo.click();
+    });
+    linhaBotoes.appendChild(btnAbrir);
+    painel.appendChild(linhaCopias);
+    inputArquivo.addEventListener("change", async (e) => {
+      const arquivo = e.target.files[0];
+      if (!arquivo) return;
+      try {
+        const texto = await arquivo.text();
+        const confirmar = window.confirm("Abrir esta c\xF3pia? Os gatinhos que j\xE1 existem aqui ser\xE3o trocados pelos da c\xF3pia (a vers\xE3o de agora fica guardada).");
+        if (confirmar) {
+          const resultado = versoes2.importarTexto(texto);
+          const n = resultado.gatos;
+          linhaCopias.textContent = "Pronto! " + n + (n === 1 ? " gatinho" : " gatinhos") + " da c\xF3pia.";
+        }
+      } catch (err) {
+        linhaCopias.textContent = err.message;
+      } finally {
+        inputArquivo.value = "";
+      }
+    });
+  }
   function desenhar() {
     while (painel.firstChild) {
       painel.removeChild(painel.firstChild);
@@ -8710,6 +8974,7 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar }) {
       const p = document.createElement("p");
       p.textContent = "A nuvem funciona no site do jogo: leomoy.github.io/jogos/gatinho";
       painel.appendChild(p);
+      adicionarCopias();
       return;
     }
     const codigo = nuvem2.codigo();
@@ -8790,6 +9055,7 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar }) {
           bloco.style.display = "none";
         }
       });
+      adicionarCopias();
       return;
     }
     const rotulo = document.createElement("p");
@@ -8817,6 +9083,7 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar }) {
       nuvem2.sincronizar({ forcar: true });
     });
     painel.appendChild(btnSinc);
+    adicionarCopias();
   }
   function aoEstado() {
     if (linhaSituacao) {
@@ -8833,6 +9100,833 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar }) {
       raiz.parentNode?.removeChild(raiz);
     },
     aoEstado
+  };
+}
+
+// js/versoes.js
+var CHAVE_LOCAL = "gatinho-versoes";
+var CHAVE_FILA = "gatinho-versoes-pendentes";
+var CHAVE_ULTIMA = "gatinho-ultima-versao";
+var POR_GATO = 5;
+var NA_LISTA = 30;
+var FILA_MAX = 200;
+var TEMPO = 12e3;
+var ID_GATO = /^[A-Za-z0-9_-]{1,40}$/;
+var agoraISO3 = () => {
+  try {
+    return (/* @__PURE__ */ new Date()).toISOString();
+  } catch {
+    return "";
+  }
+};
+var limpar2 = (v) => JSON.parse(JSON.stringify(v));
+var copia = (v) => v == null ? v : JSON.parse(JSON.stringify(v));
+function lerJson(chave, padrao) {
+  try {
+    const v = JSON.parse(localStorage.getItem(chave));
+    return v && typeof v === "object" ? v : padrao;
+  } catch {
+    return padrao;
+  }
+}
+function gravarJson(chave, v) {
+  try {
+    localStorage.setItem(chave, JSON.stringify(v));
+  } catch {
+  }
+}
+function comTempo2(p) {
+  let t;
+  return Promise.race([p, new Promise((_, rej) => {
+    t = setTimeout(() => rej(new Error("tempo")), TEMPO);
+  })]).finally(() => clearTimeout(t));
+}
+function dia(iso) {
+  const d = new Date(iso);
+  return isNaN(d) ? "" : d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function novoIdVersao() {
+  let r = "";
+  for (let i = 0; i < 4; i++) r += "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)];
+  return "v" + Date.now().toString(36) + r;
+}
+function criarVersoes({ nuvem: nuvem2 }) {
+  let enviando = false;
+  let timerEnvio = null;
+  const lerTudo = () => lerJson(CHAVE_LOCAL, {});
+  const doGato = (id) => {
+    const l = lerTudo()[id];
+    return Array.isArray(l) ? l : [];
+  };
+  async function enviar() {
+    if (enviando) return;
+    let fila = lerJson(CHAVE_FILA, []);
+    if (!Array.isArray(fila) || !fila.length || !nuvem2.codigo()) return;
+    enviando = true;
+    try {
+      const b = await comTempo2(nuvem2.conexao());
+      const c = nuvem2.codigo();
+      for (const it of fila.slice()) {
+        const v = it.versao;
+        let sai = true;
+        try {
+          await comTempo2(b.fs.setDoc(b.fs.doc(b.db, "familias", c, "gatos", it.gatoId, "versoes", v.id), limpar2({
+            quando: v.quando,
+            motivo: v.motivo,
+            versaoJogo: v.versaoJogo,
+            formato: v.formato,
+            quem: b.uid,
+            dados: v.dados
+          })));
+        } catch (e) {
+          sai = !!e && e.code === "permission-denied";
+          if (!sai) break;
+        }
+        fila = lerJson(CHAVE_FILA, []).filter((x) => !(x.versao && x.versao.id === v.id));
+        gravarJson(CHAVE_FILA, fila);
+      }
+    } catch {
+    } finally {
+      enviando = false;
+    }
+  }
+  function logo() {
+    if (timerEnvio || !nuvem2.codigo()) return;
+    timerEnvio = setTimeout(() => {
+      timerEnvio = null;
+      enviar();
+    }, 600);
+  }
+  function guardar(gatoId, motivo) {
+    try {
+      const g = Save.pegar(gatoId);
+      if (!g) return null;
+      const v = {
+        id: novoIdVersao(),
+        quando: agoraISO3(),
+        motivo: String(motivo || "manual"),
+        versaoJogo: VERSION,
+        formato: 1,
+        dados: copia({ look: g.look, mundo: g.mundo || null, criado: g.criado || "", atualizado: g.atualizado || "", formato: g.formato || 1 })
+      };
+      const tudo = lerTudo();
+      tudo[g.id] = [v, ...doGato(g.id)].slice(0, POR_GATO);
+      gravarJson(CHAVE_LOCAL, tudo);
+      if (nuvem2.codigo() && location.protocol !== "file:") {
+        const fila = lerJson(CHAVE_FILA, []);
+        fila.push({ gatoId: g.id, versao: v });
+        gravarJson(CHAVE_FILA, fila.slice(-FILA_MAX));
+        logo();
+      }
+      return v;
+    } catch {
+      return null;
+    }
+  }
+  async function daNuvem(gatoId) {
+    const c = nuvem2.codigo();
+    if (!c || location.protocol === "file:") return [];
+    try {
+      const b = await comTempo2(nuvem2.conexao());
+      const { fs } = b;
+      const q = fs.query(fs.collection(b.db, "familias", c, "gatos", gatoId, "versoes"), fs.orderBy("quando", "desc"), fs.limit(NA_LISTA));
+      const snap = await comTempo2(fs.getDocs(q));
+      return snap.docs.map((d) => ({ ...d.data(), id: d.id }));
+    } catch {
+      return [];
+    }
+  }
+  async function listar(gatoId) {
+    try {
+      const locais = doGato(gatoId);
+      const remotas = await daNuvem(gatoId);
+      const naNuvem = new Set(remotas.map((v) => v.id));
+      const noAparelho = new Set(locais.map((v) => v.id));
+      const porId = /* @__PURE__ */ new Map();
+      for (const v of [...remotas, ...locais]) if (!porId.has(v.id)) porId.set(v.id, v);
+      return [...porId.values()].map((v) => ({ ...v, ondeFica: noAparelho.has(v.id) ? naNuvem.has(v.id) ? "os dois" : "aqui" : "nuvem" })).sort((a, b) => a.quando < b.quando ? 1 : a.quando > b.quando ? -1 : a.id < b.id ? 1 : -1).slice(0, NA_LISTA);
+    } catch {
+      return [];
+    }
+  }
+  function restaurar2(gatoId, versao) {
+    try {
+      if (!versao || !versao.dados || typeof versao.dados.look !== "object") return false;
+      guardar(gatoId, "antes-restaurar");
+      const bruto = lerBruto();
+      if (!bruto) return false;
+      const d = copia(versao.dados);
+      const agora = agoraISO3();
+      const novo = { id: String(gatoId), look: d.look, mundo: d.mundo || null, criado: d.criado || agora, atualizado: agora, formato: Number.isInteger(d.formato) ? d.formato : 1 };
+      const i = bruto.gatos.findIndex((g) => g.id === novo.id);
+      if (i >= 0) bruto.gatos[i] = novo;
+      else {
+        bruto.gatos.push(novo);
+        delete bruto.apagados[novo.id];
+      }
+      if (!gravar(bruto)) return false;
+      guardar(gatoId, "restaurado");
+      try {
+        Save.aoMudar?.(novo.id);
+      } catch {
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  function exportarTexto() {
+    const b = lerBruto() || { gatos: [], apagados: {} };
+    return JSON.stringify({ app: "gatinho", formato: 1, versaoJogo: VERSION, quando: agoraISO3(), gatos: b.gatos, apagados: b.apagados || {} });
+  }
+  function baixarCopia() {
+    try {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([exportarTexto()], { type: "application/json" }));
+      a.download = "gatinho-copia-" + dia(agoraISO3()) + ".json";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      }, 1e3);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  function importarTexto(texto) {
+    let dados;
+    try {
+      dados = JSON.parse(texto);
+    } catch {
+      dados = null;
+    }
+    if (!dados || dados.app !== "gatinho" || !Array.isArray(dados.gatos)) throw new Error("arquivo n\xE3o \xE9 uma c\xF3pia do gatinho");
+    const bruto = lerBruto() || { v: 3, atual: null, gatos: [], apagados: {} };
+    const agora = agoraISO3();
+    const ids = [];
+    for (const x of dados.gatos) {
+      if (!x || typeof x !== "object" || !ID_GATO.test(String(x.id)) || !x.look || typeof x.look !== "object") continue;
+      const id = String(x.id);
+      const novo = { id, look: copia(x.look), mundo: x.mundo && typeof x.mundo === "object" ? copia(x.mundo) : null, criado: typeof x.criado === "string" ? x.criado : agora, atualizado: agora, formato: Number.isInteger(x.formato) ? x.formato : 1 };
+      const i = bruto.gatos.findIndex((g) => g.id === id);
+      if (i >= 0) {
+        guardar(id, "antes-importar");
+        bruto.gatos[i] = novo;
+      } else bruto.gatos.push(novo);
+      delete bruto.apagados[id];
+      ids.push(id);
+    }
+    if (!bruto.atual && bruto.gatos.length) bruto.atual = bruto.gatos[0].id;
+    if (ids.length) {
+      gravar(bruto);
+      for (const id of ids) {
+        try {
+          Save.aoMudar?.(id);
+        } catch {
+        }
+      }
+    }
+    return { gatos: ids.length };
+  }
+  Save.aoSalvarMundo = (id) => {
+    const ultima = doGato(id)[0];
+    if (!ultima || dia(ultima.quando) !== dia(agoraISO3())) guardar(id, "diario");
+  };
+  if (nuvem2.ganchos) {
+    nuvem2.ganchos.antesJuntar = (id) => guardar(id, "antes-juntar");
+    nuvem2.ganchos.depoisEnvio = () => enviar();
+  }
+  try {
+    if (localStorage.getItem(CHAVE_ULTIMA) !== VERSION) {
+      for (const g of Save.listar()) guardar(g.id, "versao-nova");
+      localStorage.setItem(CHAVE_ULTIMA, VERSION);
+    }
+  } catch {
+  }
+  return { guardar, listar, restaurar: restaurar2, exportarTexto, baixarCopia, importarTexto, enviar };
+}
+
+// js/versoes-tela.js
+var MOTIVOS = {
+  "fim-sessao": "Depois de brincar",
+  "diario": "C\xF3pia do dia",
+  "manual": "Guardada por voc\xEA",
+  "antes-juntar": "Antes de juntar com a nuvem",
+  "antes-restaurar": "Antes de voltar no tempo",
+  "restaurado": "Voltou no tempo",
+  "versao-nova": "Antes do jogo novo",
+  "antes-importar": "Antes de abrir uma c\xF3pia"
+};
+function textoMotivo(motivo) {
+  if (motivo && MOTIVOS[motivo]) {
+    return MOTIVOS[motivo];
+  }
+  return "C\xF3pia";
+}
+function dataCurta(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) {
+    return "";
+  }
+  const dia2 = String(d.getDate()).padStart(2, "0");
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const hora = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return dia2 + "/" + mes + " " + hora + ":" + min;
+}
+function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
+  const raiz = document.createElement("div");
+  raiz.className = "tela tela-versoes";
+  const painel = document.createElement("div");
+  painel.className = "painel versoes-painel";
+  raiz.appendChild(painel);
+  const titulo = document.createElement("h2");
+  titulo.textContent = "C\xF3pias de " + gato.nome;
+  painel.appendChild(titulo);
+  const btnGuardar = document.createElement("button");
+  btnGuardar.className = "botao-grande versoes-guardar";
+  btnGuardar.type = "button";
+  btnGuardar.textContent = "Guardar uma c\xF3pia agora";
+  painel.appendChild(btnGuardar);
+  const aviso = document.createElement("p");
+  aviso.className = "versoes-aviso";
+  aviso.textContent = "";
+  painel.appendChild(aviso);
+  const lista = document.createElement("div");
+  lista.className = "versoes-lista";
+  painel.appendChild(lista);
+  const btnVoltar = document.createElement("button");
+  btnVoltar.className = "botao-grande versoes-voltar";
+  btnVoltar.type = "button";
+  btnVoltar.textContent = "Voltar";
+  btnVoltar.addEventListener("click", () => aoVoltar());
+  raiz.appendChild(btnVoltar);
+  let destruida = false;
+  function carregar() {
+    if (destruida) {
+      return;
+    }
+    while (lista.firstChild) {
+      lista.removeChild(lista.firstChild);
+    }
+    const procurando = document.createElement("p");
+    procurando.className = "versoes-vazio";
+    procurando.textContent = "Procurando\u2026";
+    lista.appendChild(procurando);
+    versoes2.listar(gato.id).then((itens) => {
+      if (destruida) {
+        return;
+      }
+      while (lista.firstChild) {
+        lista.removeChild(lista.firstChild);
+      }
+      if (!itens || itens.length === 0) {
+        const vazio = document.createElement("p");
+        vazio.className = "versoes-vazio";
+        vazio.textContent = "Ainda n\xE3o tem c\xF3pias.";
+        lista.appendChild(vazio);
+        return;
+      }
+      for (const versao of itens) {
+        lista.appendChild(montarItem(versao));
+      }
+    }).catch(() => {
+      if (destruida) {
+        return;
+      }
+      while (lista.firstChild) {
+        lista.removeChild(lista.firstChild);
+      }
+      const vazio = document.createElement("p");
+      vazio.className = "versoes-vazio";
+      vazio.textContent = "Ainda n\xE3o tem c\xF3pias.";
+      lista.appendChild(vazio);
+    });
+  }
+  function montarItem(versao) {
+    const item = document.createElement("div");
+    item.className = "versao-item";
+    const quando = document.createElement("span");
+    quando.className = "versao-quando";
+    quando.textContent = dataCurta(versao.quando);
+    item.appendChild(quando);
+    const motivo = document.createElement("span");
+    motivo.className = "versao-motivo";
+    motivo.textContent = textoMotivo(versao.motivo);
+    item.appendChild(motivo);
+    if (versao.ondeFica && versao.ondeFica !== "aqui") {
+      const nuvem2 = document.createElement("span");
+      nuvem2.className = "versao-nuvem";
+      nuvem2.textContent = "\u2601\uFE0F";
+      item.appendChild(nuvem2);
+    }
+    const btnVoltarTempo = document.createElement("button");
+    btnVoltarTempo.className = "botao versao-voltar-tempo";
+    btnVoltarTempo.type = "button";
+    btnVoltarTempo.textContent = "Voltar para esta";
+    item.appendChild(btnVoltarTempo);
+    btnVoltarTempo.addEventListener("click", () => {
+      if (destruida) {
+        return;
+      }
+      const data = dataCurta(versao.quando);
+      const confirma = document.createElement("div");
+      confirma.className = "versao-confirma";
+      const texto = document.createElement("span");
+      texto.className = "versao-confirma-texto";
+      texto.textContent = "A " + gato.nome + " vai voltar para como estava em " + data + ". Pode?";
+      confirma.appendChild(texto);
+      const btnSim = document.createElement("button");
+      btnSim.className = "botao versao-sim";
+      btnSim.type = "button";
+      btnSim.textContent = "Pode";
+      confirma.appendChild(btnSim);
+      const btnNao = document.createElement("button");
+      btnNao.className = "botao versao-nao";
+      btnNao.type = "button";
+      btnNao.textContent = "N\xE3o";
+      confirma.appendChild(btnNao);
+      item.replaceChild(confirma, btnVoltarTempo);
+      btnNao.addEventListener("click", () => {
+        if (destruida) {
+          return;
+        }
+        item.replaceChild(btnVoltarTempo, confirma);
+      });
+      btnSim.addEventListener("click", () => {
+        if (destruida) {
+          return;
+        }
+        const ok = versoes2.restaurar(gato.id, versao);
+        if (ok) {
+          aviso.textContent = "Pronto! " + gato.nome + " voltou no tempo.";
+        } else {
+          aviso.textContent = "N\xE3o deu certo.";
+        }
+        carregar();
+      });
+    });
+    return item;
+  }
+  btnGuardar.addEventListener("click", () => {
+    if (destruida) {
+      return;
+    }
+    versoes2.guardar(gato.id, "manual");
+    aviso.textContent = "C\xF3pia guardada!";
+    carregar();
+  });
+  container.appendChild(raiz);
+  carregar();
+  return {
+    elemento: raiz,
+    atualizar() {
+    },
+    destruir() {
+      destruida = true;
+      raiz.parentNode?.removeChild(raiz);
+    }
+  };
+}
+
+// js/aovivo.js
+var LIMITE_T = 3e4;
+var RELOGIO = 1e4;
+var ENVIO = 100;
+var PARADO = 1e3;
+var ATRASO_DESENHO = 150;
+var TEMPO_REDE = 5e3;
+var VERIFICA_FECHOU = 3e3;
+var arred = (v, k = 1e3) => Math.round(v * k) / k;
+var menorArco = (a, b) => {
+  let d = b - a;
+  while (d > Math.PI) d -= 2 * Math.PI;
+  while (d < -Math.PI) d += 2 * Math.PI;
+  return d;
+};
+function comTempo3(p, ms = TEMPO_REDE) {
+  let t;
+  const limite = new Promise((_, rej) => {
+    t = setTimeout(() => rej(new Error("tempo")), ms);
+  });
+  return Promise.race([p, limite]).finally(() => clearTimeout(t));
+}
+function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, aoFechar }) {
+  let S = null;
+  let sessao = 0;
+  let offset = 0;
+  let offsetLigado = false;
+  const agoraServ = () => Date.now() + offset;
+  const ref = (st, caminho) => st.D.ref(st.con.rtdb, "mundos/" + st.cod + "/" + caminho);
+  const nada = () => {
+  };
+  async function conectar() {
+    const con = await comTempo3(nuvem2.conexao());
+    if (!offsetLigado) {
+      offsetLigado = true;
+      const D = con.m.database;
+      try {
+        D.onValue(D.ref(con.rtdb, ".info/serverTimeOffset"), (s) => {
+          const v = s.val();
+          if (typeof v === "number") offset = v;
+        }, nada);
+      } catch {
+        offsetLigado = false;
+      }
+    }
+    return con;
+  }
+  async function verificar() {
+    try {
+      if (!nuvem2.codigo()) return null;
+      const con = await conectar();
+      const D = con.m.database;
+      const snap = await comTempo3(D.get(D.ref(con.rtdb, "mundos/" + nuvem2.codigo() + "/info")));
+      const v = snap.val();
+      if (!v || typeof v !== "object" || v.anfitriao === con.uid || typeof v.t !== "number") return null;
+      return agoraServ() - v.t < LIMITE_T ? v : null;
+    } catch {
+      return null;
+    }
+  }
+  async function iniciar(papel, mapa, gato) {
+    sair2();
+    const minha = sessao;
+    const con = await conectar();
+    if (minha !== sessao) return null;
+    const st = {
+      papel,
+      mapa,
+      gato,
+      con,
+      D: con.m.database,
+      cod: nuvem2.codigo(),
+      minha,
+      unsub: [],
+      timers: [],
+      remotos: /* @__PURE__ */ new Map(),
+      atraso: null,
+      pronto: false,
+      lookJson: JSON.stringify(gato),
+      m: 0,
+      a: "",
+      n: 0,
+      ult: null,
+      ultEnvio: 0,
+      catVisto: null
+    };
+    S = st;
+    return st;
+  }
+  function gravarInfo(st) {
+    const D = st.D;
+    st.cicloGravado = st.mapa.ciclo;
+    return D.set(ref(st, "info"), {
+      anfitriao: st.con.uid,
+      seed: st.mapa.seed,
+      nome: String(st.gato.nome || "Gatinho").slice(0, 20),
+      ciclo: String(st.mapa.ciclo || "dia").slice(0, 12),
+      t: D.serverTimestamp()
+    });
+  }
+  function registrarDesconexao(st) {
+    const D = st.D;
+    const caminhos = ["gatos/" + st.con.uid].concat(st.papel === "anfitriao" ? ["bichos", "info"] : []);
+    for (const c of caminhos) D.onDisconnect(ref(st, c)).remove().catch(nada);
+  }
+  function ligarComum(st) {
+    const D = st.D;
+    const pos = ref(st, "gatos");
+    const receber = (snap) => {
+      try {
+        receberGato(st, snap);
+      } catch {
+      }
+    };
+    st.unsub.push(
+      D.onChildAdded(pos, receber, nada),
+      D.onChildChanged(pos, receber, nada),
+      D.onChildRemoved(pos, (snap) => {
+        const r = st.remotos.get(snap.key);
+        if (r) {
+          descartarRemoto(st, r);
+          st.remotos.delete(snap.key);
+        }
+      }, nada)
+    );
+    let jaConectou = false;
+    st.unsub.push(D.onValue(D.ref(st.con.rtdb, ".info/connected"), (s) => {
+      if (s.val() !== true) return;
+      if (jaConectou && S === st) {
+        registrarDesconexao(st);
+        if (st.papel === "anfitriao") gravarInfo(st).catch(nada);
+      }
+      jaConectou = true;
+    }, nada));
+    st.pronto = true;
+  }
+  async function abrir(mapa, gato) {
+    let st = null;
+    try {
+      st = await iniciar("anfitriao", mapa, gato);
+      if (!st) return false;
+      await comTempo3(gravarInfo(st));
+      if (S !== st) return false;
+      registrarDesconexao(st);
+      st.timers.push(setInterval(() => {
+        gravarInfo(st).catch(nada);
+      }, RELOGIO));
+      ligarComum(st);
+      return true;
+    } catch {
+      if (st && S === st) sair2();
+      return false;
+    }
+  }
+  async function entrar2(mapa, gato, info2) {
+    let st = null;
+    try {
+      st = await iniciar("visita", mapa, gato);
+      if (!st) return false;
+      st.info = info2;
+      st.tInfo = info2.t;
+      const D = st.D;
+      registrarDesconexao(st);
+      st.unsub.push(D.onValue(ref(st, "info"), (s) => {
+        if (S !== st) return;
+        const v = s.val();
+        if (!v || v.anfitriao !== info2.anfitriao || typeof v.t !== "number" || agoraServ() - v.t > LIMITE_T) {
+          fechou(st);
+          return;
+        }
+        st.tInfo = v.t;
+        if (v.ciclo !== st.mapa.ciclo && st.mapa.setCiclo) st.mapa.setCiclo(v.ciclo);
+      }, nada));
+      st.timers.push(setInterval(() => {
+        if (S === st && agoraServ() - st.tInfo > LIMITE_T) fechou(st);
+      }, VERIFICA_FECHOU));
+      ligarComum(st);
+      return true;
+    } catch {
+      if (st && S === st) sair2();
+      return false;
+    }
+  }
+  function fechou(st) {
+    if (S !== st) return;
+    const info2 = st.info;
+    sair2();
+    try {
+      if (aoFechar) aoFechar(info2);
+    } catch {
+    }
+  }
+  function enviar(st, agora) {
+    const mapa = st.mapa, alvo = mapa.sub || mapa, g = mapa.gatoGroup;
+    if (!g) return;
+    const sub = mapa.sub ? String(mapa.sub.tipo + ":" + mapa.sub.id).slice(0, 60) : "";
+    const e = {
+      x: arred(g.position.x),
+      y: arred(g.position.y),
+      z: arred(g.position.z),
+      r: arred(g.rotation.y),
+      m: arred(st.m, 100),
+      ag: !!alvo.agachado,
+      es: !!(alvo.acaoEst && alvo.acaoEst.modo === "escondido"),
+      n: st.n,
+      sub
+    };
+    const u = st.ult;
+    const mudou = !u || Math.hypot(e.x - u.x, e.z - u.z) > 0.02 || Math.abs(e.y - u.y) > 0.02 || Math.abs(menorArco(u.r, e.r)) > 0.02 || e.m !== u.m || e.ag !== u.ag || e.es !== u.es || e.n !== u.n || e.sub !== u.sub;
+    if (agora - st.ultEnvio < (mudou ? ENVIO : PARADO)) return;
+    st.ult = e;
+    st.ultEnvio = agora;
+    const doc = { look: st.lookJson, x: e.x, y: e.y, z: e.z, r: e.r, m: e.m, tc: Date.now() + offset };
+    if (e.ag) doc.ag = true;
+    if (e.es) doc.es = true;
+    if (st.n > 0) {
+      doc.a = st.a;
+      doc.n = st.n;
+    }
+    if (sub) doc.sub = sub;
+    st.D.set(ref(st, "gatos/" + st.con.uid), doc).catch(nada);
+  }
+  function vigiarGato(st) {
+    const cat = st.mapa.cat;
+    if (!cat || cat === st.catVisto) return;
+    st.catVisto = cat;
+    const play = cat.play, setMove = cat.setMove;
+    cat.play = (id) => {
+      st.a = String(id).slice(0, 20);
+      st.n++;
+      return play(id);
+    };
+    cat.setMove = (v) => {
+      st.m = v;
+      return setMove(v);
+    };
+  }
+  function receberGato(st, snap) {
+    if (S !== st) return;
+    const uid = snap.key;
+    if (uid === st.con.uid) return;
+    const v = snap.val();
+    if (!v || typeof v !== "object" || typeof v.x !== "number" || typeof v.z !== "number") return;
+    let r = st.remotos.get(uid);
+    if (!r) {
+      r = { uid, cat: null, grupo: new THREE11.Group(), nome: null, buf: [], nAplicado: null };
+      r.grupo.visible = false;
+      st.mapa.scene.add(r.grupo);
+      st.remotos.set(uid, r);
+      carregarRemoto(st, r, v.look);
+    }
+    r.buf.push({ t: performance.now(), x: v.x, y: v.y || 0, z: v.z, r: v.r || 0, m: v.m || 0, ag: !!v.ag, es: !!v.es, a: v.a || "", n: v.n || 0, sub: v.sub || "" });
+    if (r.buf.length > 60) r.buf.splice(0, r.buf.length - 60);
+    const d = agoraServ() - v.tc;
+    if (d > -1e3 && d < 5e3) st.atraso = st.atraso == null ? d : st.atraso * 0.8 + d * 0.2;
+  }
+  function carregarRemoto(st, r, lookJson) {
+    let look;
+    try {
+      look = JSON.parse(lookJson);
+    } catch {
+      return;
+    }
+    if (!look || typeof look !== "object") return;
+    loadCat2(THREE11, look).then((cat) => {
+      if (S !== st || st.remotos.get(r.uid) !== r) {
+        cat.dispose();
+        return;
+      }
+      r.cat = cat;
+      r.grupo.add(cat.object);
+      r.grupo.updateMatrixWorld(true);
+      const alto = new THREE11.Box3().setFromObject(cat.object).max.y;
+      r.nome = criarNome(look.nome || "Gatinho");
+      r.nome.position.y = (Number.isFinite(alto) ? alto : 0.6) + 0.18;
+      r.grupo.add(r.nome);
+    }).catch(nada);
+  }
+  function criarNome(texto) {
+    const c = document.createElement("canvas");
+    c.width = 256;
+    c.height = 64;
+    const x = c.getContext("2d");
+    x.font = "bold 34px sans-serif";
+    x.textAlign = "center";
+    x.textBaseline = "middle";
+    x.lineWidth = 6;
+    x.strokeStyle = "rgba(0,0,0,0.65)";
+    x.strokeText(String(texto).slice(0, 16), 128, 34);
+    x.fillStyle = "#fff";
+    x.fillText(String(texto).slice(0, 16), 128, 34);
+    const tex = new THREE11.CanvasTexture(c);
+    tex.colorSpace = THREE11.SRGBColorSpace;
+    const sp = new THREE11.Sprite(new THREE11.SpriteMaterial({ map: tex, depthTest: false, transparent: true, fog: false, toneMapped: false }));
+    sp.scale.set(0.8, 0.2, 1);
+    sp.renderOrder = 10;
+    return sp;
+  }
+  function descartarRemoto(st, r) {
+    try {
+      if (r.nome) {
+        r.nome.material.map.dispose();
+        r.nome.material.dispose();
+      }
+      if (r.cat) r.cat.dispose();
+      if (r.grupo.parent) r.grupo.parent.remove(r.grupo);
+    } catch {
+    }
+  }
+  function animarRemoto(r, dt, agora, meuSub) {
+    const b = r.buf;
+    if (!r.cat || !b.length) return;
+    const rt = agora - ATRASO_DESENHO;
+    while (b.length > 2 && b[1].t <= rt) b.shift();
+    const a = b[0], c = b[1];
+    let x = a.x, y = a.y, z = a.z, rot = a.r, s = a;
+    if (c && rt >= c.t) {
+      x = c.x;
+      y = c.y;
+      z = c.z;
+      rot = c.r;
+      s = c;
+    } else if (c && rt > a.t && a.sub === c.sub && Math.hypot(c.x - a.x, c.z - a.z) < 10) {
+      const k = (rt - a.t) / (c.t - a.t);
+      x = a.x + (c.x - a.x) * k;
+      y = a.y + (c.y - a.y) * k;
+      z = a.z + (c.z - a.z) * k;
+      rot = a.r + menorArco(a.r, c.r) * k;
+    }
+    const g = r.grupo;
+    g.visible = !s.es && s.sub === meuSub;
+    if (!g.visible) return;
+    g.position.set(x, y, z);
+    g.rotation.y = rot;
+    if (r.nAplicado === null) r.nAplicado = s.n;
+    else if (s.n !== r.nAplicado) {
+      r.nAplicado = s.n;
+      if (s.a) r.cat.play(s.a);
+    }
+    r.cat.setMove(s.m);
+    r.cat.setAgachado(s.ag);
+    r.cat.update(dt);
+  }
+  function atualizar(dt) {
+    const st = S;
+    if (!st || !st.pronto) return;
+    try {
+      const agora = performance.now();
+      vigiarGato(st);
+      if (st.papel === "anfitriao" && st.mapa.ciclo !== st.cicloGravado) gravarInfo(st).catch(nada);
+      enviar(st, agora);
+      const meuSub = st.mapa.sub ? st.mapa.sub.tipo + ":" + st.mapa.sub.id : "";
+      for (const r of st.remotos.values()) animarRemoto(r, dt, agora, meuSub);
+    } catch {
+    }
+  }
+  function info() {
+    return { gatos: S ? S.remotos.size : 0, atrasoMs: S && S.atraso != null ? Math.max(0, Math.round(S.atraso)) : null };
+  }
+  function sair2() {
+    const st = S;
+    sessao++;
+    S = null;
+    if (!st) return Promise.resolve();
+    try {
+      for (const t of st.timers) clearInterval(t);
+      for (const u of st.unsub) {
+        try {
+          u();
+        } catch {
+        }
+      }
+      for (const r of st.remotos.values()) descartarRemoto(st, r);
+      st.remotos.clear();
+      const D = st.D, esp = [];
+      const caminhos = ["gatos/" + st.con.uid].concat(st.papel === "anfitriao" ? ["bichos", "info"] : []);
+      for (const c of caminhos) {
+        esp.push(D.onDisconnect(ref(st, c)).cancel().catch(nada));
+        esp.push(D.remove(ref(st, c)).catch(nada));
+      }
+      return Promise.all(esp).then(nada, nada);
+    } catch {
+      return Promise.resolve();
+    }
+  }
+  return {
+    verificar,
+    abrir,
+    entrar: entrar2,
+    atualizar,
+    info,
+    sair: sair2,
+    ativo: () => !!S && S.pronto,
+    papel: () => S ? S.papel : null,
+    // para os testes: onde estão os gatos dos outros
+    remotos: () => S ? [...S.remotos.values()].map((r) => ({ uid: r.uid, x: r.grupo.position.x, z: r.grupo.position.z, visivel: r.grupo.visible, carregado: !!r.cat, nome: r.nome ? true : false })) : []
   };
 }
 
@@ -8897,6 +9991,9 @@ window.addEventListener("resize", () => {
 });
 var uiRoot = document.getElementById("ui");
 var nuvem = null;
+var versoes = null;
+var aovivo = null;
+var AO_VIVO = new URLSearchParams(location.search).has("aovivo");
 var tInicio = Date.now();
 var telaAtual = null;
 var telaObj = null;
@@ -8984,6 +10081,8 @@ function trocarSub(fn) {
 }
 function desmontarMapa() {
   salvarMundoAgora();
+  if (idGatoMapa) versoes?.guardar(idGatoMapa, "fim-sessao");
+  aovivo.sair();
   idGatoMapa = null;
   if (inputAtual) {
     try {
@@ -9037,8 +10136,11 @@ function irPara(nome, opcoes) {
   telaAtual = null;
   limparUI();
   if (nome === "menu") {
-    const aoEscolher = (acao) => {
-      if (acao === "continuar") {
+    const aoEscolher = (acao, dado) => {
+      if (acao === "visitar") {
+        const a = Save.atual();
+        irPara("mapa", { gato: a?.look || gatoPadrao(), id: a?.id, visita: dado });
+      } else if (acao === "continuar") {
         const a = Save.atual();
         irPara("mapa", { gato: a?.look || gatoPadrao(), id: a?.id });
       } else if (acao === "gatos") {
@@ -9051,7 +10153,7 @@ function irPara(nome, opcoes) {
         irPara("familia");
       }
     };
-    telaObj = criarMenu({ container: uiRoot, scene, aoEscolher, nuvem });
+    telaObj = criarMenu({ container: uiRoot, scene, aoEscolher, nuvem, aovivo: AO_VIVO ? aovivo : null });
     telaAtual = "menu";
     if (nuvem && Date.now() - tInicio > 1500) nuvem.sincronizar();
   } else if (nome === "gatos") {
@@ -9067,13 +10169,17 @@ function irPara(nome, opcoes) {
       aoJogar: jogar,
       aoEditar: (id) => irPara("criador", { gato: Save.pegar(id)?.look || null, id }),
       aoNovo: () => irPara("criador", { gato: null, id: null, voltarPara: "gatos" }),
+      aoCopias: (id, nome2) => irPara("versoes", { id, nome: nome2 }),
       aoVoltar: () => irPara("menu")
     });
     telaAtual = "gatos";
     if (nuvem && Date.now() - tInicio > 1500) nuvem.sincronizar();
   } else if (nome === "familia") {
-    telaObj = criarTelaFamilia({ container: uiRoot, nuvem, aoVoltar: () => irPara("menu") });
+    telaObj = criarTelaFamilia({ container: uiRoot, nuvem, versoes, aoVoltar: () => irPara("menu") });
     telaAtual = "familia";
+  } else if (nome === "versoes") {
+    telaObj = criarTelaVersoes({ container: uiRoot, versoes, gato: { id: opcoes.id, nome: opcoes.nome || "Gatinho" }, aoVoltar: () => irPara("gatos") });
+    telaAtual = "versoes";
   } else if (nome === "criador") {
     const idGato = opcoes.id ?? null;
     const aoSalvar = (gato) => {
@@ -9093,8 +10199,9 @@ function irPara(nome, opcoes) {
   } else if (nome === "mapa") {
     const gato = opcoes.gato || gatoPadrao();
     opcoesMapaAtual = { gato };
-    idGatoMapa = opcoes.id ?? null;
-    const salvo = idGatoMapa ? Save.pegar(idGatoMapa)?.mundo : null;
+    const visita = opcoes.visita || null;
+    idGatoMapa = visita ? null : opcoes.id ?? null;
+    const salvo = visita ? { seed: visita.seed, ciclo: visita.ciclo } : idGatoMapa ? Save.pegar(idGatoMapa)?.mundo : null;
     const zIni = Number.isFinite(salvo?.zoom) ? salvo.zoom : ZOOM_INICIAL;
     zoomAtual = criarZoom({ min: 3, max: 16, inicial: zIni });
     distCam = zoomAtual.get();
@@ -9166,7 +10273,13 @@ function irPara(nome, opcoes) {
       });
       cicloBox.appendChild(b);
     }
+    if (visita) cicloBox.style.display = "none";
     hud.appendChild(cicloBox);
+    const aoVivoEl = document.createElement("div");
+    aoVivoEl.id = "hud-aovivo";
+    aoVivoEl.className = "hud-aovivo";
+    aoVivoEl.hidden = true;
+    if (AO_VIVO) hud.appendChild(aoVivoEl);
     uiRoot.appendChild(hud);
     inputAtual = criarInput(uiRoot, { agachado: !!salvo?.agachado });
     inputAtual.onPular(() => {
@@ -9176,7 +10289,44 @@ function irPara(nome, opcoes) {
       if (alvoAtivo() && !trocando) alvoAtivo().usarAcao();
     });
     telaAtual = "mapa";
+    iniciarAoVivo(mapaNovo, gato, visita);
   }
+}
+async function iniciarAoVivo(mapa, gato, visita) {
+  try {
+    if (!AO_VIVO || !nuvem.codigo() || location.protocol === "file:") return;
+    if (visita) {
+      await aovivo.entrar(mapa, gato, visita);
+      return;
+    }
+    const outro = await aovivo.verificar();
+    if (outro || mapaAtual !== mapa) return;
+    await aovivo.abrir(mapa, gato);
+  } catch (e) {
+  }
+}
+function avisar2(texto) {
+  const d = document.createElement("div");
+  d.className = "aviso";
+  d.textContent = texto;
+  document.body.appendChild(d);
+  setTimeout(() => {
+    if (d.parentNode) d.parentNode.removeChild(d);
+  }, 4e3);
+}
+var tHudAoVivo = 0;
+function atualizarHudAoVivo(ms) {
+  if (ms - tHudAoVivo < 500) return;
+  tHudAoVivo = ms;
+  const el = document.getElementById("hud-aovivo");
+  if (!el) return;
+  if (!aovivo.ativo()) {
+    el.hidden = true;
+    return;
+  }
+  const i = aovivo.info();
+  el.textContent = "ao vivo \xB7 " + (i.gatos + 1) + (i.gatos ? " gatos" : " gato") + (i.atrasoMs != null ? " \xB7 " + i.atrasoMs + " ms" : "");
+  el.hidden = false;
 }
 function mostrarTelaSimples(div) {
   if (telaObj && typeof telaObj.destruir === "function") {
@@ -9350,6 +10500,10 @@ if (renderer) {
       camAlvo = null;
       restaurarRenderNormal();
     }
+    if (telaAtual === "mapa" && mapaAtual) {
+      aovivo.atualizar(dt);
+      atualizarHudAoVivo(tempoMs);
+    }
     if (telaAtual === "mapa" && !pausado && mapaAtual) {
       const alvo = alvoAtivo();
       const estado = inputAtual && !trocando ? inputAtual.estado() : { dx: 0, dy: 0, correndo: false };
@@ -9390,6 +10544,16 @@ nuvem = criarNuvem({
     if (cl && (cl.contains("tela-menu") || cl.contains("tela-gatos"))) irPara(telaAtual);
   }
 });
+versoes = criarVersoes({ nuvem });
+aovivo = criarAoVivo({
+  nuvem,
+  THREE: THREE10,
+  loadCat,
+  aoFechar: (info) => {
+    irPara("menu");
+    avisar2("O mundo de " + (info && info.nome || "outro gatinho") + " fechou");
+  }
+});
 irPara("menu");
 if (nuvem.codigo()) setTimeout(() => nuvem.sincronizar(), 1500);
 window.GATINHO = {
@@ -9419,6 +10583,12 @@ window.GATINHO = {
   salvarMundo: salvarMundoAgora,
   get nuvem() {
     return nuvem;
+  },
+  get versoes() {
+    return versoes;
+  },
+  get aovivo() {
+    return aovivo;
   },
   carregarFirebase,
   mover(dx, dy, correndo, agachado) {
