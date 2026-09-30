@@ -1510,6 +1510,21 @@ canvas,
     grid-column: 2;
   }
 }
+
+/* ===== 0.8.5 — escolher o mundo (depois do char, em "Jogar") e o botão Continuar com char + mundo ===== */
+.tela-escolher-mundo { justify-content: flex-start; gap: 10px; padding: 16px 16px 14px; overflow: hidden; }
+.escolher-titulo { margin: 4px 0 0; font-size: 1.5rem; color: #5b6bb0; flex: 0 0 auto; text-align: center; }
+.escolher-lista { flex: 1 1 auto; min-height: 0; width: min(100%, 420px); overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 2px 4px 8px; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
+.escolher-item { flex: 0 0 auto; width: 100%; box-sizing: border-box; overflow-wrap: anywhere; }
+.escolher-vazio { text-align: center; color: #5b6bb0; font-weight: 700; margin: 12px 0; }
+.escolher-criar, .escolher-voltar { flex: 0 0 auto; min-height: 48px; }
+.botao-grupo .botao-grande { overflow-wrap: anywhere; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .tela-escolher-mundo { gap: 6px; padding: 8px 16px; }
+  .escolher-titulo { font-size: 1.15rem; }
+  .escolher-lista { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 8px; width: min(100%, 720px); }
+  .escolher-item { min-height: 48px; padding: 6px 10px; font-size: 1rem; }
+}
 </style>
 <script type="importmap">{
   "imports": {
@@ -1578,7 +1593,7 @@ ${(e.error && e.error.stack || "").split("\n").slice(0, 4).join("\n")}`));
   const click = (el) => {
     if (el) el.click();
   };
-  const btnComeca = (txt) => $$("button").find((b) => (b.textContent || "").trim().startsWith(txt));
+  const btnComeca = (txt) => $$("button").find((b) => (b.textContent || "").trim().includes(txt));
   async function step(name, fn) {
     const n = R.errors.length;
     try {
@@ -1851,7 +1866,7 @@ ${(e.stack || "").split("\n").slice(1, 4).join("\n")}`);
     const abrirLista = async () => {
       G.ir("menu");
       await wait(30);
-      click(btnLike("Meus gatinhos"));
+      click(btnLike("Jogar"));
       await wait(30);
       assert(G.tela === "gatos", "n\xE3o abriu Meus gatinhos: " + G.tela);
     };
@@ -2005,7 +2020,7 @@ if (typeof window !== "undefined") {
 import * as THREE10 from "three";
 
 // js/data.js
-var VERSION = "0.8.4";
+var VERSION = "0.8.5";
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
 var CORES_GATO = {
@@ -2222,6 +2237,12 @@ function gatoPadrao() {
     acessorio: { tipo: "lacinho", modelo: "classico", cor: "rosa", tamanho: "medio" }
   };
 }
+var TIPOS_MUNDO = { floresta: { nome: "Floresta", tamanhos: [120], chars: ["gato"] } };
+function mundoAceita(registro, tipoChar) {
+  const t = TIPOS_MUNDO[registro && registro.tipo || "floresta"];
+  const r = registro && registro.regras && Array.isArray(registro.regras.chars) ? registro.regras.chars : null;
+  return !!t && t.chars.includes(tipoChar) && (!r || r.includes(tipoChar));
+}
 
 // js/save.js
 function temLocalStorage() {
@@ -2278,6 +2299,8 @@ function lerBruto() {
         atualizado: g.atualizado || "",
         mundo: g.mundo || null,
         formato: Number.isInteger(g.formato) ? g.formato : 1,
+        tipo: typeof g.tipo === "string" && g.tipo ? g.tipo : "gato",
+        // 0.8.5: hoje todo char é gato
         // 0.8.3: o mundo saiu do gato; ele guarda só a posição em cada mundo e qual é o atual
         ...g.posicoes && typeof g.posicoes === "object" && !Array.isArray(g.posicoes) ? { posicoes: g.posicoes } : {},
         ...typeof g.mundoAtual === "string" && g.mundoAtual ? { mundoAtual: g.mundoAtual } : {},
@@ -2382,7 +2405,8 @@ var Save = {
         criado: agora,
         atualizado: agora,
         mundo: null,
-        formato: 2
+        formato: 2,
+        tipo: "gato"
       });
       dados.atual = novoIdGato;
       if (gravar(dados)) {
@@ -2537,7 +2561,7 @@ var Save = {
 };
 
 // js/menu.js
-function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2 }) {
+function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, continuar }) {
   const tela = document.createElement("div");
   tela.className = "tela tela-menu";
   const titulo = document.createElement("h1");
@@ -2592,7 +2616,6 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2 }) {
   const botoes = document.createElement("div");
   botoes.className = "botao-grupo";
   tela.appendChild(botoes);
-  const existeSave = Save.existe();
   function criarBotao(texto, acao) {
     const b = document.createElement("button");
     b.className = "botao-grande";
@@ -2601,8 +2624,8 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2 }) {
     botoes.appendChild(b);
     return b;
   }
-  if (existeSave) criarBotao("Continuar com " + (Save.atual()?.look.nome || "Avel\xE3"), "continuar");
-  criarBotao("Meus gatinhos", "gatos");
+  if (continuar) criarBotao("\u25B6 Continuar: " + continuar.charNome + (continuar.mundoNome ? " \xB7 " + continuar.mundoNome : ""), "continuar");
+  criarBotao("Jogar", "gatos");
   criarBotao("\u{1F30D} Mundos", "mundos");
   const linhaMeia = document.createElement("div");
   linhaMeia.className = "botao-linha";
@@ -9087,6 +9110,15 @@ function mesclar(local, remotos) {
     if (L && R) {
       const atualL = getAtualizado(L);
       const atualR = getAtualizado(R);
+      const fL = Number.isInteger(L.formato) ? L.formato : 0;
+      const fR = Number.isInteger(R.formato) ? R.formato : 0;
+      if (!L.apagado && !R.apagado && fL !== fR) {
+        if (fL > fR) {
+          enviar.push(L);
+          novosGatos.push(L);
+        } else novosGatos.push(R);
+        continue;
+      }
       if (atualL === atualR) {
         if (L.apagado) {
           novosApagados[id] = L.atualizado;
@@ -9122,6 +9154,7 @@ function mesclar(local, remotos) {
 // js/nuvem.js
 var APP_CHECK_CHAVE = "";
 var CHAVE_FAMILIA = "gatinho-familia";
+var CHAVE_PUBLICO = "gatinho-publico";
 var ALFABETO = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 var TEMPO_LIMITE = 15e3;
 var INTERVALO_SYNC = 2e4;
@@ -9159,6 +9192,25 @@ function guardarCodigo(c) {
   } catch {
   }
 }
+function lerPublico(c) {
+  try {
+    const [cod, pub] = (localStorage.getItem(CHAVE_PUBLICO) || "").split("|");
+    return cod === c && pub ? pub : "";
+  } catch {
+    return "";
+  }
+}
+function guardarPublico(c, p) {
+  try {
+    localStorage.setItem(CHAVE_PUBLICO, c + "|" + p);
+  } catch {
+  }
+}
+function novoPublico() {
+  const b = new Uint8Array(10);
+  crypto.getRandomValues(b);
+  return "f" + [...b].map((x) => "abcdefghijklmnopqrstuvwxyz0123456789"[x % 36]).join("");
+}
 function limpar(v) {
   return JSON.parse(JSON.stringify(v));
 }
@@ -9190,7 +9242,7 @@ function comTempo(fn) {
 }
 function paraDoc(x) {
   if (x.apagado) return { apagado: true, atualizado: x.atualizado || agoraISO2() };
-  const d = { look: limpar(x.look || {}), mundo: x.mundo ? limpar(x.mundo) : null, atualizado: x.atualizado || agoraISO2(), formato: Number.isInteger(x.formato) ? x.formato : 1 };
+  const d = { look: limpar(x.look || {}), tipo: x.tipo || "gato", mundo: x.mundo ? limpar(x.mundo) : null, atualizado: x.atualizado || agoraISO2(), formato: Number.isInteger(x.formato) ? x.formato : 1 };
   if (x.criado) d.criado = x.criado;
   if (x.posicoes) d.posicoes = limpar(x.posicoes);
   if (x.mundoAtual) d.mundoAtual = x.mundoAtual;
@@ -9209,7 +9261,7 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
   let timer = null;
   let base = null;
   const pendentes = /* @__PURE__ */ new Set();
-  const ganchos = { antesJuntar: null, depoisEnvio: null };
+  const ganchos = { antesJuntar: null, depoisEnvio: null, depoisSync: null };
   const avisar3 = (nome, ...a) => {
     try {
       if (ganchos[nome]) ganchos[nome](...a);
@@ -9267,6 +9319,22 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
       throw e;
     }
   }
+  async function garantirPublico(b, c) {
+    const ref = b.fs.doc(b.db, "familias", c);
+    let p = (await b.fs.getDoc(ref)).data()?.publico;
+    if (!p) {
+      const novo = novoPublico();
+      try {
+        await b.fs.updateDoc(ref, { publico: novo });
+        p = novo;
+      } catch (e) {
+        if (!ehPermissao(e)) throw e;
+        p = (await b.fs.getDoc(ref)).data()?.publico;
+      }
+    }
+    if (p) guardarPublico(c, p);
+    return p || "";
+  }
   function trocarIdAntigo() {
     const bruto = lerBruto();
     if (!bruto || !bruto.gatos.some((g) => g.id === "g-antigo")) return;
@@ -9278,7 +9346,7 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     const validos = itens.filter((x) => ID_VALIDO.test(x.id));
     for (let i = 0; i < validos.length; i += LOTE) {
       const lote = b.fs.writeBatch(b.db);
-      for (const x of validos.slice(i, i + LOTE)) lote.set(b.fs.doc(b.db, "familias", codigo, "gatos", x.id), paraDoc(x));
+      for (const x of validos.slice(i, i + LOTE)) lote.set(b.fs.doc(b.db, "familias", codigo, "chars", x.id), paraDoc(x));
       await lote.commit();
     }
   }
@@ -9287,7 +9355,16 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     const b = await iniciar();
     const uid = await login(b);
     await garantirMembro(b, codigo, uid);
-    const snap = await b.fs.getDocs(b.fs.collection(b.db, "familias", codigo, "gatos"));
+    await garantirPublico(b, codigo);
+    let snap = await b.fs.getDocs(b.fs.collection(b.db, "familias", codigo, "chars"));
+    let migrando = false;
+    if (snap.empty) {
+      const velho = await b.fs.getDocs(b.fs.collection(b.db, "familias", codigo, "gatos"));
+      if (!velho.empty) {
+        snap = velho;
+        migrando = true;
+      }
+    }
     const remotos = snap.docs.map((d) => {
       const v = d.data();
       return { ...v, id: d.id, mundo: v.mundo || null };
@@ -9299,7 +9376,7 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     if (r.mudouLocal) {
       for (const g of bruto.gatos) {
         const n = r.gatos.find((x) => x.id === g.id);
-        if (n && n.atualizado !== g.atualizado) avisar3("antesJuntar", g.id);
+        if (n && (n.atualizado !== g.atualizado || migrando && remotos.some((x) => x.id === g.id))) avisar3("antesJuntar", g.id);
       }
       const atual = r.gatos.some((g) => g.id === bruto.atual) ? bruto.atual : r.gatos.length ? r.gatos[0].id : null;
       gravar({ ...bruto, v: 3, gatos: r.gatos, apagados: r.apagados, atual });
@@ -9309,10 +9386,11 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
       }
     }
     if (run.cancelado) return;
-    await escrever(b, r.enviar);
+    await escrever(b, migrando ? [...r.gatos, ...Object.entries(r.apagados).map(([id, atualizado]) => ({ id, apagado: true, atualizado }))] : r.enviar);
     for (const id of marcados) pendentes.delete(id);
     avisar3("depoisEnvio");
     jaSincronizou = true;
+    avisar3("depoisSync");
   }
   function sincronizar({ forcar = false } = {}) {
     if (noArquivo || !codigo) return Promise.resolve(false);
@@ -9375,12 +9453,14 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
         const uid = await login(b);
         for (let tentativa = 0; !novo; tentativa++) {
           const c = gerarCodigo();
+          const pub = novoPublico();
           const lote = b.fs.writeBatch(b.db);
-          lote.set(b.fs.doc(b.db, "familias", c), { criada: b.fs.serverTimestamp() });
+          lote.set(b.fs.doc(b.db, "familias", c), { criada: b.fs.serverTimestamp(), publico: pub });
           lote.set(b.fs.doc(b.db, "familias", c, "membros", uid), { entrou: b.fs.serverTimestamp() });
           try {
             await lote.commit();
             novo = c;
+            guardarPublico(c, pub);
           } catch (e) {
             if (!ehPermissao(e) || tentativa) throw e;
           }
@@ -9429,7 +9509,13 @@ function criarNuvem({ aoMudarEstado, aoReceber } = {}) {
     const b = await iniciar();
     return { m: b.m, rtdb: b.rtdb, db: b.db, fs: b.fs, uid: await login(b) };
   }
-  return { conexao, ganchos, estado: () => estado, codigo: () => codigo, ultima: () => ultima, criarFamilia, entrarFamilia, sincronizar, enviarPendentes };
+  const publico = () => lerPublico(codigo);
+  async function publicoGarantido() {
+    if (publico()) return publico();
+    const c = await conexao();
+    return garantirPublico(c, codigo);
+  }
+  return { conexao, ganchos, publico, garantirPublico: publicoGarantido, estado: () => estado, codigo: () => codigo, ultima: () => ultima, criarFamilia, entrarFamilia, sincronizar, enviarPendentes };
 }
 
 // js/familia.js
@@ -9706,6 +9792,7 @@ function extras(d) {
   if (d.posicoes && typeof d.posicoes === "object") r.posicoes = copia(d.posicoes);
   if (typeof d.mundoAtual === "string" && d.mundoAtual) r.mundoAtual = d.mundoAtual;
   if (d.ficha && typeof d.ficha === "object") r.ficha = copia(d.ficha);
+  if (typeof d.tipo === "string" && d.tipo) r.tipo = d.tipo;
   return r;
 }
 function criarVersoes({ nuvem: nuvem2 }) {
@@ -9728,7 +9815,7 @@ function criarVersoes({ nuvem: nuvem2 }) {
         const v = it.versao;
         let sai = true;
         try {
-          await comTempo2(b.fs.setDoc(b.fs.doc(b.db, "familias", c, "gatos", it.gatoId, "versoes", v.id), limpar2({
+          await comTempo2(b.fs.setDoc(b.fs.doc(b.db, "familias", c, "chars", it.gatoId, "versoes", v.id), limpar2({
             quando: v.quando,
             motivo: v.motivo,
             versaoJogo: v.versaoJogo,
@@ -9765,7 +9852,7 @@ function criarVersoes({ nuvem: nuvem2 }) {
         motivo: String(motivo || "manual"),
         versaoJogo: VERSION,
         formato: 1,
-        dados: copia({ look: g.look, mundo: g.mundo || null, criado: g.criado || "", atualizado: g.atualizado || "", formato: g.formato || 1, posicoes: g.posicoes, mundoAtual: g.mundoAtual, ficha: g.ficha })
+        dados: copia({ look: g.look, mundo: g.mundo || null, criado: g.criado || "", atualizado: g.atualizado || "", formato: g.formato || 1, posicoes: g.posicoes, mundoAtual: g.mundoAtual, ficha: g.ficha, tipo: g.tipo })
       };
       const tudo = lerTudo();
       tudo[g.id] = [v, ...doGato(g.id)].slice(0, POR_GATO);
@@ -9787,7 +9874,7 @@ function criarVersoes({ nuvem: nuvem2 }) {
     try {
       const b = await comTempo2(nuvem2.conexao());
       const { fs } = b;
-      const q = fs.query(fs.collection(b.db, "familias", c, "gatos", gatoId, "versoes"), fs.orderBy("quando", "desc"), fs.limit(NA_LISTA));
+      const q = fs.query(fs.collection(b.db, "familias", c, "chars", gatoId, "versoes"), fs.orderBy("quando", "desc"), fs.limit(NA_LISTA));
       const snap = await comTempo2(fs.getDocs(q));
       return snap.docs.map((d) => ({ ...d.data(), id: d.id }));
     } catch {
@@ -10276,11 +10363,20 @@ function novoId2(prefixo, n = 10) {
 }
 var mudou = (a, b) => CAMPOS.some((k) => JSON.stringify(a && a[k]) !== JSON.stringify(b && b[k]));
 var ehPermissao2 = (e) => !!e && e.code === "permission-denied";
+function idMundo1(publico) {
+  let h = 0xcbf29ce484222325n;
+  for (const c of String(publico)) h = BigInt.asUintN(64, (h ^ BigInt(c.codePointAt(0))) * 0x100000001b3n);
+  return "m" + (h % 36n ** 10n).toString(36).padStart(10, "0");
+}
+var CHAVE_JUNTOU = "gatinho-juntou-";
+var ID_LOCAL1 = "mlocal0001";
 function criarMundos({ nuvem: nuvem2 }) {
   const ultimaSync = /* @__PURE__ */ new Map();
   const andamento = /* @__PURE__ */ new Map();
   let usuarioOk = "";
   let enviando = false;
+  let juntando = null;
+  const ganchos = { aoJuntar: null };
   const lerTudo = () => {
     const t = lerJson2(CHAVE, null);
     return t && t.mundos && typeof t.mundos === "object" ? t : { formato: 1, mundos: {} };
@@ -10335,11 +10431,12 @@ function criarMundos({ nuvem: nuvem2 }) {
       enviando = false;
     }
   }
-  function guardarVersao(id, motivo) {
+  function guardarVersao(id, motivo, estadoDe) {
     try {
       const w = pegar(id);
-      if (!w || !w.estado) return null;
-      const { mobs, ...dados } = w.estado;
+      const est2 = estadoDe || w && w.estado;
+      if (!w || !est2) return null;
+      const { mobs, ...dados } = est2;
       const v = { id: "v" + Date.now().toString(36) + novoId2("", 4), quando: agoraISO4(), motivo: String(motivo || "manual"), versaoJogo: VERSION, formato: 1, dados: copia2(dados) };
       const tudo = lerJson2(CHAVE_VERSOES, {});
       tudo[id] = [v, ...doMundo(id)].slice(0, POR_MUNDO);
@@ -10393,13 +10490,16 @@ function criarMundos({ nuvem: nuvem2 }) {
   }
   async function subir(b, id) {
     const w = pegar(id);
-    if (!w || w.registro.subido) return;
+    if (!w || w.registro.subido || id === ID_LOCAL1) return;
+    const pub = nuvem2.publico() || await nuvem2.garantirPublico();
+    if (!pub) throw new Error("sem-publico");
     const fam = nuvem2.codigo();
     const r = w.registro;
+    let adotado = null;
     for (let tentativa = 0; ; tentativa++) {
       const codigo = tentativa ? gerarCodigo() : r.codigo;
       const lote = b.fs.writeBatch(b.db);
-      lote.set(b.fs.doc(b.db, "mundos", id), { criador: b.uid, criadorFam: fam, nome: r.nome.slice(0, 30), codigo, seed: Math.floor(r.seed), bioma: r.bioma || "padrao", formato: 1, gestor: "" });
+      lote.set(b.fs.doc(b.db, "mundos", id), { criador: b.uid, familia: pub, nome: r.nome.slice(0, 30), codigo, seed: Math.floor(r.seed), tipo: r.tipo || "floresta", tamanho: r.tamanho || 120, formato: 2, gestor: "" });
       lote.set(b.fs.doc(b.db, "familias", fam, "mundos", id), { nome: r.nome.slice(0, 30), codigo });
       lote.set(b.fs.doc(b.db, "convites", codigo), { mundo: id });
       try {
@@ -10407,14 +10507,21 @@ function criarMundos({ nuvem: nuvem2 }) {
         r.codigo = codigo;
         break;
       } catch (e) {
-        if (!ehPermissao2(e) || tentativa) throw e;
+        if (!ehPermissao2(e)) throw e;
+        try {
+          const m = await b.fs.getDoc(b.fs.doc(b.db, "mundos", id));
+          if (m.exists() && m.data().familia === pub) {
+            adotado = m.data();
+            break;
+          }
+        } catch {
+        }
+        if (tentativa) throw e;
       }
     }
     alterar(id, (x) => {
-      x.registro.codigo = r.codigo;
-      x.registro.criador = b.uid;
-      x.registro.criadorFam = fam;
-      x.registro.subido = true;
+      Object.assign(x.registro, adotado ? { nome: adotado.nome, codigo: adotado.codigo, seed: adotado.seed, tipo: adotado.tipo, tamanho: adotado.tamanho, criador: adotado.criador, ...adotado.regras ? { regras: adotado.regras } : {} } : { codigo: r.codigo, criador: b.uid });
+      Object.assign(x.registro, { familia: pub, formato: 2, subido: true });
     });
   }
   function sincronizar(id, { forcar = false, emJogo = false } = {}) {
@@ -10447,19 +10554,21 @@ function criarMundos({ nuvem: nuvem2 }) {
     andamento.set(id, p);
     return p;
   }
-  function criar3({ nome, seed, estado } = {}) {
+  function criar3({ nome, seed, estado, id: idDado, tipo = "floresta", tamanho = 120 } = {}) {
     try {
       const t = lerTudo();
-      const id = novoId2("m");
+      if (idDado && t.mundos[idDado]) return copia2(t.mundos[idDado].registro);
+      const id = idDado || novoId2("m");
       const registro = {
         id,
         nome: String(nome || "Mundo novo").trim().slice(0, 30) || "Mundo novo",
         codigo: gerarCodigo(),
         seed: Number.isFinite(seed) ? Math.floor(seed) : 1 + Math.floor(Math.random() * 2147483e3),
-        bioma: "padrao",
-        formato: 1,
+        tipo,
+        tamanho,
+        formato: 2,
         criador: "",
-        criadorFam: "",
+        familia: "",
         subido: false
       };
       t.mundos[id] = { registro, estado: estado ? { ...copia2(estado), atualizado: estado.atualizado || agoraISO4(), formato: 1 } : null, pendente: true };
@@ -10492,18 +10601,22 @@ function criarMundos({ nuvem: nuvem2 }) {
     if (!online()) throw new Error("Primeiro ligue a nuvem no \u2601\uFE0F");
     const b = await comTempo3(nuvem2.conexao());
     await garantirUsuario(b);
+    const pub = nuvem2.publico() || await comTempo3(nuvem2.garantirPublico());
     const conv = await comTempo3(b.fs.getDoc(b.fs.doc(b.db, "convites", cod)));
     if (!conv.exists() || typeof conv.data().mundo !== "string") throw new Error("C\xF3digo n\xE3o encontrado");
     const id = conv.data().mundo;
     const fam = nuvem2.codigo();
     if (!pegar(id)) {
+      const lote = b.fs.writeBatch(b.db);
+      lote.set(b.fs.doc(b.db, "mundos", id, "familias", pub), { nome: "", codigo: cod });
+      lote.set(b.fs.doc(b.db, "familias", fam, "mundos", id), { nome: "", codigo: cod });
       try {
-        await comTempo3(b.fs.setDoc(b.fs.doc(b.db, "familias", fam, "mundos", id), { nome: "", codigo: cod }));
+        await comTempo3(lote.commit());
       } catch (e) {
         if (!ehPermissao2(e)) throw e;
       }
       const m = await comTempo3(b.fs.getDoc(b.fs.doc(b.db, "mundos", id)));
-      if (!m.exists()) throw new Error("C\xF3digo n\xE3o encontrado");
+      if (!m.exists() || !m.data().familia) throw new Error("C\xF3digo n\xE3o encontrado");
       const t = lerTudo();
       t.mundos[id] = { registro: { ...m.data(), id, subido: true }, estado: null, pendente: false };
       gravarTudo(t);
@@ -10518,7 +10631,7 @@ function criarMundos({ nuvem: nuvem2 }) {
       const b = await comTempo3(nuvem2.conexao());
       await garantirUsuario(b);
       const m = await comTempo3(b.fs.getDoc(b.fs.doc(b.db, "mundos", id)));
-      if (!m.exists()) return null;
+      if (!m.exists() || !m.data().familia) return null;
       const t = lerTudo();
       t.mundos[id] = { registro: { ...m.data(), id, subido: true }, estado: null, pendente: false };
       gravarTudo(t);
@@ -10528,8 +10641,9 @@ function criarMundos({ nuvem: nuvem2 }) {
     }
   }
   function linha(w) {
-    const r = w.registro, fam = nuvem2.codigo();
-    return { id: r.id, nome: r.nome, codigo: r.codigo, subido: !!r.subido, eSeu: !r.criadorFam || r.criadorFam === fam };
+    const r = w.registro, pub = nuvem2.publico(), fam = nuvem2.codigo();
+    const eSeu = r.familia ? !pub || r.familia === pub : !r.criadorFam || r.criadorFam === fam;
+    return { id: r.id, nome: r.nome, codigo: r.codigo, subido: !!r.subido, eSeu, tipo: r.tipo || "floresta", ...r.regras ? { regras: r.regras } : {} };
   }
   const listarLocal = () => Object.values(lerTudo().mundos).map(linha).sort((a, b) => a.nome < b.nome ? -1 : 1);
   async function listar() {
@@ -10576,46 +10690,158 @@ function criarMundos({ nuvem: nuvem2 }) {
     const w = g && g.mundoAtual && pegar(g.mundoAtual);
     return w ? { id: g.mundoAtual, registro: w.registro, estado: w.estado, posicao: g.posicoes && g.posicoes[g.mundoAtual] || null } : null;
   }
-  function garantirMundo(gatoId, versoes2) {
+  function mundo1(estado) {
+    const pub = nuvem2.publico();
+    const r = criar3({ id: pub ? idMundo1(pub) : ID_LOCAL1, nome: "Mundo 1", seed: SEED_PADRAO, estado });
+    return r && r.id;
+  }
+  function migrarSave07(versoes2) {
     try {
-      const g = Save.pegar(gatoId);
-      if (!g) return null;
-      if (g.mundoAtual) return g.mundoAtual;
-      const nome = "Mundo da " + (g.look && g.look.nome || "Avel\xE3");
-      if (g.mundo && typeof g.mundo === "object") {
+      const velhos = Save.listar().filter((g) => g.mundo && typeof g.mundo === "object" && !g.posicoes);
+      if (!velhos.length) return;
+      let est2 = null;
+      for (const g of velhos) {
         versoes2?.guardar(g.id, "antes-migrar");
         const m = g.mundo;
-        const r2 = criar3({ nome, seed: Number.isFinite(m.seed) ? m.seed : SEED_PADRAO, estado: { descoberto: m.descoberto, cavernas: m.cavernas || {}, arvores: m.arvores || {}, ciclo: m.ciclo || "dia", mobs: m.mobs || [], pegos: {}, atualizado: g.atualizado || agoraISO4() } });
-        if (!r2) return null;
-        const bruto = lerBruto();
-        const x = bruto.gatos.find((y) => y.id === g.id);
-        x.posicoes = { ...x.posicoes || {}, [r2.id]: { x: m.x, z: m.z, rot: m.rot, agachado: !!m.agachado, sub: m.sub || null, zoom: m.zoom } };
-        x.mundoAtual = r2.id;
+        const e = { descoberto: m.descoberto, cavernas: m.cavernas || {}, arvores: m.arvores || {}, ciclo: m.ciclo || "dia", mobs: m.mobs || [], pegos: {}, atualizado: g.atualizado || agoraISO4() };
+        est2 = est2 ? { ...juntarEstado(est2, e), mobs: est2.mobs } : e;
+      }
+      const id = mundo1(est2);
+      if (!id) return;
+      const bruto = lerBruto();
+      for (const g of velhos) {
+        const x = bruto.gatos.find((y) => y.id === g.id), m = g.mundo;
+        x.posicoes = { [id]: { x: m.x, z: m.z, rot: m.rot, agachado: !!m.agachado, sub: m.sub || null, zoom: m.zoom } };
+        x.mundoAtual = id;
         x.mundo = null;
         x.formato = 2;
         x.atualizado = agoraISO4();
-        if (!gravar(bruto)) return null;
+      }
+      if (!gravar(bruto)) return;
+      for (const g of velhos) {
         try {
           Save.aoMudar?.(g.id);
         } catch {
         }
-        return r2.id;
       }
-      const r = criar3({ nome, seed: SEED_PADRAO });
-      if (!r) return null;
-      Save.definirMundoAtual(g.id, r.id);
-      return r.id;
     } catch {
-      return null;
     }
   }
-  function migrarTodos(versoes2) {
+  async function fazerJuntar(versoes2, pub) {
+    const b = await nuvem2.conexao();
+    await garantirUsuario(b);
+    const cod = nuvem2.codigo();
+    const M1 = idMundo1(pub);
+    const meu = (r) => !r.criadorFam || r.criadorFam === cod;
+    const cand = /* @__PURE__ */ new Map();
+    const conhecidos = /* @__PURE__ */ new Set();
+    for (const [id, w] of Object.entries(lerTudo().mundos)) {
+      conhecidos.add(id);
+      if (id === M1 || !meu(w.registro) || !((w.registro.formato || 1) < 2 || id === ID_LOCAL1)) continue;
+      cand.set(id, { estados: w.estado ? [w.estado] : [], nuvem: false });
+    }
+    const snap = await b.fs.getDocs(b.fs.collection(b.db, "familias", cod, "mundos"));
+    for (const d of snap.docs) {
+      conhecidos.add(d.id);
+      if (d.id === M1) continue;
+      try {
+        const m = await b.fs.getDoc(b.fs.doc(b.db, "mundos", d.id));
+        if (!m.exists() || m.data().familia || !meu(m.data())) continue;
+        const e = await b.fs.getDoc(b.fs.doc(b.db, "mundos", d.id, "estado", "principal"));
+        const c = cand.get(d.id) || { estados: [], nuvem: true };
+        if (e.exists()) c.estados.push(e.data());
+        c.nuvem = true;
+        cand.set(d.id, c);
+      } catch {
+      }
+    }
+    const chars = Save.listar();
+    const velho = (id) => !!id && id !== M1 && (cand.has(id) || !conhecidos.has(id));
+    if (!cand.size && !chars.some((g) => velho(g.mundoAtual))) {
+      gravarJson2(CHAVE_JUNTOU + pub, { quando: agoraISO4() });
+      return true;
+    }
+    const ids = [...cand.keys()].sort();
+    const junta = (a, e) => !e ? a : a ? { ...juntarEstado(a, e), mobs: a.mobs } : copia2(e);
+    const porMundo = ids.map((id) => cand.get(id).estados.reduce(junta, null));
+    const est2 = porMundo.reduce(junta, null);
+    if (!pegar(M1)) {
+      let rem = null;
+      try {
+        const m = await b.fs.getDoc(b.fs.doc(b.db, "mundos", M1));
+        if (m.exists() && m.data().familia === pub) rem = m.data();
+      } catch {
+      }
+      if (rem) {
+        const t2 = lerTudo();
+        t2.mundos[M1] = { registro: { ...rem, id: M1, subido: true }, estado: null, pendente: false };
+        gravarTudo(t2);
+      } else if (!mundo1(null)) return false;
+    }
+    ids.forEach((id, i) => {
+      if (porMundo[i]) guardarVersao(M1, "antes-migrar", porMundo[i]);
+    });
+    for (const g of chars) if (velho(g.mundoAtual) || Object.keys(g.posicoes || {}).some(velho)) versoes2?.guardar(g.id, "antes-migrar");
+    if (est2) alterar(M1, (x) => {
+      x.estado = { ...juntarEstado(x.estado, est2), mobs: x.estado && x.estado.mobs || est2.mobs || [], atualizado: agoraISO4(), formato: 1 };
+      x.pendente = true;
+    });
+    await sincronizar(M1, { forcar: true });
+    if (!pegar(M1)?.registro.subido) return false;
+    const bruto = lerBruto();
+    const mudados = [];
+    for (const x of bruto.gatos) {
+      const pos = x.posicoes || {};
+      const W = x.mundoAtual;
+      const chaveVelha = Object.keys(pos).find(velho);
+      if (!velho(W) && !chaveVelha) continue;
+      const novas = Object.fromEntries(Object.entries(pos).filter(([k]) => !velho(k)));
+      if (!novas[M1] && (pos[W] || pos[chaveVelha])) novas[M1] = pos[W] || pos[chaveVelha];
+      x.posicoes = novas;
+      if (!W || velho(W)) x.mundoAtual = M1;
+      x.formato = 2;
+      x.atualizado = agoraISO4();
+      mudados.push(x.id);
+    }
+    if (mudados.length) {
+      gravar(bruto);
+      for (const id of mudados) {
+        try {
+          Save.aoMudar?.(id);
+        } catch {
+        }
+      }
+    }
+    const t = lerTudo();
+    for (const id of ids) delete t.mundos[id];
+    gravarTudo(t);
+    const vs = lerJson2(CHAVE_VERSOES, {});
+    for (const id of ids) delete vs[id];
+    gravarJson2(CHAVE_VERSOES, vs);
+    gravarJson2(CHAVE_FILA2, lerJson2(CHAVE_FILA2, []).filter((x) => !ids.includes(x.mundoId)));
+    for (const id of ids) if (cand.get(id).nuvem) {
+      try {
+        await b.fs.deleteDoc(b.fs.doc(b.db, "familias", cod, "mundos", id));
+      } catch {
+      }
+    }
+    gravarJson2(CHAVE_JUNTOU + pub, { quando: agoraISO4() });
     try {
-      for (const g of Save.listar()) if (g.mundo && !g.posicoes) garantirMundo(g.id, versoes2);
+      ganchos.aoJuntar?.();
     } catch {
     }
+    return true;
   }
-  const api = { criar: criar3, entrarComCodigo, listar, listarLocal, pegar, obter, salvarEstado, sincronizar, guardarVersao, listarVersoes, restaurar: restaurar2, enviarVersoes, mundoDoGato, garantirMundo, migrarTodos, formatarCodigo, minhaFamilia: () => nuvem2.codigo() };
+  function juntar(versoes2) {
+    if (juntando) return juntando;
+    const pub = nuvem2.publico();
+    if (!online() || !pub || lerJson2(CHAVE_JUNTOU + pub, null)) return Promise.resolve(false);
+    juntando = comTempo3(fazerJuntar(versoes2, pub), 4e4).catch(() => false).finally(() => {
+      juntando = null;
+    });
+    return juntando;
+  }
+  const api = { criar: criar3, entrarComCodigo, listar, listarLocal, pegar, obter, salvarEstado, sincronizar, guardarVersao, listarVersoes, restaurar: restaurar2, enviarVersoes, mundoDoGato, mundo1, migrarSave07, juntar, juntando: () => juntando, precisaJuntar: () => online() && !lerJson2(CHAVE_JUNTOU + (nuvem2.publico() || ""), null), ganchos, formatarCodigo, minhaFamilia: () => nuvem2.codigo() };
   return api;
 }
 
@@ -11007,6 +11233,93 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoS
   };
 }
 
+// js/escolher-mundo.js
+function criarEscolherMundo({ container, nome, carregar, aoEscolher, aoCriar, aoVoltar }) {
+  const raiz = document.createElement("div");
+  raiz.className = "tela tela-escolher-mundo";
+  const titulo = document.createElement("h2");
+  titulo.className = "escolher-titulo";
+  titulo.textContent = "Onde " + nome + " vai brincar?";
+  raiz.appendChild(titulo);
+  const lista = document.createElement("div");
+  lista.className = "escolher-lista";
+  raiz.appendChild(lista);
+  const btnCriar = document.createElement("button");
+  btnCriar.type = "button";
+  btnCriar.className = "botao escolher-criar";
+  btnCriar.textContent = "+ Criar mundo novo";
+  btnCriar.addEventListener("click", () => {
+    if (aoCriar) aoCriar();
+  });
+  raiz.appendChild(btnCriar);
+  const btnVoltar = document.createElement("button");
+  btnVoltar.type = "button";
+  btnVoltar.className = "botao escolher-voltar";
+  btnVoltar.textContent = "Voltar";
+  btnVoltar.addEventListener("click", () => {
+    if (aoVoltar) aoVoltar();
+  });
+  raiz.appendChild(btnVoltar);
+  container.appendChild(raiz);
+  let vivo = true;
+  function limparLista() {
+    while (lista.firstChild) lista.removeChild(lista.firstChild);
+  }
+  function mostrarVazio(texto) {
+    limparLista();
+    const p = document.createElement("p");
+    p.className = "escolher-vazio";
+    p.textContent = texto;
+    lista.appendChild(p);
+  }
+  function mostrarMundos(mundos2) {
+    limparLista();
+    if (!Array.isArray(mundos2) || mundos2.length === 0) {
+      mostrarVazio("Ainda n\xE3o tem mundos.");
+      return;
+    }
+    for (const m of mundos2) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "botao-grande escolher-item";
+      const rotulo = "\u{1F30D} " + m.nome + (m.eSeu ? "" : " \xB7 convidado");
+      btn.textContent = rotulo;
+      btn.addEventListener("click", () => {
+        if (vivo && aoEscolher) aoEscolher(m.id);
+      });
+      lista.appendChild(btn);
+    }
+  }
+  mostrarVazio("Procurando\u2026");
+  if (typeof carregar === "function") {
+    let p;
+    try {
+      p = carregar();
+    } catch (e) {
+      p = Promise.reject(e);
+    }
+    Promise.resolve(p).then(
+      (mundos2) => {
+        if (!vivo) return;
+        mostrarMundos(mundos2);
+      },
+      () => {
+        if (!vivo) return;
+        mostrarVazio("Ainda n\xE3o tem mundos.");
+      }
+    );
+  }
+  return {
+    elemento: raiz,
+    atualizar: () => {
+    },
+    destruir: () => {
+      vivo = false;
+      if (raiz.parentNode) raiz.parentNode.removeChild(raiz);
+    }
+  };
+}
+
 // js/eleicao.js
 var VIVA = 6e3;
 var MORTO = 3e3;
@@ -11138,7 +11451,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
     return g && g.uid !== st.con.uid && agoraServ() - g.t <= MORTO ? "jogador" : "gestor";
   }
   const souGestorGravado = (st) => !!(st.gestor && st.gestor.uid === st.con.uid);
-  async function iniciar({ mapa, gato, mundoId, semGato = false }) {
+  async function iniciar({ mapa, gato, mundoId, semGato = false, char = "" }) {
     sair2();
     const minha = sessao;
     let st = null;
@@ -11155,6 +11468,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
         gato,
         mundoId,
         semGato: !!semGato,
+        char: String(char || "").slice(0, 40),
         con,
         D: con.m.database,
         minha,
@@ -11212,6 +11526,8 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
       const D = st.D;
       const doc = { nome: st.semGato ? "mundo" : String(st.gato.nome || "Gatinho").slice(0, 30), nota: nota(st), gato: !st.semGato, t: D.serverTimestamp() };
       if (!st.semGato && st.lookJson.length <= 2e3) doc.look = st.lookJson;
+      doc.papel = st.semGato ? "servidor" : "jogador";
+      if (!st.semGato && st.char) doc.char = st.char;
       if (st.avocado) doc.avocado = true;
       const t0 = performance.now();
       D.set(ref(st, "presenca/" + st.con.uid), doc).then(() => {
@@ -11254,7 +11570,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
         const m = /* @__PURE__ */ new Map();
         snap.forEach((c) => {
           const v = c.val();
-          if (v && typeof v === "object" && typeof v.t === "number") m.set(c.key, { uid: c.key, nome: String(v.nome || ""), nota: +v.nota || 0, avocado: !!v.avocado, gato: v.gato !== false, t: v.t });
+          if (v && typeof v === "object" && typeof v.t === "number") m.set(c.key, { uid: c.key, nome: String(v.nome || ""), nota: +v.nota || 0, avocado: !!v.avocado, gato: v.gato !== false, papel: String(v.papel || ""), char: String(v.char || ""), t: v.t });
         });
         st.presencas = m;
         st.visto.presenca = true;
@@ -11582,7 +11898,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2 }) {
     const agora = agoraServ();
     return [...st.presencas.values()].filter((p) => agora - p.t < VIVA).map((p) => {
       const r = st.remotos.get(p.uid);
-      return { uid: p.uid, nome: p.nome, gato: p.gato, nota: p.nota, avocado: p.avocado, gestor: !!(st.gestor && st.gestor.uid === p.uid), eu: p.uid === st.con.uid, atrasoMs: r && r.atraso != null ? Math.max(0, Math.round(r.atraso)) : null };
+      return { uid: p.uid, nome: p.nome, gato: p.gato, nota: p.nota, avocado: p.avocado, papel: p.papel, char: p.char, gestor: !!(st.gestor && st.gestor.uid === p.uid), eu: p.uid === st.con.uid, atrasoMs: r && r.atraso != null ? Math.max(0, Math.round(r.atraso)) : null };
     }).sort((a, b) => a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : a.uid < b.uid ? -1 : 1);
   }
   function avocar(ligar2) {
@@ -11985,7 +12301,8 @@ function irPara(nome, opcoes) {
   if (nome === "menu") {
     const aoEscolher = (acao, dado) => {
       if (acao === "continuar") {
-        jogarCom(Save.atual()?.id);
+        const u2 = parContinuar();
+        jogar(u2 ? u2.char : Save.atual()?.id, u2 ? u2.mundo : void 0);
       } else if (acao === "mundos") {
         irPara("mundos");
       } else if (acao === "gatos") {
@@ -11998,19 +12315,19 @@ function irPara(nome, opcoes) {
         irPara("familia");
       }
     };
-    telaObj = criarMenu({ container: uiRoot, scene, aoEscolher, nuvem });
+    const u = parContinuar();
+    telaObj = criarMenu({ container: uiRoot, scene, aoEscolher, nuvem, continuar: u ? { charNome: u.charNome, mundoNome: u.mundoNome } : null });
     telaAtual = "menu";
     if (nuvem && Date.now() - tInicio > 1500) nuvem.sincronizar();
   } else if (nome === "gatos") {
-    const jogar = (id) => {
-      if (Save.pegar(id)) {
-        Save.escolher(id);
-        jogarCom(id);
-      }
-    };
     telaObj = criarGatos({
       container: uiRoot,
-      aoJogar: jogar,
+      aoJogar: (id) => {
+        if (Save.pegar(id)) {
+          Save.escolher(id);
+          jogar(id);
+        }
+      },
       aoEditar: (id) => irPara("criador", { gato: Save.pegar(id)?.look || null, id }),
       aoNovo: () => irPara("criador", { gato: null, id: null, voltarPara: "gatos" }),
       aoCopias: (id, nome2) => irPara("versoes", { id, nome: nome2 }),
@@ -12029,15 +12346,27 @@ function irPara(nome, opcoes) {
       gato: g ? { id: g.id, nome: g.look?.nome || "Avel\xE3" } : null,
       atual: () => Save.atual()?.mundoAtual || null,
       aoJogar: (idMundo) => {
-        if (g) {
-          Save.definirMundoAtual(g.id, idMundo);
-          jogarCom(g.id);
-        }
+        if (g) jogar(g.id, idMundo);
       },
       aoServidor: (idMundo) => abrirServidor(idMundo),
       aoVoltar: () => irPara("menu")
     });
     telaAtual = "mundos";
+  } else if (nome === "escolher") {
+    const g = Save.pegar(opcoes.char);
+    const tipo = g?.tipo || "gato";
+    telaObj = criarEscolherMundo({
+      container: uiRoot,
+      nome: g?.look?.nome || "Avel\xE3",
+      carregar: async () => (await mundos.listar()).filter((m) => mundoAceita(m, tipo)),
+      aoEscolher: (idMundo) => jogar(g.id, idMundo),
+      aoCriar: () => {
+        const r = mundos.criar({ nome: "Mundo " + (mundos.listarLocal().length + 1) });
+        if (r) jogar(g.id, r.id);
+      },
+      aoVoltar: () => irPara("gatos")
+    });
+    telaAtual = "escolher";
   } else if (nome === "versoes") {
     telaObj = criarTelaVersoes({ container: uiRoot, versoes, gato: { id: opcoes.id, nome: opcoes.nome || "Gatinho" }, aoVoltar: () => irPara("gatos") });
     telaAtual = "versoes";
@@ -12046,7 +12375,7 @@ function irPara(nome, opcoes) {
     const aoSalvar = (gato) => {
       const id = Save.salvarGato(gato, idGato);
       if (id) Save.escolher(id);
-      irPara("mapa", { gato, id });
+      jogar(id, void 0, { usarAtual: true });
     };
     const aoVoltar = () => irPara(opcoes.voltarPara || (idGato ? "gatos" : "menu"));
     telaObj = criarCreator({
@@ -12064,7 +12393,7 @@ function irPara(nome, opcoes) {
     servidorMundo = servidor;
     idGatoMapa = servidor ? null : opcoes.id ?? null;
     idMundoMapa = servidor || null;
-    if (idGatoMapa) idMundoMapa = mundos.garantirMundo(idGatoMapa, versoes);
+    if (idGatoMapa) idMundoMapa = opcoes.mundo || Save.pegar(idGatoMapa)?.mundoAtual || null;
     const salvo = servidor ? montarSalvoMundo(servidor) : idGatoMapa ? montarSalvo(idGatoMapa) : null;
     if (!salvo) idMundoMapa = null;
     const zIni = Number.isFinite(salvo?.zoom) ? salvo.zoom : ZOOM_INICIAL;
@@ -12178,24 +12507,68 @@ function irPara(nome, opcoes) {
   }
 }
 var entrando = false;
-async function jogarCom(id) {
+var espera = (ms) => new Promise((r) => setTimeout(r, ms));
+var LER_ULTIMO = "gatinho-ultimo";
+function parContinuar() {
+  const c = Save.atual();
+  if (!c) return null;
+  let u = null;
+  try {
+    u = JSON.parse(localStorage.getItem(LER_ULTIMO));
+  } catch {
+  }
+  let g = u && Save.pegar(u.char), m = g && u.mundo && mundos.pegar(u.mundo);
+  if (!g || !m) {
+    g = c;
+    m = c.mundoAtual ? mundos.pegar(c.mundoAtual) : null;
+    u = { char: g.id, mundo: m ? g.mundoAtual : void 0 };
+  }
+  return { char: g.id, charNome: g.look?.nome || "Avel\xE3", mundo: m ? u.mundo : void 0, mundoNome: m ? m.registro.nome : "" };
+}
+async function esperarJuntar() {
+  if (mundos.precisaJuntar()) await Promise.race([nuvem.sincronizar({ forcar: true }).then(() => mundos.juntando()), espera(3e3)]);
+  else if (mundos.juntando()) await Promise.race([mundos.juntando(), espera(6e3)]);
+}
+async function jogar(id, mundoId, { usarAtual = false } = {}) {
   const g = id != null ? Save.pegar(id) : null;
   if (entrando) return;
   entrando = true;
   try {
-    const mid = g ? mundos.garantirMundo(id, versoes) : null;
-    if (g && mid) {
-      if (!mundos.pegar(mid)) await mundos.obter(mid);
-      const w = mundos.pegar(mid);
-      if (!w) {
-        avisar2("Esse mundo ainda n\xE3o chegou neste aparelho. Ligue a internet e tente de novo.");
+    if (!g) {
+      irPara("mapa", { gato: gatoPadrao() });
+      return;
+    }
+    await esperarJuntar();
+    const tipo = g.tipo || "gato";
+    if (!mundoId && usarAtual && g.mundoAtual && (mundos.pegar(g.mundoAtual) || await mundos.obter(g.mundoAtual))) mundoId = g.mundoAtual;
+    if (!mundoId) {
+      const lista = (await Promise.race([mundos.listar(), espera(1500).then(() => mundos.listarLocal())])).filter((m) => mundoAceita(m, tipo));
+      if (!lista.length) mundoId = mundos.mundo1();
+      else if (lista.length === 1) mundoId = lista[0].id;
+      else {
+        irPara("escolher", { char: g.id });
         return;
       }
-      if (nuvem.codigo() && location.protocol !== "file:") {
-        await Promise.race([mundos.sincronizar(mid, { forcar: true }), new Promise((r) => setTimeout(r, w.estado || !w.registro.subido ? 1500 : 6e3))]);
-      }
     }
-    irPara("mapa", { gato: g?.look || gatoPadrao(), id: g?.id });
+    if (mundoId && !mundos.pegar(mundoId)) await mundos.obter(mundoId);
+    const w = mundoId && mundos.pegar(mundoId);
+    if (!w) {
+      avisar2("Esse mundo ainda n\xE3o chegou neste aparelho. Ligue a internet e tente de novo.");
+      return;
+    }
+    if (!mundoAceita(w.registro, tipo)) {
+      avisar2("Esse mundo n\xE3o aceita esse tipo de gatinho.");
+      return;
+    }
+    if (g.mundoAtual !== mundoId) Save.definirMundoAtual(g.id, mundoId);
+    try {
+      localStorage.setItem(LER_ULTIMO, JSON.stringify({ char: g.id, mundo: mundoId }));
+    } catch {
+    }
+    if (nuvem.codigo() && location.protocol !== "file:") {
+      await Promise.race([mundos.sincronizar(mundoId, { forcar: true }), espera(w.estado || !w.registro.subido ? 1500 : 6e3)]);
+    }
+    irPara("mapa", { gato: g.look, id: g.id, mundo: mundoId });
   } finally {
     entrando = false;
   }
@@ -12205,7 +12578,7 @@ async function iniciarAoVivo(mapa, gato, servidor) {
     const id = idMundoMapa;
     const w = id && mundos.pegar(id);
     if (!nuvem.codigo() || location.protocol === "file:" || !w || !w.registro.subido) return;
-    const ok = await aovivo.iniciar({ mapa, gato, mundoId: id, semGato: !!servidor });
+    const ok = await aovivo.iniciar({ mapa, gato, mundoId: id, semGato: !!servidor, char: idGatoMapa || "" });
     if (ok && mapaAtual !== mapa) aovivo.sair();
   } catch (e) {
   }
@@ -12469,7 +12842,15 @@ nuvem = criarNuvem({
 });
 versoes = criarVersoes({ nuvem });
 mundos = criarMundos({ nuvem });
-mundos.migrarTodos(versoes);
+mundos.migrarSave07(versoes);
+nuvem.ganchos.depoisSync = () => {
+  mundos.juntar(versoes);
+};
+mundos.ganchos.aoJuntar = () => {
+  const cl = telaObj?.elemento?.classList;
+  if (cl && (cl.contains("tela-menu") || cl.contains("tela-gatos"))) irPara(telaAtual);
+  setTimeout(() => nuvem.sincronizar({ forcar: true }), 500);
+};
 aovivo = criarAoVivo({ nuvem, THREE: THREE10, loadCat });
 irPara("menu");
 if (nuvem.codigo()) setTimeout(() => nuvem.sincronizar(), 1500);
@@ -12507,6 +12888,7 @@ window.GATINHO = {
   get mundos() {
     return mundos;
   },
+  jogar,
   // o que o mapa lê ao abrir (estado do mundo + posição do gato atual) e o caminho inverso — para os testes
   salvo() {
     const a = Save.atual();
