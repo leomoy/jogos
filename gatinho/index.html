@@ -2317,7 +2317,7 @@ if (typeof window !== "undefined") {
 import * as THREE12 from "three";
 
 // js/data.js
-var VERSION = "0.9.10";
+var VERSION = "0.9.11";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -2657,7 +2657,7 @@ function entradaZerada() {
   e.cacas = {};
   for (const t of TIPOS_CACA) e.cacas[t] = 0;
   e.brincadeiras = {};
-  for (const b of TIPOS_BRINC) e.brincadeiras[b] = { jogou: 0, ganhou: 0 };
+  for (const b of TIPOS_BRINC) e.brincadeiras[b] = { jogou: 0 };
   e.primeiro = "";
   e.ultimo = "";
   return e;
@@ -2674,7 +2674,6 @@ function normalizarEntrada(e) {
       const bb = e.brincadeiras[b];
       if (ehObjeto2(bb)) {
         z.brincadeiras[b].jogou = num2(bb.jogou);
-        z.brincadeiras[b].ganhou = num2(bb.ganhou);
       }
     }
   }
@@ -2730,7 +2729,6 @@ function somarEstat(ficha, mundoId, delta, agora2) {
       const bb = d.brincadeiras[b];
       if (ehObjeto2(bb)) {
         atual.brincadeiras[b].jogou += num2(bb.jogou);
-        atual.brincadeiras[b].ganhou += num2(bb.ganhou);
       }
     }
   }
@@ -2755,7 +2753,6 @@ function totaisEstat(ficha) {
     for (const tt of TIPOS_CACA) t.cacas[tt] += e.cacas[tt];
     for (const b of TIPOS_BRINC) {
       t.brincadeiras[b].jogou += e.brincadeiras[b].jogou;
-      t.brincadeiras[b].ganhou += e.brincadeiras[b].ganhou;
     }
     if (ehTextoValido(e.primeiro)) {
       if (!ehTextoValido(primeiro) || e.primeiro < primeiro) primeiro = e.primeiro;
@@ -17425,8 +17422,8 @@ function temJogo(e) {
   const c = e.cacas || {};
   if (num4(c.rato) > 0 || num4(c.peixe) > 0 || num4(c.passaro) > 0 || num4(c.ovo) > 0) return true;
   const b = e.brincadeiras || {};
-  if (b.esconde && (num4(b.esconde.jogou) > 0 || num4(b.esconde.ganhou) > 0)) return true;
-  if (b.pega && (num4(b.pega.jogou) > 0 || num4(b.pega.ganhou) > 0)) return true;
+  if (b.esconde && num4(b.esconde.jogou) > 0) return true;
+  if (b.pega && num4(b.pega.jogou) > 0) return true;
   return false;
 }
 function criarCartao(icone, rotulo, valor, detalhe) {
@@ -17480,14 +17477,12 @@ function montarCartoes(e, aba) {
   const esconde = b.esconde || {};
   const pega = b.pega || {};
   const escondeJogou = num4(esconde.jogou);
-  const escondeGanhou = num4(esconde.ganhou);
   const pegaJogou = num4(pega.jogou);
-  const pegaGanhou = num4(pega.ganhou);
   const andando = Math.max(0, distancia - corrida - nado);
   const detalheCaminhada = "\u{1F6B6} " + formatarDistancia(andando) + " \xB7 \u{1F3C3} " + formatarDistancia(corrida) + " \xB7 \u{1F3CA} " + formatarDistancia(nado);
   const detalheCacas = "\u{1F42D} " + rato + "  \u{1F41F} " + peixe + "  \u{1F426} " + passaro + "  \u{1F95A} " + ovo;
-  const detalheEsconde = "jogou " + escondeJogou + " \xB7 ganhou " + escondeGanhou;
-  const detalhePega = "jogou " + pegaJogou + " \xB7 ganhou " + pegaGanhou;
+  const detalheEsconde = "brincou " + escondeJogou + (escondeJogou === 1 ? " vez" : " vezes");
+  const detalhePega = "brincou " + pegaJogou + (pegaJogou === 1 ? " vez" : " vezes");
   const primeiro = e.primeiro || "";
   const ultimo = e.ultimo || "";
   const valorDesde = dataBR(primeiro);
@@ -17748,22 +17743,9 @@ function criarTelaBrincadeira() {
       }
       placar.hidden = false;
     } else if (jogo.fase === "fim") {
-      const titulo = "\u{1F3C6} Acabou o pique-esconde!";
-      const final = placarFinal(jogo);
-      const linhas = [];
-      const posicoes = [];
-      let posicao = 1;
-      let totalAnterior = null;
-      final.forEach((jogador, i) => {
-        if (totalAnterior !== null && jogador.total === totalAnterior) {
-        } else {
-          posicao = i + 1;
-        }
-        totalAnterior = jogador.total;
-        posicoes.push(posicao);
-        const pontos = jogador.total === 1 ? "ponto" : "pontos";
-        linhas.push(`${posicao}\xBA ${nomeDeSeguro(jogador.uid)} \u2014 achou ${jogador.achou} \xB7 ficou escondido ${jogador.escondeu} \xB7 ${jogador.total} ${pontos}`);
-      });
+      const titulo = "\u{1F389} Acabou o pique-esconde!";
+      const final = placarFinal(jogo).sort((a, b) => jogo.fila.indexOf(a.uid) - jogo.fila.indexOf(b.uid));
+      const linhas = final.map((jogador) => `${nomeDeSeguro(jogador.uid)} \u2014 achou ${jogador.achou} \xB7 ficou escondido ${jogador.escondeu}`);
       const chave = titulo + "|" + linhas.join("|");
       if (chave !== ultimoPlacarChave) {
         placarTitulo.textContent = titulo;
@@ -17772,7 +17754,6 @@ function criarTelaBrincadeira() {
         linhas.forEach((linha, i) => {
           const li = document.createElement("li");
           li.textContent = linha;
-          if (posicoes[i] === 1) li.className = "brinc-placar-1";
           placarLista.appendChild(li);
         });
         ultimoPlacarChave = chave;
@@ -17830,7 +17811,7 @@ function criarTelaPega() {
   placar.hidden = true;
   const placarTitulo = document.createElement("h2");
   placarTitulo.className = "pega-placar-titulo";
-  placarTitulo.textContent = "\u{1F3C6} Acabou o pique-pega!";
+  placarTitulo.textContent = "\u{1F389} Acabou o pique-pega!";
   const placarLista = document.createElement("ol");
   placarLista.className = "pega-placar-lista";
   placar.appendChild(placarTitulo);
@@ -17948,7 +17929,7 @@ function criarTelaPega() {
     }
     if (fase === "fim") {
       placar.hidden = false;
-      const linhas = placarPega(jogo);
+      const linhas = placarPega(jogo).sort((a, b) => jogo.fila.indexOf(a.uid) - jogo.fila.indexOf(b.uid));
       const chave = linhas.map((l) => l.uid + "|" + l.pegou + "|" + l.zumbi + "|" + l.venceu).join(";");
       if (chave !== ultimoPlacar) {
         ultimoPlacar = chave;
@@ -17957,9 +17938,8 @@ function criarTelaPega() {
           const li = document.createElement("li");
           const nome = nomeDe && nomeDe(l.uid) || "Algu\xE9m";
           const sufixo = l.zumbi ? "virou zumbi" : "ficou livre";
-          const texto = (l.venceu ? "\u{1F3C6} " : "") + nome + " \u2014 pegou " + l.pegou + " \xB7 " + sufixo;
+          const texto = nome + " \u2014 pegou " + l.pegou + " \xB7 " + sufixo;
           li.textContent = texto;
-          if (l.venceu) li.className = "pega-placar-1";
           placarLista.appendChild(li);
         }
       }
@@ -18195,21 +18175,12 @@ function estatBrincar(jj, eu) {
   }
   if (!estatJoga() || !eu || !(jj.fila || []).includes(eu)) return;
   const k = jj.tipo === "pega" ? "pega" : "esconde", chave = k + ":" + jj.fila.join(",");
-  const e = estat.brincadeiras[k] = estat.brincadeiras[k] || { jogou: 0, ganhou: 0 };
+  const e = estat.brincadeiras[k] = estat.brincadeiras[k] || { jogou: 0 };
   if (!estatBr || estatBr.chave !== chave || estatBr.fim && jj.fase !== "fim") {
     estatBr = { chave, fim: false };
     e.jogou++;
   }
-  if (jj.fase === "fim" && !estatBr.fim) {
-    estatBr.fim = true;
-    let ganhou;
-    if (k === "pega") ganhou = (jj.venc || []).includes(eu);
-    else {
-      const pl = placarFinal(jj), meu = pl.find((x) => x.uid === eu);
-      ganhou = !!meu && meu.total > 0 && meu.total >= (pl[0] ? pl[0].total : 0);
-    }
-    if (ganhou) e.ganhou++;
-  }
+  if (jj.fase === "fim") estatBr.fim = true;
 }
 function abrirEstatisticas(idGato, idMundo) {
   const g = Save.pegar(idGato);

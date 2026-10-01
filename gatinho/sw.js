@@ -1,7 +1,7 @@
 // Service Worker do Gatinho (PWA): guarda o jogo e as bibliotecas da CDN na primeira abertura e serve do cache.
 // O build.mjs troca os dois marcadores abaixo (versão e lista de URLs) antes de gravar dist/pwa/sw.js.
 
-const VERSAO = "0.9.10";
+const VERSAO = "0.9.11";
 const CDN = ["https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.js","https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/dist/rapier.mjs","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-app.js","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-auth.js","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-firestore.js","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-app-check.js","https://cdn.jsdelivr.net/npm/firebase@12.19.0/firebase-database.js","https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/loaders/GLTFLoader.js","https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/utils/BufferGeometryUtils.js","https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/utils/SkeletonUtils.js"];
 const SONS = ["./sons/floresta.mp3","./sons/passaros.mp3","./sons/rio.mp3","./sons/respingo-1.mp3","./sons/respingo-2.mp3","./sons/respingo-3.mp3","./sons/ronronar.mp3","./sons/ronronar-sono.mp3","./sons/miau-1.mp3","./sons/miau-2.mp3","./sons/miau-3.mp3","./sons/miau-comida.mp3","./sons/rato.mp3"];   // 0.9.5: os MP3 de sons/ ficam no cache para jogar sem internet
 
