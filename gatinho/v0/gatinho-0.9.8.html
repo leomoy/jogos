@@ -1764,6 +1764,20 @@ canvas,
 .brinc-placar-lista li.brinc-placar-1 { background: #fff1b8; }
 .missoes-subtitulo { margin: 4px 0 0; font-size: 1.15rem; align-self: flex-start; }
 @media (max-height: 520px) { .brinc-faixa { font-size: 0.85rem; padding: 3px 8px; } .brincando #hud { top: 24px; } .brinc-dica { top: 56%; padding: 3px 10px; font-size: 0.9rem; } .brinc-contagem-num { font-size: min(38vw, 34vh, 8rem); } .brinc-contagem-texto { font-size: 1rem; } .brinc-placar { top: 48%; padding: 6px 12px; } .brinc-placar-titulo { font-size: 1.15rem; margin-bottom: 3px; } .brinc-placar-lista { font-size: 0.9rem; gap: 2px; } .brinc-placar-lista li { padding: 2px 6px; } }
+
+/* 0.9.8: pique-pega zumbi (js/pega-ui.js) — mesma família do pique-esconde, em verde de zumbi */
+.pega[hidden], .pega [hidden] { display: none; }
+.pega-faixa { position: fixed; left: 0; right: 0; top: 0; z-index: 18; margin: 0; padding: 5px 10px; box-sizing: border-box; font-size: clamp(0.7rem, 3.1vw, 0.95rem); font-weight: 800; line-height: 1.2; text-align: center; color: #1f3a22; background: #c9f0b0; border-bottom: 3px solid #6fbf4a; pointer-events: none; }
+.pega-dica { position: fixed; left: 14px; top: 64%; z-index: 18; width: max-content; max-width: min(calc(100vw - 130px), 360px); box-sizing: border-box; margin: 0; padding: 6px 14px; font-size: 1rem; font-weight: 700; line-height: 1.25; text-align: center; color: #1f3a22; background: rgba(255, 255, 255, 0.88); border: 3px solid #a6d98a; border-radius: 16px; pointer-events: none; }
+.pega-aviso { position: fixed; left: 0; right: 0; top: 36%; z-index: 50; display: flex; justify-content: center; pointer-events: none; }
+.pega-aviso p { margin: 0; max-width: calc(100vw - 150px); padding: 12px 22px; font-size: clamp(1.3rem, 6vw, 2.2rem); font-weight: 900; line-height: 1.15; text-align: center; color: #fff; background: rgba(54, 140, 48, 0.92); border: 4px solid #1f5a22; border-radius: 22px; box-shadow: 0 6px 0 #1f5a22; text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35); animation: brinc-pulso 0.6s ease-out 2; }
+.pega-rapido { position: fixed; left: 50%; top: 14%; transform: translateX(-50%); z-index: 50; margin: 0; padding: 6px 16px; font-size: 1.3rem; font-weight: 900; color: #5a3a00; background: #ffe45e; border: 3px solid #e0a800; border-radius: 16px; pointer-events: none; animation: brinc-pulso 0.5s ease-out 2; }
+.pega-placar { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 60; width: min(88vw, 500px); max-height: 80vh; overflow: hidden; box-sizing: border-box; padding: 12px 18px; background: #fff; border: 4px solid #6fbf4a; border-radius: 22px; box-shadow: 0 6px 0 #6fbf4a; color: #1f3a22; text-align: center; pointer-events: none; }
+.pega-placar-titulo { margin: 0 0 6px; font-size: 1.45rem; }
+.pega-placar-lista { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 1.05rem; font-weight: 700; }
+.pega-placar-lista li { padding: 4px 8px; background: #f0faea; border-radius: 10px; }
+.pega-placar-lista li.pega-placar-1 { background: #ffe9a3; }
+@media (max-height: 520px) { .pega-faixa { font-size: 0.85rem; padding: 3px 8px; } .pega-dica { top: 56%; padding: 3px 10px; font-size: 0.9rem; } .pega-aviso { top: 14%; } .pega-aviso p { padding: 6px 14px; font-size: 1.2rem; } .pega-rapido { top: 10%; padding: 3px 10px; font-size: 1rem; } .pega-placar { top: 48%; padding: 6px 12px; } .pega-placar-titulo { font-size: 1.15rem; margin-bottom: 3px; } .pega-placar-lista { font-size: 0.9rem; gap: 2px; } .pega-placar-lista li { padding: 2px 6px; } }
 </style>
 <script type="importmap">{
   "imports": {
@@ -2261,10 +2275,10 @@ if (typeof window !== "undefined") {
 }
 
 // js/main.js
-import * as THREE10 from "three";
+import * as THREE11 from "three";
 
 // js/data.js
-var VERSION = "0.9.7";
+var VERSION = "0.9.8";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -3342,9 +3356,9 @@ var ajusta = (g, v) => {
 function pronto(nome) {
   return !!(ctx && ligado && ctx.state === "running" && bufs[nome]);
 }
-function tocar(nome, vol, dist = 0) {
+function tocar(nome, vol, dist2 = 0) {
   if (!pronto(nome)) return false;
-  const v = vol * atenuacao(dist);
+  const v = vol * atenuacao(dist2);
   if (v < 0.01) return false;
   const f = ctx.createBufferSource(), g = ctx.createGain();
   f.buffer = bufs[nome];
@@ -3357,8 +3371,8 @@ function tocar(nome, vol, dist = 0) {
   cont.ultimo = nome;
   return true;
 }
-function ronronar(dist, dur) {
-  const v = V.ronronar * atenuacao(dist);
+function ronronar(dist2, dur) {
+  const v = V.ronronar * atenuacao(dist2);
   if (!pronto("ronronar") || v < 0.01) return;
   const t = ctx.currentTime, { f, g } = laco("ronronar");
   g.gain.setValueAtTime(0, t);
@@ -4159,7 +4173,7 @@ async function loadCat(_THREE, look) {
   let pendente = null;
   let base = "sentado";
   let trans = null;
-  let alvoMove = 0, move = 0, vel = 0;
+  let alvoMove = 0, move = 0, vel = 0, mult = 1;
   let agachado = false, ag = 0;
   let nadando = false, nd = 0;
   let acao = null;
@@ -4267,6 +4281,9 @@ async function loadCat(_THREE, look) {
   function setMove(v) {
     alvoMove = clamp(v, 0, 1);
   }
+  function setMult(v) {
+    mult = v > 0 ? v : 1;
+  }
   function setAgachado(v) {
     agachado = !!v;
   }
@@ -4368,9 +4385,9 @@ async function loadCat(_THREE, look) {
     for (const n in peso) acoes[n].setEffectiveWeight(peso[n] * (1 - somaD));
     const esc = object.scale.x;
     const ritmo = move < 0.5 ? 0.7 + 0.6 * move : 1 + 2.2 * (move - 0.5);
-    const vAndar = VEL.andar * ritmo;
-    const vCorrer = VEL.correr * move;
-    const vEsg = VEL.esgueirar * ritmo;
+    const vAndar = VEL.andar * ritmo * mult;
+    const vCorrer = VEL.correr * move * mult;
+    const vEsg = VEL.esgueirar * ritmo * mult;
     acoes.WalkClean.timeScale = vAndar / (PASSO.andar * esc);
     if (doador.Correr) doador.Correr.timeScale = Math.max(0.3, vCorrer / (PASSO.correr * esc));
     if (doador.Esgueirar) doador.Esgueirar.timeScale = vEsg / (PASSO.esgueirar * esc);
@@ -4428,7 +4445,7 @@ async function loadCat(_THREE, look) {
     for (const m of materiais) m.dispose();
     brilhoGeo.dispose();
   }
-  const cat = { object, setLook, play, setMove, setAgachado, setNadando, setAr, update, dispose, velocidade: () => vel, gesto: () => rt, base: () => base, nado: () => nd };
+  const cat = { object, setLook, play, setMove, setMult, setAgachado, setNadando, setAr, update, dispose, velocidade: () => vel, gesto: () => rt, base: () => base, nado: () => nd };
   setLook(look);
   return cat;
 }
@@ -4658,10 +4675,10 @@ function criarInput(container, opcoes) {
     const cy = rect.top + rect.height / 2;
     let dx = clientX - cx;
     let dy = clientY - cy;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > r) {
-      dx = dx / dist * r;
-      dy = dy / dist * r;
+    const dist2 = Math.sqrt(dx * dx + dy * dy);
+    if (dist2 > r) {
+      dx = dx / dist2 * r;
+      dy = dy / dist2 * r;
     }
     posicionarAlca(dx, dy);
   }
@@ -4948,9 +4965,9 @@ function moverNoEstudio(pos, dx, dy, correndo, dt, raio) {
   const velocidade = correndo ? 1.6 : 0.8;
   let x = pos.x + dx * velocidade * dt;
   let z = pos.z + dy * velocidade * dt;
-  const dist = Math.sqrt(x * x + z * z);
-  if (dist > raio) {
-    const escala = raio / dist;
+  const dist2 = Math.sqrt(x * x + z * z);
+  if (dist2 > raio) {
+    const escala = raio / dist2;
     x *= escala;
     z *= escala;
   }
@@ -5555,7 +5572,7 @@ function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar, aoCopias, 
 }
 
 // js/map.js
-import * as THREE9 from "three";
+import * as THREE10 from "three";
 
 // js/world.js
 function mulberry32(seed) {
@@ -6001,6 +6018,15 @@ function criarGato(w, mundo, x0, z0, bloqueiam = /* @__PURE__ */ new Set()) {
       b.x = Math.max(-lim, Math.min(lim, b.x + m.x));
       b.z = Math.max(-lim, Math.min(lim, b.z + m.z));
       b.y += m.y;
+      const ce = f.cerca;
+      if (ce) {
+        const ex = b.x - ce.x, ez = b.z - ce.z, d = Math.hypot(ex, ez);
+        if (d > ce.r) {
+          b.x = ce.x + ex / d * ce.r;
+          b.z = ce.z + ez / d * ce.r;
+          f.cercou = true;
+        }
+      }
       f.noChao = kcc.computedGrounded();
       if (f.noChao && f.vy < 0) f.vy = 0;
       const ch = mundo.altura(b.x, b.z);
@@ -6040,6 +6066,18 @@ function criarGato(w, mundo, x0, z0, bloqueiam = /* @__PURE__ */ new Set()) {
       const ray = new RAPIER.Ray({ x: ox, y: oy, z: oz }, { x: dx / d, y: dy / d, z: dz / d });
       return !w.castRay(ray, d, true, void 0, void 0, void 0, void 0, (c) => bloqueiam.has(c.handle));
     },
+    /** 0.9.8 (pique-pega): acrescenta colisores — `lista` = [{ cil: true, x, z, r, yb, yt } | { x, z, rot, hx, hz, yb, yt }] (caixa) — e devolve a função que os tira. */
+    acrescentar(lista) {
+      const cs = lista.map((c) => c.cil ? cilindro(w, c.x, c.z, c.r, c.yb, c.yt) : caixa(w, c.x, c.z, c.rot, c.hx, c.hz, c.yb, c.yt));
+      w.step();
+      return () => {
+        for (const c of cs) w.removeCollider(c, false);
+        w.step();
+      };
+    },
+    cerca: null,
+    cercou: false,
+    // cerca = { x, z, r } ou null; cercou = o gato bateu nela desde a última vez que alguém zerou
     descartar() {
       w.free();
     }
@@ -6219,7 +6257,7 @@ function criarCanvas(n) {
   const g = c.getContext("2d");
   return { c, g };
 }
-function criarTexturaTerreno(THREE11, mundo, tam = 1024) {
+function criarTexturaTerreno(THREE12, mundo, tam = 1024) {
   const { c: canvas, g: ctx2 } = criarCanvas(tam);
   const k = tam / TERRENO;
   const rnd = mulberry32(777);
@@ -6322,15 +6360,15 @@ function criarTexturaTerreno(THREE11, mundo, tam = 1024) {
     ctx2.fillStyle = i % 2 === 0 ? "rgba(255,255,200,0.12)" : "rgba(30,70,20,0.16)";
     ctx2.fillRect(x, y, tamP, tamP);
   }
-  const texture = new THREE11.CanvasTexture(canvas);
-  texture.colorSpace = THREE11.SRGBColorSpace;
+  const texture = new THREE12.CanvasTexture(canvas);
+  texture.colorSpace = THREE12.SRGBColorSpace;
   texture.anisotropy = 4;
-  texture.wrapS = THREE11.ClampToEdgeWrapping;
-  texture.wrapT = THREE11.ClampToEdgeWrapping;
+  texture.wrapS = THREE12.ClampToEdgeWrapping;
+  texture.wrapT = THREE12.ClampToEdgeWrapping;
   texture.needsUpdate = true;
   return { canvas, texture };
 }
-function criarTexturaDetalhe(THREE11) {
+function criarTexturaDetalhe(THREE12) {
   const n = 256;
   const { c: canvas, g: ctx2 } = criarCanvas(n);
   const rnd = mulberry32(1234);
@@ -6371,14 +6409,14 @@ function criarTexturaDetalhe(THREE11) {
       ctx2.stroke();
     }
   }
-  const texture = new THREE11.CanvasTexture(canvas);
-  texture.wrapS = THREE11.RepeatWrapping;
-  texture.wrapT = THREE11.RepeatWrapping;
-  texture.colorSpace = THREE11.NoColorSpace;
+  const texture = new THREE12.CanvasTexture(canvas);
+  texture.wrapS = THREE12.RepeatWrapping;
+  texture.wrapT = THREE12.RepeatWrapping;
+  texture.colorSpace = THREE12.NoColorSpace;
   texture.needsUpdate = true;
   return texture;
 }
-function criarTexturaRuido(THREE11) {
+function criarTexturaRuido(THREE12) {
   const n = 128;
   const { c: canvas, g: ctx2 } = criarCanvas(n);
   const img = ctx2.createImageData(n, n);
@@ -6439,11 +6477,11 @@ function criarTexturaRuido(THREE11) {
     }
   }
   ctx2.putImageData(img, 0, 0);
-  const texture = new THREE11.CanvasTexture(canvas);
-  texture.wrapS = THREE11.RepeatWrapping;
-  texture.wrapT = THREE11.RepeatWrapping;
-  texture.colorSpace = THREE11.NoColorSpace;
-  texture.minFilter = THREE11.LinearMipmapLinearFilter;
+  const texture = new THREE12.CanvasTexture(canvas);
+  texture.wrapS = THREE12.RepeatWrapping;
+  texture.wrapT = THREE12.RepeatWrapping;
+  texture.colorSpace = THREE12.NoColorSpace;
+  texture.minFilter = THREE12.LinearMipmapLinearFilter;
   texture.needsUpdate = true;
   return texture;
 }
@@ -6632,8 +6670,8 @@ function geoArvoreGrande() {
 function geoTufo() {
   return unir([[0, 0.14, 0, 0.42], [0.3, 0.1, 0.12, 0.3], [-0.28, 0.1, -0.1, 0.3]].map(([x, y, z, r], i) => parte(new THREE3.IcosahedronGeometry(r, 1), { liso: true, m: T(x, y, z, 1, 0.6, 1), desloca: 0.08, seed: i * 3.3, cor: grad("#3f8f3a", "#b9e050", 0, 0.5, 0.1) })));
 }
-function geoTroncoSeg(y0, y1, r0, r1) {
-  return unir([parte(new THREE3.CylinderGeometry(r1, r0, y1 - y0, 11, 2), { desloca: 0.03, m: T(0, (y0 + y1) / 2, 0), cor: (x, y, z) => grad("#6b4a30", "#a37c4e", y0, y1, 0.1)(x, y, z).multiplyScalar(0.8 + 0.35 * hash3(Math.round(Math.atan2(x, z) * 3.5), 4, 9)) })]);
+function geoTroncoSeg(y0, y1, r0, r12) {
+  return unir([parte(new THREE3.CylinderGeometry(r12, r0, y1 - y0, 11, 2), { desloca: 0.03, m: T(0, (y0 + y1) / 2, 0), cor: (x, y, z) => grad("#6b4a30", "#a37c4e", y0, y1, 0.1)(x, y, z).multiplyScalar(0.8 + 0.35 * hash3(Math.round(Math.atan2(x, z) * 3.5), 4, 9)) })]);
 }
 function geoGalhos(andar) {
   const { y, segs, juntas } = andar;
@@ -7629,12 +7667,12 @@ function criarAnimais(mapa, salvos) {
       return;
     }
     if (m.faseFuga !== "nada") {
-      const r2 = mundo.distRio(m.x, m.z);
-      if (r2.d < r2.hw * 0.7) {
+      const r3 = mundo.distRio(m.x, m.z);
+      if (r3.d < r3.hw * 0.7) {
         m.faseFuga = "nada";
         m.tFuga = Math.max(m.tFuga, 3);
       } else {
-        const dx = r2.px - m.x, dz = r2.pz - m.z;
+        const dx = r3.px - m.x, dz = r3.pz - m.z;
         const dot = dx * ax + dz * az;
         const dGato = Math.hypot(ax, az);
         if (dot < 0 && dGato < 2.5) {
@@ -8396,14 +8434,14 @@ function gerarPlanta(seed) {
       for (let j = minJ; j <= maxJ; j++) {
         const dx = i + 0.5 - cx;
         const dz = j + 0.5 - cz;
-        const dist = Math.hypot(dx, dz);
-        if (dist < 1e-3) {
+        const dist2 = Math.hypot(dx, dz);
+        if (dist2 < 1e-3) {
           chao[j * N + i] = 1;
           continue;
         }
         const ang = Math.atan2(dz, dx);
         const rLocal = r * (1 + 0.22 * Math.sin(3 * ang + f1) + 0.15 * Math.sin(5 * ang + f2));
-        if (dist < rLocal) chao[j * N + i] = 1;
+        if (dist2 < rLocal) chao[j * N + i] = 1;
       }
     }
   };
@@ -8436,8 +8474,8 @@ function gerarPlanta(seed) {
     for (let step = 0; step < 400; step++) {
       const dx = b.cx - x;
       const dz = b.cz - z;
-      const dist = Math.hypot(dx, dz);
-      if (dist < 0.8) break;
+      const dist2 = Math.hypot(dx, dz);
+      if (dist2 < 0.8) break;
       const targetAng = Math.atan2(dz, dx);
       let diff = targetAng - ang;
       while (diff > Math.PI) diff -= 2 * Math.PI;
@@ -8445,7 +8483,7 @@ function gerarPlanta(seed) {
       ang += (rc() - 0.5) * 0.6;
       if (ang > 0.9) ang = 0.9;
       if (ang < -0.9) ang = -0.9;
-      if (dist < 4) ang *= 0.5;
+      if (dist2 < 4) ang *= 0.5;
       const moveAng = targetAng + ang;
       x += Math.cos(moveAng) * 0.6;
       z += Math.sin(moveAng) * 0.6;
@@ -9340,14 +9378,14 @@ function gerarPlanta2(seed) {
     const pontoNoRamo = (r, t) => {
       if (r.segs.length === 0) return null;
       const total = r.segs.reduce((s, seg) => s + Math.hypot(seg.x1 - seg.x0, seg.z1 - seg.z0), 0);
-      let dist = t * total;
+      let dist2 = t * total;
       for (const seg of r.segs) {
         const len = Math.hypot(seg.x1 - seg.x0, seg.z1 - seg.z0);
-        if (dist <= len) {
-          const f = len === 0 ? 0 : dist / len;
+        if (dist2 <= len) {
+          const f = len === 0 ? 0 : dist2 / len;
           return { x: seg.x0 + (seg.x1 - seg.x0) * f, z: seg.z0 + (seg.z1 - seg.z0) * f, ang: Math.atan2(seg.z1 - seg.z0, seg.x1 - seg.x0) };
         }
-        dist -= len;
+        dist2 -= len;
       }
       const last = r.segs[r.segs.length - 1];
       return { x: last.x1, z: last.z1, ang: Math.atan2(last.z1 - last.z0, last.x1 - last.x0) };
@@ -9569,7 +9607,7 @@ function desenharPlanta2(ctx2, W, planta, ia) {
     const m = A.mirante;
     const cx = px(m.x), cy = py(m.z);
     const R = Math.max(6, 0.9 * e);
-    const r2 = R / 2;
+    const r3 = R / 2;
     ctx2.fillStyle = "#ffd34d";
     ctx2.strokeStyle = "#7a5a00";
     ctx2.lineWidth = 1;
@@ -9579,7 +9617,7 @@ function desenharPlanta2(ctx2, W, planta, ia) {
       const a2 = (i * 72 + 36 - 90) * Math.PI / 180;
       if (i === 0) ctx2.moveTo(cx + R * Math.cos(a1), cy + R * Math.sin(a1));
       else ctx2.lineTo(cx + R * Math.cos(a1), cy + R * Math.sin(a1));
-      ctx2.lineTo(cx + r2 * Math.cos(a2), cy + r2 * Math.sin(a2));
+      ctx2.lineTo(cx + r3 * Math.cos(a2), cy + r3 * Math.sin(a2));
     }
     ctx2.closePath();
     ctx2.fill();
@@ -9690,7 +9728,7 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
   const pisos = [], borboletas = [];
   const ovos = [];
   const geoOvo = new THREE8.SphereGeometry(0.085, 8, 6);
-  let anel = null, bandeira = null;
+  let anel2 = null, bandeira = null;
   const mirante = planta.andares[2].mirante;
   planta.andares.forEach((A, i) => {
     const g = new THREE8.Group(), mats = [];
@@ -9756,12 +9794,12 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
       fl.closePath();
       bandeira = new THREE8.Mesh(new THREE8.ShapeGeometry(fl), new THREE8.MeshBasicMaterial({ color: 16734794, side: THREE8.DoubleSide, transparent: true }));
       bandeira.position.set(A.mirante.x + 0.02, A.y + 1.2, A.mirante.z - 0.75);
-      anel = new THREE8.Mesh(new THREE8.RingGeometry(0.85, 1, 40).rotateX(-Math.PI / 2), new THREE8.MeshBasicMaterial({ color: 16769658, transparent: true, opacity: 0, depthWrite: false }));
-      anel.position.set(A.mirante.x, A.y + 0.08, A.mirante.z);
-      anel.visible = false;
+      anel2 = new THREE8.Mesh(new THREE8.RingGeometry(0.85, 1, 40).rotateX(-Math.PI / 2), new THREE8.MeshBasicMaterial({ color: 16769658, transparent: true, opacity: 0, depthWrite: false }));
+      anel2.position.set(A.mirante.x, A.y + 0.08, A.mirante.z);
+      anel2.visible = false;
       mast.material.vertexColors = false;
       mast.material.color.set(9069112);
-      g.add(disco, mast, bandeira, anel);
+      g.add(disco, mast, bandeira, anel2);
       mats.push(mb, mast.material, bandeira.material);
     }
     grupo.add(g);
@@ -9841,11 +9879,11 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
           revelar(mapa, entrada.x, entrada.z, RAIO_MIRANTE);
         }
       } else noMirante = false;
-      if (anel && tAnel >= 0) {
+      if (anel2 && tAnel >= 0) {
         tAnel += dt;
-        anel.visible = tAnel < 1.8;
-        anel.scale.setScalar(1 + tAnel * 4);
-        anel.material.opacity = Math.max(0, 1 - tAnel / 1.8);
+        anel2.visible = tAnel < 1.8;
+        anel2.scale.setScalar(1 + tAnel * 4);
+        anel2.material.opacity = Math.max(0, 1 - tAnel / 1.8);
         if (tAnel >= 1.8) tAnel = -1;
       }
     },
@@ -9866,6 +9904,808 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
   };
 }
 
+// js/pega-mapa.js
+import * as THREE9 from "three";
+
+// js/brincadeiras.js
+var BRINCADEIRAS = {
+  esconde: {
+    nome: "Pique-esconde",
+    icone: "\u{1F648}",
+    contagem: 10,
+    procura: 90,
+    pausa: 6,
+    fimTela: 10,
+    dica: "Um conta at\xE9 10 e os outros se escondem!"
+  },
+  // 0.9.8: a lógica fica em js/pega.js; aqui só o cartão do catálogo (diálogo, votação)
+  pega: { nome: "Pique-pega zumbi", icone: "\u{1F9DF}", dica: "Quem \xE9 pego vira zumbi e corre atr\xE1s dos outros!" }
+};
+function ehTexto(v) {
+  return typeof v === "string";
+}
+function ehInteiro(v) {
+  return typeof v === "number" && Number.isInteger(v);
+}
+function ehNumeroFinito2(v) {
+  return typeof v === "number" && Number.isFinite(v);
+}
+function ehObjeto3(v) {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+function uidValido(u) {
+  return ehTexto(u) && u.length >= 1 && u.length <= 40 && /^[A-Za-z0-9_-]+$/.test(u) && u !== "__proto__";
+}
+function listaUnica(arr) {
+  const s = /* @__PURE__ */ new Set();
+  for (const x of arr) {
+    if (s.has(x)) return false;
+    s.add(x);
+  }
+  return true;
+}
+function emLista(lista, v) {
+  return Array.isArray(lista) && lista.includes(v);
+}
+function filaInicial(uids, rnd = Math.random) {
+  if (!Array.isArray(uids)) return null;
+  const arr = uids.filter((u) => ehTexto(u));
+  if (!listaUnica(arr)) return null;
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    const t = a[i];
+    a[i] = a[j];
+    a[j] = t;
+  }
+  return a;
+}
+function novoJogo(tipo, uids, agora2, rnd) {
+  if (tipo !== "esconde") return null;
+  const cfg = BRINCADEIRAS[tipo];
+  if (!ehNumeroFinito2(agora2)) return null;
+  const fila = filaInicial(uids, rnd);
+  if (!fila || fila.length < 2) return null;
+  const placar = {};
+  for (const u of fila) placar[u] = [0, 0];
+  return {
+    tipo,
+    fila,
+    rodada: 1,
+    peg: fila[0],
+    fase: "contando",
+    fimFase: agora2 + cfg.contagem * 1e3,
+    esc: {},
+    ach: [],
+    perd: [],
+    placar
+  };
+}
+function registrarEscondidos(jogo, esc) {
+  if (!ehObjeto3(jogo) || jogo.fase !== "contando" || !ehObjeto3(esc)) return false;
+  const filaSet = new Set(jogo.fila);
+  let mudou2 = false;
+  for (const uid in esc) {
+    if (!Object.hasOwn(esc, uid)) continue;
+    const idx = esc[uid];
+    if (!ehTexto(uid) || !filaSet.has(uid) || uid === jogo.peg) continue;
+    if (Object.hasOwn(jogo.esc, uid)) continue;
+    if (!ehInteiro(idx) || idx < 0) continue;
+    jogo.esc[uid] = idx;
+    mudou2 = true;
+  }
+  return mudou2;
+}
+function olhar(jogo, uid, idx) {
+  if (!ehObjeto3(jogo) || jogo.fase !== "procurando" || uid !== jogo.peg) return [];
+  if (!ehInteiro(idx) || idx < 0) return [];
+  const achados = [];
+  for (const u in jogo.esc) {
+    if (!Object.hasOwn(jogo.esc, u)) continue;
+    if (jogo.esc[u] === idx && !emLista(jogo.ach, u)) {
+      jogo.ach.push(u);
+      achados.push(u);
+      if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[uid]) && ehInteiro(jogo.placar[uid][0])) {
+        jogo.placar[uid][0] += 1;
+      }
+    }
+  }
+  return achados;
+}
+function avancar(jogo, agora2, vivos) {
+  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || !Array.isArray(vivos)) return "";
+  const cfg = Object.hasOwn(BRINCADEIRAS, jogo.tipo) ? BRINCADEIRAS[jogo.tipo] : null;
+  if (!cfg) return "";
+  const vivosSet = new Set(vivos);
+  const filaSet = new Set(jogo.fila);
+  const vivoDaFila = (u) => filaSet.has(u) && vivosSet.has(u);
+  if (jogo.fase === "fim") {
+    if (agora2 >= jogo.fimFase) return "acabou";
+    return "";
+  }
+  let vivosFila = 0;
+  for (const u of jogo.fila) if (vivosSet.has(u)) vivosFila++;
+  if (vivosFila < 2) {
+    jogo.fase = "fim";
+    jogo.fimFase = agora2 + cfg.fimTela * 1e3;
+    return "mudou";
+  }
+  if (jogo.fase === "contando") {
+    if (!vivosSet.has(jogo.peg)) {
+      jogo.fase = "rodada";
+      jogo.fimFase = agora2 + cfg.pausa * 1e3;
+      return "mudou";
+    }
+    if (agora2 >= jogo.fimFase) {
+      for (const u of jogo.fila) {
+        if (u === jogo.peg) continue;
+        if (!vivosSet.has(u)) continue;
+        if (Object.hasOwn(jogo.esc, u)) continue;
+        if (emLista(jogo.ach, u)) continue;
+        jogo.ach.push(u);
+        jogo.perd.push(u);
+      }
+      jogo.fase = "procurando";
+      jogo.fimFase = agora2 + cfg.procura * 1e3;
+      return "mudou";
+    }
+    return "";
+  }
+  if (jogo.fase === "procurando") {
+    const pegVivo = vivosSet.has(jogo.peg);
+    let todosAchados = true;
+    for (const u of jogo.fila) {
+      if (u === jogo.peg) continue;
+      if (!vivosSet.has(u)) continue;
+      if (!emLista(jogo.ach, u)) {
+        todosAchados = false;
+        break;
+      }
+    }
+    if (!pegVivo || agora2 >= jogo.fimFase || todosAchados) {
+      if (pegVivo) {
+        for (const u of jogo.fila) {
+          if (u === jogo.peg) continue;
+          if (!vivosSet.has(u)) continue;
+          if (!Object.hasOwn(jogo.esc, u)) continue;
+          if (emLista(jogo.ach, u)) continue;
+          if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[u]) && ehInteiro(jogo.placar[u][1])) {
+            jogo.placar[u][1] += 1;
+          }
+        }
+      }
+      jogo.fase = "rodada";
+      jogo.fimFase = agora2 + cfg.pausa * 1e3;
+      return "mudou";
+    }
+    return "";
+  }
+  if (jogo.fase === "rodada") {
+    if (agora2 >= jogo.fimFase) {
+      let r = jogo.rodada + 1;
+      while (r <= jogo.fila.length && !vivosSet.has(jogo.fila[r - 1])) r++;
+      if (r > jogo.fila.length) {
+        jogo.fase = "fim";
+        jogo.fimFase = agora2 + cfg.fimTela * 1e3;
+      } else {
+        jogo.rodada = r;
+        jogo.peg = jogo.fila[r - 1];
+        jogo.esc = {};
+        jogo.ach = [];
+        jogo.perd = [];
+        jogo.fase = "contando";
+        jogo.fimFase = agora2 + cfg.contagem * 1e3;
+      }
+      return "mudou";
+    }
+    return "";
+  }
+  return "";
+}
+function restante(jogo, agora2) {
+  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || !ehNumeroFinito2(jogo.fimFase)) return 0;
+  const s = Math.ceil((jogo.fimFase - agora2) / 1e3);
+  return s < 0 ? 0 : s;
+}
+function tempoTexto(seg) {
+  if (!ehNumeroFinito2(seg) || seg < 0) return "0:00";
+  const s = Math.floor(seg);
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return m + ":" + (r < 10 ? "0" + r : "" + r);
+}
+function faixaTexto(jogo, agora2, nomeDe) {
+  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || typeof nomeDe !== "function") return "";
+  const cfg = Object.hasOwn(BRINCADEIRAS, jogo.tipo) ? BRINCADEIRAS[jogo.tipo] : null;
+  if (!cfg) return "";
+  const icone = cfg.icone;
+  const nome = cfg.nome;
+  const R = ehInteiro(jogo.rodada) ? jogo.rodada : 1;
+  const N2 = Array.isArray(jogo.fila) ? jogo.fila.length : 0;
+  const nomePeg = nomeDe(jogo.peg);
+  if (jogo.fase === "contando") {
+    return icone + " " + nome + " \u2014 rodada " + R + "/" + N2 + " \u2014 " + nomePeg + " est\xE1 contando: " + restante(jogo, agora2);
+  }
+  if (jogo.fase === "procurando") {
+    return icone + " " + nome + " \u2014 rodada " + R + "/" + N2 + " \u2014 quem procura: " + nomePeg + " \u2014 " + tempoTexto(restante(jogo, agora2));
+  }
+  if (jogo.fase === "rodada") {
+    return icone + " " + nome + " \u2014 fim da rodada " + R + "/" + N2;
+  }
+  if (jogo.fase === "fim") {
+    return icone + " " + nome + " \u2014 acabou!";
+  }
+  return "";
+}
+function resumoRodada(jogo) {
+  if (!ehObjeto3(jogo)) return { achados: [], escondidos: [], perderam: [] };
+  const perdSet = new Set(Array.isArray(jogo.perd) ? jogo.perd : []);
+  const achSet = new Set(Array.isArray(jogo.ach) ? jogo.ach : []);
+  const achados = [];
+  for (const u of jogo.ach) if (!perdSet.has(u)) achados.push(u);
+  const escondidos = [];
+  if (ehObjeto3(jogo.esc)) {
+    for (const u in jogo.esc) {
+      if (!Object.hasOwn(jogo.esc, u)) continue;
+      if (!achSet.has(u)) escondidos.push(u);
+    }
+  }
+  const perderam = Array.isArray(jogo.perd) ? jogo.perd.slice() : [];
+  return { achados, escondidos, perderam };
+}
+function placarFinal(jogo) {
+  if (!ehObjeto3(jogo) || !Array.isArray(jogo.fila)) return [];
+  const arr = [];
+  for (let i = 0; i < jogo.fila.length; i++) {
+    const u = jogo.fila[i];
+    let achou = 0;
+    let escondeu = 0;
+    if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[u])) {
+      if (ehInteiro(jogo.placar[u][0])) achou = jogo.placar[u][0];
+      if (ehInteiro(jogo.placar[u][1])) escondeu = jogo.placar[u][1];
+    }
+    arr.push({ uid: u, achou, escondeu, total: achou + escondeu, _i: i });
+  }
+  arr.sort((a, b) => {
+    if (b.total !== a.total) return b.total - a.total;
+    return a._i - b._i;
+  });
+  return arr.map((x) => ({ uid: x.uid, achou: x.achou, escondeu: x.escondeu, total: x.total }));
+}
+function serializarJogo(jogo) {
+  if (!ehObjeto3(jogo)) return "";
+  let s;
+  try {
+    s = JSON.stringify(jogo);
+  } catch (e) {
+    return "";
+  }
+  if (typeof s !== "string" || s.length > 3e3) return "";
+  return s;
+}
+function lerJogo(texto) {
+  if (typeof texto !== "string" || texto.length > 3e3) return null;
+  let obj;
+  try {
+    obj = JSON.parse(texto);
+  } catch (e) {
+    return null;
+  }
+  if (!ehObjeto3(obj)) return null;
+  if (obj.tipo !== "esconde") return null;
+  if (!Array.isArray(obj.fila) || obj.fila.length < 2 || obj.fila.length > 12) return null;
+  for (const u of obj.fila) {
+    if (!uidValido(u)) return null;
+  }
+  if (!listaUnica(obj.fila)) return null;
+  const filaSet = new Set(obj.fila);
+  if (!ehInteiro(obj.rodada) || obj.rodada < 1 || obj.rodada > obj.fila.length) return null;
+  if (obj.peg !== obj.fila[obj.rodada - 1]) return null;
+  const fases = ["contando", "procurando", "rodada", "fim"];
+  if (!fases.includes(obj.fase)) return null;
+  if (!ehNumeroFinito2(obj.fimFase)) return null;
+  const esc = {};
+  if (ehObjeto3(obj.esc)) {
+    for (const u in obj.esc) {
+      if (!Object.hasOwn(obj.esc, u)) continue;
+      if (!filaSet.has(u)) continue;
+      const v = obj.esc[u];
+      if (ehInteiro(v) && v >= 0 && v <= 9999) esc[u] = v;
+    }
+  }
+  const ach = [];
+  if (Array.isArray(obj.ach)) {
+    for (const u of obj.ach) {
+      if (ehTexto(u) && filaSet.has(u) && !ach.includes(u)) ach.push(u);
+    }
+  }
+  const perd = [];
+  if (Array.isArray(obj.perd)) {
+    for (const u of obj.perd) {
+      if (ehTexto(u) && filaSet.has(u) && !perd.includes(u)) perd.push(u);
+    }
+  }
+  const placar = {};
+  for (const u of obj.fila) {
+    let a = 0;
+    let e = 0;
+    if (ehObjeto3(obj.placar) && Array.isArray(obj.placar[u])) {
+      if (ehInteiro(obj.placar[u][0]) && obj.placar[u][0] >= 0 && obj.placar[u][0] <= 99) a = obj.placar[u][0];
+      if (ehInteiro(obj.placar[u][1]) && obj.placar[u][1] >= 0 && obj.placar[u][1] <= 99) e = obj.placar[u][1];
+    }
+    placar[u] = [a, e];
+  }
+  return {
+    tipo: obj.tipo,
+    fila: obj.fila.slice(),
+    rodada: obj.rodada,
+    peg: obj.peg,
+    fase: obj.fase,
+    fimFase: obj.fimFase,
+    esc,
+    ach,
+    perd,
+    placar
+  };
+}
+
+// js/pega.js
+var PEGA = {
+  raioMin: 22,
+  raioMax: 40,
+  folga: 6,
+  aura: 0.9,
+  graca: 5,
+  duracao: 180,
+  fimTela: 10,
+  passoBonus: 10,
+  fator: 1.2,
+  teto: 2.5
+};
+function num2(v) {
+  return typeof v === "number" && Number.isFinite(v);
+}
+function r1(v) {
+  return Math.round(v * 10) / 10;
+}
+function r2(v) {
+  return Math.round(v * 100) / 100;
+}
+function dist(a, b) {
+  if (!num2(a.x) || !num2(a.z) || !num2(b.x) || !num2(b.z)) return Infinity;
+  const dx = a.x - b.x;
+  const dz = a.z - b.z;
+  return Math.sqrt(dx * dx + dz * dz);
+}
+function mulberry322(seed) {
+  let a = seed | 0;
+  return function() {
+    a = a + 1831565813 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function areaPega(posicoes, limite = 55) {
+  const pts = (posicoes || []).filter((p) => p && num2(p.x) && num2(p.z));
+  if (pts.length === 0) {
+    return { cx: 0, cz: 0, raio: r1(PEGA.raioMin) };
+  }
+  let sx = 0, sz = 0;
+  for (const p of pts) {
+    sx += p.x;
+    sz += p.z;
+  }
+  const cx0 = sx / pts.length;
+  const cz0 = sz / pts.length;
+  let maxD = 0;
+  for (const p of pts) {
+    const dx = p.x - cx0;
+    const dz = p.z - cz0;
+    const d = Math.sqrt(dx * dx + dz * dz);
+    if (d > maxD) maxD = d;
+  }
+  let raio = Math.min(PEGA.raioMax, Math.max(PEGA.raioMin, maxD + PEGA.folga));
+  let cx = 0, cz = 0;
+  if (num2(limite) && limite > raio) {
+    const m = limite - raio;
+    cx = Math.max(-m, Math.min(m, cx0));
+    cz = Math.max(-m, Math.min(m, cz0));
+  }
+  return { cx: r1(cx), cz: r1(cz), raio: r1(raio) };
+}
+function troncosArea(centro, raio, seed) {
+  if (!centro || !num2(centro.x) || !num2(centro.z) || !num2(raio) || raio <= 0) return [];
+  const rnd = mulberry322(seed | 0);
+  const n = Math.round(Math.PI * raio * raio / 80);
+  const tentativas = n * 12;
+  const aceitos = [];
+  const rMax = Math.max(0, raio - 2);
+  for (let i = 0; i < tentativas && aceitos.length < n; i++) {
+    const ang = rnd() * Math.PI * 2;
+    const r = Math.sqrt(rnd()) * rMax;
+    const x = centro.x + Math.cos(ang) * r;
+    const z = centro.z + Math.sin(ang) * r;
+    let ok = true;
+    for (const a of aceitos) {
+      const dx = a.x - x;
+      const dz = a.z - z;
+      if (Math.sqrt(dx * dx + dz * dz) < 3.2) {
+        ok = false;
+        break;
+      }
+    }
+    if (!ok) continue;
+    const tipo = rnd() < 0.65 ? "tronco" : "rocha";
+    const rot = rnd() * Math.PI * 2;
+    const s = 0.9 + rnd() * 0.6;
+    aceitos.push({ tipo, x: r2(x), z: r2(z), rot: r2(rot), s: r2(s) });
+  }
+  return aceitos;
+}
+function multVelocidade(seg) {
+  if (!num2(seg) || seg < PEGA.passoBonus) return 1;
+  return Math.min(PEGA.teto, PEGA.fator ** Math.floor(seg / PEGA.passoBonus));
+}
+function pegou(a, b, raio) {
+  if (!a || !b || !num2(raio)) return false;
+  return dist(a, b) <= raio;
+}
+function pegouTrecho(a0, a1, b, raio) {
+  if (!a0 || !a1 || !b || !num2(raio)) return false;
+  if (!num2(a0.x) || !num2(a0.z) || !num2(a1.x) || !num2(a1.z) || !num2(b.x) || !num2(b.z)) return false;
+  const ax = a1.x - a0.x;
+  const az = a1.z - a0.z;
+  const len2 = ax * ax + az * az;
+  let t;
+  if (len2 === 0) {
+    t = 0;
+  } else {
+    t = ((b.x - a0.x) * ax + (b.z - a0.z) * az) / len2;
+    t = Math.max(0, Math.min(1, t));
+  }
+  const px = a0.x + t * ax;
+  const pz = a0.z + t * az;
+  const dx = b.x - px;
+  const dz = b.z - pz;
+  return Math.sqrt(dx * dx + dz * dz) <= raio;
+}
+function escolherPego(fila, n, vivos) {
+  if (!Array.isArray(fila) || fila.length === 0) return null;
+  const v = new Set(vivos || []);
+  const start = (n % fila.length + fila.length) % fila.length;
+  for (let i = 0; i < fila.length; i++) {
+    const uid = fila[(start + i) % fila.length];
+    if (v.has(uid)) return uid;
+  }
+  return null;
+}
+function novoPega({ uids, posicoes, agora: agora2, seed, primeiro, limite }) {
+  if (!Array.isArray(uids) || uids.length < 2 || uids.length > 12) return null;
+  const set = new Set(uids);
+  if (set.size !== uids.length) return null;
+  const fila = uids.slice();
+  const { cx, cz, raio } = areaPega(posicoes, limite);
+  const ini = agora2 + PEGA.graca * 1e3;
+  const fimFase = ini + PEGA.duracao * 1e3;
+  let p = primeiro;
+  if (!set.has(p)) p = uids[0];
+  const pegos = { [p]: ini };
+  const pg = {};
+  for (const u of fila) pg[u] = 0;
+  return {
+    tipo: "pega",
+    fila,
+    fase: "jogando",
+    ini,
+    fimFase,
+    cx,
+    cz,
+    raio,
+    seed: seed | 0,
+    pegos,
+    pg,
+    ult: "",
+    venc: []
+  };
+}
+function registrarPegadas(jogo, agora2, pos, ant, raio = PEGA.aura) {
+  const resultado = [];
+  if (!jogo || jogo.fase !== "jogando" || !num2(agora2) || agora2 < jogo.ini) return resultado;
+  if (!pos || typeof pos !== "object") return resultado;
+  const zumbis = Object.keys(jogo.pegos || {});
+  const livres = (jogo.fila || []).filter((u) => !Object.hasOwn(jogo.pegos || {}, u));
+  const novos = /* @__PURE__ */ new Set();
+  for (const p of zumbis) {
+    if (!Object.hasOwn(pos, p)) continue;
+    const pp = pos[p];
+    const ap = ant && Object.hasOwn(ant, p) ? ant[p] : null;
+    for (const l of livres) {
+      if (novos.has(l)) continue;
+      if (!Object.hasOwn(pos, l)) continue;
+      const pl = pos[l];
+      const ok = pegou(pp, pl, raio) || ap && pegouTrecho(ap, pp, pl, raio);
+      if (ok) {
+        jogo.pegos[l] = agora2;
+        jogo.pegos[p] = agora2;
+        jogo.pg[p] = (jogo.pg[p] || 0) + 1;
+        jogo.ult = l;
+        novos.add(l);
+        resultado.push({ de: p, para: l });
+      }
+    }
+  }
+  return resultado;
+}
+function avancarPega(jogo, agora2, vivos) {
+  if (!jogo || !num2(agora2)) return "";
+  if (jogo.fase === "fim") {
+    return agora2 >= jogo.fimFase ? "acabou" : "";
+  }
+  const vset = new Set(vivos || []);
+  const vf = (jogo.fila || []).filter((u) => vset.has(u));
+  const pegos = jogo.pegos || {};
+  const livres = vf.filter((u) => !Object.hasOwn(pegos, u));
+  let venc = null;
+  let fim = false;
+  if (vf.length < 2) {
+    venc = livres;
+    fim = true;
+  } else if (livres.length === 0) {
+    if (jogo.ult && (jogo.fila || []).includes(jogo.ult)) venc = [jogo.ult];
+    else venc = [];
+    fim = true;
+  } else if (agora2 >= jogo.fimFase) {
+    venc = livres;
+    fim = true;
+  }
+  if (fim) {
+    jogo.fase = "fim";
+    jogo.fimFase = agora2 + PEGA.fimTela * 1e3;
+    jogo.venc = venc;
+    return "mudou";
+  }
+  return "";
+}
+function contagemPega(jogo, vivos) {
+  const out = { pegos: [], livres: [] };
+  if (!jogo || !Array.isArray(jogo.fila)) return out;
+  const vset = vivos ? new Set(vivos) : null;
+  const pegos = jogo.pegos || {};
+  for (const u of jogo.fila) {
+    if (vset && !vset.has(u)) continue;
+    if (Object.hasOwn(pegos, u)) out.pegos.push(u);
+    else out.livres.push(u);
+  }
+  return out;
+}
+function faixaPega(jogo, agora2, vivos) {
+  if (!jogo || !num2(agora2)) return "";
+  if (jogo.fase === "jogando") {
+    if (agora2 < jogo.ini) {
+      const n = Math.ceil((jogo.ini - agora2) / 1e3);
+      return `\u{1F9DF} Pique-pega \u2014 corram! come\xE7a em ${n}`;
+    }
+    const c = contagemPega(jogo, vivos);
+    const seg = Math.max(0, Math.ceil((jogo.fimFase - agora2) / 1e3));
+    return `\u{1F9DF} Pique-pega \u2014 pegos: ${c.pegos.length} \u2014 livres: ${c.livres.length} \u2014 ${tempoTexto(seg)}`;
+  }
+  if (jogo.fase === "fim") {
+    return "\u{1F9DF} Pique-pega \u2014 acabou!";
+  }
+  return "";
+}
+function placarPega(jogo) {
+  if (!jogo || !Array.isArray(jogo.fila)) return [];
+  const pg = jogo.pg || {};
+  const pegos = jogo.pegos || {};
+  const venc = new Set(jogo.venc || []);
+  const arr = jogo.fila.map((u) => ({
+    uid: u,
+    pegou: pg[u] || 0,
+    zumbi: Object.hasOwn(pegos, u),
+    venceu: venc.has(u)
+  }));
+  arr.sort((a, b) => {
+    if (a.venceu !== b.venceu) return a.venceu ? -1 : 1;
+    if (a.pegou !== b.pegou) return b.pegou - a.pegou;
+    return jogo.fila.indexOf(a.uid) - jogo.fila.indexOf(b.uid);
+  });
+  return arr;
+}
+function serializarPega(jogo) {
+  if (!jogo || typeof jogo !== "object") return "";
+  try {
+    const s = JSON.stringify(jogo);
+    if (typeof s !== "string" || s.length > 3e3) return "";
+    return s;
+  } catch {
+    return "";
+  }
+}
+var RE_UID = /^[A-Za-z0-9_-]{1,40}$/;
+function lerPega(texto) {
+  if (typeof texto !== "string" || texto.length > 3e3) return null;
+  let o;
+  try {
+    o = JSON.parse(texto);
+  } catch {
+    return null;
+  }
+  if (!o || typeof o !== "object" || Array.isArray(o)) return null;
+  if (o.tipo !== "pega") return null;
+  if (!Array.isArray(o.fila) || o.fila.length < 2 || o.fila.length > 12) return null;
+  const fila = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const u of o.fila) {
+    if (typeof u !== "string" || !RE_UID.test(u) || u === "__proto__") return null;
+    if (seen.has(u)) return null;
+    seen.add(u);
+    fila.push(u);
+  }
+  if (o.fase !== "jogando" && o.fase !== "fim") return null;
+  if (!num2(o.ini) || !num2(o.fimFase)) return null;
+  if (!num2(o.cx) || o.cx < -200 || o.cx > 200) return null;
+  if (!num2(o.cz) || o.cz < -200 || o.cz > 200) return null;
+  if (!num2(o.raio) || o.raio < 5 || o.raio > 80) return null;
+  if (!Number.isInteger(o.seed)) return null;
+  const set = new Set(fila);
+  const pegos = {};
+  if (o.pegos && typeof o.pegos === "object" && !Array.isArray(o.pegos)) {
+    for (const k of Object.keys(o.pegos)) {
+      if (!set.has(k)) continue;
+      const v = o.pegos[k];
+      if (num2(v)) pegos[k] = v;
+    }
+  }
+  const pg = {};
+  for (const u of fila) {
+    let v = 0;
+    if (o.pg && typeof o.pg === "object" && !Array.isArray(o.pg) && Object.hasOwn(o.pg, u)) {
+      v = o.pg[u];
+    }
+    if (!Number.isInteger(v) || v < 0 || v > 99) v = 0;
+    pg[u] = v;
+  }
+  let ult = "";
+  if (typeof o.ult === "string" && set.has(o.ult)) ult = o.ult;
+  const venc = [];
+  const vseen = /* @__PURE__ */ new Set();
+  if (Array.isArray(o.venc)) {
+    for (const u of o.venc) {
+      if (typeof u === "string" && set.has(u) && !vseen.has(u)) {
+        vseen.add(u);
+        venc.push(u);
+      }
+    }
+  }
+  return {
+    tipo: "pega",
+    fila,
+    fase: o.fase,
+    ini: o.ini,
+    fimFase: o.fimFase,
+    cx: o.cx,
+    cz: o.cz,
+    raio: o.raio,
+    seed: o.seed,
+    pegos,
+    pg,
+    ult,
+    venc
+  };
+}
+
+// js/pega-mapa.js
+var PASSOS = 120;
+var FOLGA_CERCA = 0.5;
+function anel(altura, cx, cz, r0, r12, y0, y1, vertical) {
+  const pos = [], idx = [];
+  for (let i = 0; i <= PASSOS; i++) {
+    const a = i / PASSOS * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+    const h = altura(cx + c * r12, cz + s * r12);
+    if (vertical) pos.push(cx + c * r12, h + y0, cz + s * r12, cx + c * r12, h + y1, cz + s * r12);
+    else pos.push(cx + c * r0, altura(cx + c * r0, cz + s * r0) + y0, cz + s * r0, cx + c * r12, h + y0, cz + s * r12);
+    if (i < PASSOS) {
+      const k = i * 2;
+      idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2);
+    }
+  }
+  const g = new THREE9.BufferGeometry();
+  g.setAttribute("position", new THREE9.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  return g;
+}
+function montarArea(mapa, grupo, j) {
+  const mundo = mapa.mundo, fis = mapa.fis, g = new THREE9.Group(), cols = [], donos = [];
+  g.name = "pega-area";
+  const R = j.raio, cx = j.cx, cz = j.cz;
+  const fita = new THREE9.Mesh(anel(mundo.altura, cx, cz, R - 0.8, R, 0.1, 0, false), new THREE9.MeshBasicMaterial({ color: 16742932, side: THREE9.DoubleSide }));
+  const parede = new THREE9.Mesh(anel(mundo.altura, cx, cz, R, R, -0.3, 1.8, true), new THREE9.MeshBasicMaterial({ color: 16751164, transparent: true, opacity: 0.3, side: THREE9.DoubleSide, depthWrite: false }));
+  g.add(fita, parede);
+  const liso = new THREE9.MeshLambertMaterial({ vertexColors: true });
+  const geoT = geoTronco(), geoR = geoRocha();
+  for (const o of troncosArea({ x: cx, z: cz }, R, j.seed)) {
+    const { x, z, s, rot } = o, h = mundo.altura(x, z), rio = mundo.distRio(x, z);
+    if (rio.d < rio.hw + 2.2) continue;
+    if (mundo.colisores.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + 1.4 * s + 0.4)) continue;
+    if (mundo.cavernas.some((c) => Math.hypot(c.x - x, c.z - z) < c.R + 3) || mundo.arvores.some((a) => Math.hypot(a.x - x, a.z - z) < 4)) continue;
+    if (o.tipo === "tronco") {
+      const dx = Math.sin(rot) * s, dz = Math.cos(rot) * s, h1 = mundo.altura(x + dx, z + dz), h2 = mundo.altura(x - dx, z - dz);
+      if (Math.abs(h1 - h2) > 0.5) continue;
+      const M = Math.max(h1, h2, h), topo = M + 0.62 * s + 0.05;
+      const m = new THREE9.Mesh(geoT, liso);
+      m.position.set(x, M + 0.05, z);
+      m.rotation.y = rot;
+      m.scale.setScalar(s);
+      m.castShadow = m.receiveShadow = true;
+      m.userData.pega = "tronco";
+      g.add(m);
+      cols.push({ x, z, rot, hx: 0.34 * s, hz: 1.8 * s, yb: topo - 2, yt: topo });
+    } else {
+      const sy = 0.9, m = new THREE9.Mesh(geoR, liso);
+      m.position.set(x, h - 0.25 * s, z);
+      m.rotation.y = rot;
+      m.scale.set(s, s * sy, s);
+      m.castShadow = m.receiveShadow = true;
+      m.userData.pega = "rocha";
+      g.add(m);
+      cols.push({ cil: true, x, z, r: s * 0.85, yb: h - 2, yt: h + s * (1.16 * sy - 0.25) });
+    }
+    donos.push(o);
+  }
+  grupo.add(g);
+  const tira = fis.acrescentar(cols);
+  const gp = mapa.gatoGroup.position;
+  fis.teleportar(gp.x, gp.z);
+  gp.set(fis.x, fis.y, fis.z);
+  return {
+    cerca: { x: cx, z: cz, r: R - FOLGA_CERCA },
+    n: donos.length,
+    remover() {
+      tira();
+      grupo.remove(g);
+      fita.geometry.dispose();
+      fita.material.dispose();
+      parede.geometry.dispose();
+      parede.material.dispose();
+      liso.dispose();
+      geoT.dispose();
+      geoR.dispose();
+    }
+  };
+}
+var _aura = null;
+function novaAura() {
+  if (!_aura) {
+    const mat = (cor, op) => new THREE9.MeshBasicMaterial({ color: cor, transparent: true, opacity: op, depthTest: false, depthWrite: false, side: THREE9.DoubleSide });
+    _aura = {
+      anel: new THREE9.RingGeometry(PEGA.aura - 0.1, PEGA.aura, 48).rotateX(-Math.PI / 2),
+      disco: new THREE9.CircleGeometry(PEGA.aura, 40).rotateX(-Math.PI / 2),
+      m1: mat(7077690, 0.85),
+      m2: mat(3856458, 0.22)
+    };
+  }
+  const a = new THREE9.Group();
+  a.name = "aura-pega";
+  const r = new THREE9.Mesh(_aura.anel, _aura.m1), d = new THREE9.Mesh(_aura.disco, _aura.m2);
+  r.renderOrder = d.renderOrder = 9;
+  r.position.y = d.position.y = 0.12;
+  a.add(d, r);
+  return a;
+}
+function auraEm(grupo, ligada, t) {
+  let a = grupo.getObjectByName("aura-pega");
+  if (ligada && !a) {
+    a = novaAura();
+    grupo.add(a);
+  } else if (!ligada && a) {
+    grupo.remove(a);
+    return;
+  }
+  if (a) a.scale.setScalar(1 + 0.07 * Math.sin(t * 6));
+}
+
 // js/map.js
 function lerpAngle2(a, b, t) {
   let diff = b - a;
@@ -9873,7 +10713,7 @@ function lerpAngle2(a, b, t) {
   while (diff < -Math.PI) diff += Math.PI * 2;
   return a + diff * t;
 }
-var SOL_OFFSET = new THREE9.Vector3(-13, 19, 4);
+var SOL_OFFSET = new THREE10.Vector3(-13, 19, 4);
 var CICLO_SEG = 1.5;
 var CICLOS = {
   dia: { sol: 16773341, solInt: 2.7, solPos: [-13, 19, 4], hemiCeu: 16773600, hemiSolo: 7178828, hemiInt: 1.15, fundo: 12575743, nevoa: 12575743, nevoaPerto: 40, nevoaLonge: 105, aguaCeu: 12575743, aguaProf: 2060170, aguaRaso: 6275268 },
@@ -9882,27 +10722,27 @@ var CICLOS = {
 };
 function estadoDoCiclo(def) {
   return {
-    sol: new THREE9.Color(def.sol),
+    sol: new THREE10.Color(def.sol),
     solInt: def.solInt,
-    solPos: new THREE9.Vector3(...def.solPos),
-    hemiCeu: new THREE9.Color(def.hemiCeu),
-    hemiSolo: new THREE9.Color(def.hemiSolo),
+    solPos: new THREE10.Vector3(...def.solPos),
+    hemiCeu: new THREE10.Color(def.hemiCeu),
+    hemiSolo: new THREE10.Color(def.hemiSolo),
     hemiInt: def.hemiInt,
-    fundo: new THREE9.Color(def.fundo),
-    nevoa: new THREE9.Color(def.nevoa),
+    fundo: new THREE10.Color(def.fundo),
+    nevoa: new THREE10.Color(def.nevoa),
     nevoaPerto: def.nevoaPerto,
     nevoaLonge: def.nevoaLonge,
-    aguaCeu: new THREE9.Color(def.aguaCeu),
-    aguaProf: new THREE9.Color(def.aguaProf),
-    aguaRaso: new THREE9.Color(def.aguaRaso)
+    aguaCeu: new THREE10.Color(def.aguaCeu),
+    aguaProf: new THREE10.Color(def.aguaProf),
+    aguaRaso: new THREE10.Color(def.aguaRaso)
   };
 }
 function misturarEstado(de, para, k, saida2) {
   for (const chave in para) {
     const v = para[chave];
-    if (v instanceof THREE9.Color) {
+    if (v instanceof THREE10.Color) {
       saida2[chave].lerpColors(de[chave], para[chave], k);
-    } else if (v instanceof THREE9.Vector3) {
+    } else if (v instanceof THREE10.Vector3) {
       saida2[chave].lerpVectors(de[chave], para[chave], k);
     } else {
       saida2[chave] = de[chave] + (para[chave] - de[chave]) * k;
@@ -9958,7 +10798,7 @@ function atualizarCiclo(mapa, scene2, dt) {
 var INCLINA_MAX = 0.35;
 var COM_SOMBRA = /* @__PURE__ */ new Set(["pino", "frondosa", "betula", "arbusto", "rocha", "tronco"]);
 function tiposDeInstancia() {
-  const liso = () => new THREE9.MeshLambertMaterial({ vertexColors: true });
+  const liso = () => new THREE10.MeshLambertMaterial({ vertexColors: true });
   return {
     pino: [geoPinho(), materialVento({ amp: 0.16, H: 5.6 })],
     frondosa: [geoFrondosa(), materialVento({ amp: 0.14, H: 5.4 })],
@@ -9976,14 +10816,14 @@ function criarMapa(scene2, gato, salvo) {
   const ok = salvo && typeof salvo === "object" && Number.isFinite(salvo.x) && Number.isFinite(salvo.z);
   const seed = salvo && Number.isFinite(salvo.seed) ? salvo.seed : 12345;
   const mundo = criarMundo(seed);
-  const grupo = new THREE9.Group();
+  const grupo = new THREE10.Group();
   grupo.name = "mapa";
   scene2.add(grupo);
-  scene2.fog = new THREE9.Fog(CICLOS.dia.nevoa, CICLOS.dia.nevoaPerto, CICLOS.dia.nevoaLonge);
-  scene2.background = new THREE9.Color(CICLOS.dia.fundo);
-  const hemi = new THREE9.HemisphereLight(CICLOS.dia.hemiCeu, CICLOS.dia.hemiSolo, CICLOS.dia.hemiInt);
+  scene2.fog = new THREE10.Fog(CICLOS.dia.nevoa, CICLOS.dia.nevoaPerto, CICLOS.dia.nevoaLonge);
+  scene2.background = new THREE10.Color(CICLOS.dia.fundo);
+  const hemi = new THREE10.HemisphereLight(CICLOS.dia.hemiCeu, CICLOS.dia.hemiSolo, CICLOS.dia.hemiInt);
   grupo.add(hemi);
-  const sol = new THREE9.DirectionalLight(CICLOS.dia.sol, CICLOS.dia.solInt);
+  const sol = new THREE10.DirectionalLight(CICLOS.dia.sol, CICLOS.dia.solInt);
   const pequeno = matchMedia("(pointer: coarse)").matches;
   sol.castShadow = true;
   sol.shadow.mapSize.set(pequeno ? 1024 : 2048, pequeno ? 1024 : 2048);
@@ -10073,15 +10913,15 @@ function criarMapa(scene2, gato, salvo) {
       else delete mapa.pegos.missao;
     }
   };
-  const tex = criarTexturaTerreno(THREE9, mundo, 1024);
+  const tex = criarTexturaTerreno(THREE10, mundo, 1024);
   mapa.texCanvas = tex.canvas;
-  const detalhe = criarTexturaDetalhe(THREE9);
-  const g = new THREE9.PlaneGeometry(TERRENO, TERRENO, 120, 120);
+  const detalhe = criarTexturaDetalhe(THREE10);
+  const g = new THREE10.PlaneGeometry(TERRENO, TERRENO, 120, 120);
   g.rotateX(-Math.PI / 2);
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) p.setY(i, mundo.altura(p.getX(i), p.getZ(i)));
   g.computeVertexNormals();
-  const matT = new THREE9.MeshLambertMaterial({ map: tex.texture });
+  const matT = new THREE10.MeshLambertMaterial({ map: tex.texture });
   matT.onBeforeCompile = (sh) => {
     sh.uniforms.tDet = { value: detalhe };
     sh.fragmentShader = "uniform sampler2D tDet;\n" + sh.fragmentShader.replace(
@@ -10089,20 +10929,20 @@ function criarMapa(scene2, gato, salvo) {
       "#include <map_fragment>\n  diffuseColor.rgb *= 0.6 + 0.6 * texture2D(tDet, vMapUv * 30.0).r;"
     );
   };
-  const terreno = new THREE9.Mesh(g, matT);
+  const terreno = new THREE10.Mesh(g, matT);
   terreno.receiveShadow = true;
   grupo.add(terreno);
-  const anel = new THREE9.Shape([new THREE9.Vector2(-450, -450), new THREE9.Vector2(450, -450), new THREE9.Vector2(450, 450), new THREE9.Vector2(-450, 450)]);
+  const anel2 = new THREE10.Shape([new THREE10.Vector2(-450, -450), new THREE10.Vector2(450, -450), new THREE10.Vector2(450, 450), new THREE10.Vector2(-450, 450)]);
   const h = TERRENO / 2 - 0.3;
-  anel.holes.push(new THREE9.Path([new THREE9.Vector2(-h, -h), new THREE9.Vector2(-h, h), new THREE9.Vector2(h, h), new THREE9.Vector2(h, -h)]));
-  const fora = new THREE9.Mesh(new THREE9.ShapeGeometry(anel).rotateX(-Math.PI / 2), new THREE9.MeshLambertMaterial({ color: 6262078 }));
+  anel2.holes.push(new THREE10.Path([new THREE10.Vector2(-h, -h), new THREE10.Vector2(-h, h), new THREE10.Vector2(h, h), new THREE10.Vector2(h, -h)]));
+  const fora = new THREE10.Mesh(new THREE10.ShapeGeometry(anel2).rotateX(-Math.PI / 2), new THREE10.MeshLambertMaterial({ color: 6262078 }));
   fora.position.y = 0.4;
   grupo.add(fora);
-  const cor = new THREE9.Color(), m4 = new THREE9.Matrix4(), q = new THREE9.Quaternion(), yAxis = new THREE9.Vector3(0, 1, 0);
-  const pos = new THREE9.Vector3(), esc = new THREE9.Vector3();
+  const cor = new THREE10.Color(), m4 = new THREE10.Matrix4(), q = new THREE10.Quaternion(), yAxis = new THREE10.Vector3(0, 1, 0);
+  const pos = new THREE10.Vector3(), esc = new THREE10.Vector3();
   for (const [tipo, [geo, mat]] of Object.entries(tiposDeInstancia())) {
     for (const lista of mundo.porChunk(mundo.inst[tipo])) {
-      const im = new THREE9.InstancedMesh(geo, mat, lista.length);
+      const im = new THREE10.InstancedMesh(geo, mat, lista.length);
       lista.forEach((it, i) => {
         pos.set(it.x, it.y, it.z);
         q.setFromAxisAngle(yAxis, it.rot);
@@ -10119,18 +10959,18 @@ function criarMapa(scene2, gato, salvo) {
       grupo.add(im);
     }
   }
-  mapa.agua = criarAgua(mundo, criarTexturaRuido(THREE9), SOL_OFFSET);
+  mapa.agua = criarAgua(mundo, criarTexturaRuido(THREE10), SOL_OFFSET);
   grupo.add(mapa.agua);
   const tr = mundo.travessias.find((t) => t.tipo === "tronco");
-  const troncoPonte = new THREE9.Mesh(geoTronco(), new THREE9.MeshLambertMaterial({ vertexColors: true }));
+  const troncoPonte = new THREE10.Mesh(geoTronco(), new THREE10.MeshLambertMaterial({ vertexColors: true }));
   troncoPonte.scale.set(1.35, 1.35, tr.comp / 3.6);
   troncoPonte.position.set(tr.cx, tr.y - 0.6 * 1.35, tr.cz);
   troncoPonte.rotation.y = tr.rot;
   troncoPonte.castShadow = troncoPonte.receiveShadow = true;
   grupo.add(troncoPonte);
-  const asa = new THREE9.BufferGeometry();
-  asa.setAttribute("position", new THREE9.Float32BufferAttribute([0, 0, 0, 0.11, 0, 0.07, 0.11, 0, -0.06, 0, 0, 0, -0.11, 0, -0.06, -0.11, 0, 0.07], 3));
-  const bor = new THREE9.InstancedMesh(asa, new THREE9.MeshBasicMaterial({ side: THREE9.DoubleSide }), 8);
+  const asa = new THREE10.BufferGeometry();
+  asa.setAttribute("position", new THREE10.Float32BufferAttribute([0, 0, 0, 0.11, 0, 0.07, 0.11, 0, -0.06, 0, 0, 0, -0.11, 0, -0.06, -0.11, 0, 0.07], 3));
+  const bor = new THREE10.InstancedMesh(asa, new THREE10.MeshBasicMaterial({ side: THREE10.DoubleSide }), 8);
   const rb = mulberry32(99);
   mapa.borboletas = Array.from({ length: 8 }, (_, i) => {
     const f = mundo.inst.flor[Math.floor(rb() * mundo.inst.flor.length)];
@@ -10140,7 +10980,7 @@ function criarMapa(scene2, gato, salvo) {
   bor.frustumCulled = false;
   mapa.bor = bor;
   grupo.add(bor);
-  const gatoGroup = new THREE9.Group();
+  const gatoGroup = new THREE10.Group();
   gatoGroup.name = "gatoGroup";
   const x0 = ok ? salvo.x : 0, z0 = ok ? salvo.z : 0;
   const fis = criarFisica(mundo, x0, z0);
@@ -10180,8 +11020,8 @@ function criarMapa(scene2, gato, salvo) {
       return { v: 1, seed, x: fora2 ? fora2.x : gatoGroup.position.x, z: fora2 ? fora2.z : gatoGroup.position.z, rot: fora2 ? fora2.rot : gatoGroup.rotation.y, agachado: mapa.agachado, ciclo: mapa.ciclo, mobs: mapa.animais ? mapa.animais.estado() : [], descoberto: descobertoParaBase64(mapa.descoberto), cavernas: mapa.cavernas, arvores: mapa.arvores, ...espelhando() ? {} : { pegos: (podarPegos(mapa.pegos, Date.now()), { ...mapa.pegos }) }, sub: s ? s.estadoSub() : null };
     },
     // sombra do sol: quanto mais longe a câmera, maior a área coberta
-    ajustarZoom(dist) {
-      const r = THREE9.MathUtils.clamp(dist * 1.15 + 5, 10, 24);
+    ajustarZoom(dist2) {
+      const r = THREE10.MathUtils.clamp(dist2 * 1.15 + 5, 10, 24);
       if (Math.abs(r - mapa.raioSombra) < 0.4) return;
       const c = sol.shadow.camera;
       c.left = -r;
@@ -10209,8 +11049,10 @@ function criarMapa(scene2, gato, salvo) {
   mapa.animais = criarAnimais(mapa, salvo && salvo.mobs);
   iniciarCiclo(mapa, scene2, salvo && salvo.ciclo);
   revelar(mapa, gatoGroup.position.x, gatoGroup.position.z, mapa.ciclo === "noite" ? RAIO_NOITE : RAIO_DIA);
+  mapa.auraEm = auraEm;
+  mapa.montarPega = (j) => montarArea(mapa, grupo, j);
   mapa.setCiclo = (id) => setCiclo(mapa, scene2, id);
-  loadCat(THREE9, gato).then((cat) => {
+  loadCat(THREE10, gato).then((cat) => {
     if (mapa.descartado) {
       cat.dispose();
       return;
@@ -10232,11 +11074,11 @@ function inclinarGato(mapa, dt) {
   mapa.pitch += (alvo2 - mapa.pitch) * Math.min(1, dt * 8);
   g.rotation.x = -mapa.pitch;
 }
-var _m = new THREE9.Matrix4();
-var _q = new THREE9.Quaternion();
-var _p = new THREE9.Vector3();
-var _s = new THREE9.Vector3();
-var _y = new THREE9.Vector3(0, 1, 0);
+var _m = new THREE10.Matrix4();
+var _q = new THREE10.Quaternion();
+var _p = new THREE10.Vector3();
+var _s = new THREE10.Vector3();
+var _y = new THREE10.Vector3(0, 1, 0);
 function moverGato(mapa, dt, input) {
   let dx = input ? input.dx || 0 : 0;
   let dy = input ? input.dy || 0 : 0;
@@ -10261,7 +11103,8 @@ function moverGato(mapa, dt, input) {
     const alvo2 = Math.atan2(dx, dy);
     mapa.gatoGroup.rotation.y = lerpAngle2(mapa.gatoGroup.rotation.y, alvo2, Math.min(1, dt * 12));
   }
-  const vel = mapa.nadando ? VEL.nadar : mapa.cat ? mapa.cat.velocidade() : agachado ? 1 : correndo && len > 0.75 ? 8 : 2;
+  const mv = mapa.multVel || 1;
+  const vel = mapa.nadando ? VEL.nadar * mv : mapa.cat ? mapa.cat.velocidade() : (agachado ? 1 : correndo && len > 0.75 ? 8 : 2) * mv;
   const tem = dx !== 0 || dy !== 0;
   const fis = mapa.fis;
   if (Math.abs(gp.x - fis.x) > 1e-3 || Math.abs(gp.z - fis.z) > 1e-3) {
@@ -10269,7 +11112,12 @@ function moverGato(mapa, dt, input) {
     gp.y = fis.y;
   }
   const noChaoAntes = fis.noChao;
+  fis.cerca = mapa.cerca || null;
   fis.atualizar(dt, tem ? dx / len * vel : 0, tem ? dy / len * vel : 0, tem);
+  if (fis.cercou) {
+    fis.cercou = false;
+    if (mapa.aoCerca) mapa.aoCerca();
+  }
   gp.x = fis.x;
   gp.z = fis.z;
   gp.y = fis.noChao && noChaoAntes ? gp.y + (fis.y - gp.y) * Math.min(1, dt * 25) : fis.y;
@@ -10277,6 +11125,7 @@ function moverGato(mapa, dt, input) {
   inclinarGato(mapa, dt);
   mapa.camY += (gp.y - mapa.camY) * Math.min(1, dt * 10);
   if (mapa.cat) {
+    mapa.cat.setMult(mv);
     mapa.cat.setAgachado(agachado);
     mapa.cat.setNadando(!!mapa.nadando);
     mapa.cat.setAr(!fis.noChao, fis.vy);
@@ -10315,7 +11164,7 @@ function atualizarMapa(mapa, dt, input, tempoSegundos) {
 
 // js/zoom.js
 function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
-  let dist = limitar(inicial);
+  let dist2 = limitar(inicial);
   function limitar(v) {
     if (typeof v !== "number" || !isFinite(v)) return min;
     if (v < min) return min;
@@ -10342,7 +11191,7 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
     const ativos = ponteirosAtivos();
     if (ativos.length === 2) {
       distIni = distEntre(ativos[0], ativos[1]);
-      zoomIni = dist;
+      zoomIni = dist2;
     }
   }
   function aoPointerMove(e) {
@@ -10352,7 +11201,7 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
     if (ativos.length === 2 && distIni >= 1) {
       const distAtual = distEntre(ativos[0], ativos[1]);
       if (distAtual > 0) {
-        dist = limitar(zoomIni * distIni / distAtual);
+        dist2 = limitar(zoomIni * distIni / distAtual);
       }
     }
   }
@@ -10375,7 +11224,7 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
       return;
     }
     e.preventDefault();
-    dist = limitar(dist * Math.exp(e.deltaY * 12e-4));
+    dist2 = limitar(dist2 * Math.exp(e.deltaY * 12e-4));
   }
   window.addEventListener("wheel", aoRoda, { passive: false });
   window.addEventListener("pointerdown", aoPointerDown);
@@ -10394,19 +11243,19 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
   }
   return {
     get() {
-      return dist;
+      return dist2;
     },
     set(v) {
-      dist = limitar(v);
-      return dist;
+      dist2 = limitar(v);
+      return dist2;
     },
     mais() {
-      dist = limitar(dist / 1.25);
-      return dist;
+      dist2 = limitar(dist2 / 1.25);
+      return dist2;
     },
     menos() {
-      dist = limitar(dist * 1.25);
-      return dist;
+      dist2 = limitar(dist2 * 1.25);
+      return dist2;
     },
     destruir
   };
@@ -12321,15 +13170,15 @@ function juntarEstado(a, b) {
   const ga = Number.isInteger(a.geracao) ? a.geracao : 1;
   const gb = Number.isInteger(b.geracao) ? b.geracao : 1;
   if (ga !== gb) {
-    const r2 = copia3(ga > gb ? a : b);
-    r2.cavernas = r2.cavernas || {};
-    r2.arvores = r2.arvores || {};
-    r2.pegos = r2.pegos || {};
-    r2.geracao = Math.max(ga, gb);
-    if (r2.formato == null) r2.formato = 1;
+    const r3 = copia3(ga > gb ? a : b);
+    r3.cavernas = r3.cavernas || {};
+    r3.arvores = r3.arvores || {};
+    r3.pegos = r3.pegos || {};
+    r3.geracao = Math.max(ga, gb);
+    if (r3.formato == null) r3.formato = 1;
     const mobs = a.mobs || b.mobs;
-    if (mobs) r2.mobs = copia3(mobs);
-    return r2;
+    if (mobs) r3.mobs = copia3(mobs);
+    return r3;
   }
   const r = {};
   const desc = ouBytes(a.descoberto, b.descoberto);
@@ -14188,345 +15037,6 @@ function eleger(presencas, gestor, agora2) {
   return gestorVivo.uid;
 }
 
-// js/brincadeiras.js
-var BRINCADEIRAS = {
-  esconde: {
-    nome: "Pique-esconde",
-    icone: "\u{1F648}",
-    contagem: 10,
-    procura: 90,
-    pausa: 6,
-    fimTela: 10
-  }
-};
-function ehTexto(v) {
-  return typeof v === "string";
-}
-function ehInteiro(v) {
-  return typeof v === "number" && Number.isInteger(v);
-}
-function ehNumeroFinito2(v) {
-  return typeof v === "number" && Number.isFinite(v);
-}
-function ehObjeto3(v) {
-  return v !== null && typeof v === "object" && !Array.isArray(v);
-}
-function uidValido(u) {
-  return ehTexto(u) && u.length >= 1 && u.length <= 40 && /^[A-Za-z0-9_-]+$/.test(u) && u !== "__proto__";
-}
-function listaUnica(arr) {
-  const s = /* @__PURE__ */ new Set();
-  for (const x of arr) {
-    if (s.has(x)) return false;
-    s.add(x);
-  }
-  return true;
-}
-function emLista(lista, v) {
-  return Array.isArray(lista) && lista.includes(v);
-}
-function filaInicial(uids, rnd = Math.random) {
-  if (!Array.isArray(uids)) return null;
-  const arr = uids.filter((u) => ehTexto(u));
-  if (!listaUnica(arr)) return null;
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rnd() * (i + 1));
-    const t = a[i];
-    a[i] = a[j];
-    a[j] = t;
-  }
-  return a;
-}
-function novoJogo(tipo, uids, agora2, rnd) {
-  if (!Object.hasOwn(BRINCADEIRAS, tipo)) return null;
-  const cfg = BRINCADEIRAS[tipo];
-  if (!ehNumeroFinito2(agora2)) return null;
-  const fila = filaInicial(uids, rnd);
-  if (!fila || fila.length < 2) return null;
-  const placar = {};
-  for (const u of fila) placar[u] = [0, 0];
-  return {
-    tipo,
-    fila,
-    rodada: 1,
-    peg: fila[0],
-    fase: "contando",
-    fimFase: agora2 + cfg.contagem * 1e3,
-    esc: {},
-    ach: [],
-    perd: [],
-    placar
-  };
-}
-function registrarEscondidos(jogo, esc) {
-  if (!ehObjeto3(jogo) || jogo.fase !== "contando" || !ehObjeto3(esc)) return false;
-  const filaSet = new Set(jogo.fila);
-  let mudou2 = false;
-  for (const uid in esc) {
-    if (!Object.hasOwn(esc, uid)) continue;
-    const idx = esc[uid];
-    if (!ehTexto(uid) || !filaSet.has(uid) || uid === jogo.peg) continue;
-    if (Object.hasOwn(jogo.esc, uid)) continue;
-    if (!ehInteiro(idx) || idx < 0) continue;
-    jogo.esc[uid] = idx;
-    mudou2 = true;
-  }
-  return mudou2;
-}
-function olhar(jogo, uid, idx) {
-  if (!ehObjeto3(jogo) || jogo.fase !== "procurando" || uid !== jogo.peg) return [];
-  if (!ehInteiro(idx) || idx < 0) return [];
-  const achados = [];
-  for (const u in jogo.esc) {
-    if (!Object.hasOwn(jogo.esc, u)) continue;
-    if (jogo.esc[u] === idx && !emLista(jogo.ach, u)) {
-      jogo.ach.push(u);
-      achados.push(u);
-      if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[uid]) && ehInteiro(jogo.placar[uid][0])) {
-        jogo.placar[uid][0] += 1;
-      }
-    }
-  }
-  return achados;
-}
-function avancar(jogo, agora2, vivos) {
-  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || !Array.isArray(vivos)) return "";
-  const cfg = Object.hasOwn(BRINCADEIRAS, jogo.tipo) ? BRINCADEIRAS[jogo.tipo] : null;
-  if (!cfg) return "";
-  const vivosSet = new Set(vivos);
-  const filaSet = new Set(jogo.fila);
-  const vivoDaFila = (u) => filaSet.has(u) && vivosSet.has(u);
-  if (jogo.fase === "fim") {
-    if (agora2 >= jogo.fimFase) return "acabou";
-    return "";
-  }
-  let vivosFila = 0;
-  for (const u of jogo.fila) if (vivosSet.has(u)) vivosFila++;
-  if (vivosFila < 2) {
-    jogo.fase = "fim";
-    jogo.fimFase = agora2 + cfg.fimTela * 1e3;
-    return "mudou";
-  }
-  if (jogo.fase === "contando") {
-    if (!vivosSet.has(jogo.peg)) {
-      jogo.fase = "rodada";
-      jogo.fimFase = agora2 + cfg.pausa * 1e3;
-      return "mudou";
-    }
-    if (agora2 >= jogo.fimFase) {
-      for (const u of jogo.fila) {
-        if (u === jogo.peg) continue;
-        if (!vivosSet.has(u)) continue;
-        if (Object.hasOwn(jogo.esc, u)) continue;
-        if (emLista(jogo.ach, u)) continue;
-        jogo.ach.push(u);
-        jogo.perd.push(u);
-      }
-      jogo.fase = "procurando";
-      jogo.fimFase = agora2 + cfg.procura * 1e3;
-      return "mudou";
-    }
-    return "";
-  }
-  if (jogo.fase === "procurando") {
-    const pegVivo = vivosSet.has(jogo.peg);
-    let todosAchados = true;
-    for (const u of jogo.fila) {
-      if (u === jogo.peg) continue;
-      if (!vivosSet.has(u)) continue;
-      if (!emLista(jogo.ach, u)) {
-        todosAchados = false;
-        break;
-      }
-    }
-    if (!pegVivo || agora2 >= jogo.fimFase || todosAchados) {
-      if (pegVivo) {
-        for (const u of jogo.fila) {
-          if (u === jogo.peg) continue;
-          if (!vivosSet.has(u)) continue;
-          if (!Object.hasOwn(jogo.esc, u)) continue;
-          if (emLista(jogo.ach, u)) continue;
-          if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[u]) && ehInteiro(jogo.placar[u][1])) {
-            jogo.placar[u][1] += 1;
-          }
-        }
-      }
-      jogo.fase = "rodada";
-      jogo.fimFase = agora2 + cfg.pausa * 1e3;
-      return "mudou";
-    }
-    return "";
-  }
-  if (jogo.fase === "rodada") {
-    if (agora2 >= jogo.fimFase) {
-      let r = jogo.rodada + 1;
-      while (r <= jogo.fila.length && !vivosSet.has(jogo.fila[r - 1])) r++;
-      if (r > jogo.fila.length) {
-        jogo.fase = "fim";
-        jogo.fimFase = agora2 + cfg.fimTela * 1e3;
-      } else {
-        jogo.rodada = r;
-        jogo.peg = jogo.fila[r - 1];
-        jogo.esc = {};
-        jogo.ach = [];
-        jogo.perd = [];
-        jogo.fase = "contando";
-        jogo.fimFase = agora2 + cfg.contagem * 1e3;
-      }
-      return "mudou";
-    }
-    return "";
-  }
-  return "";
-}
-function restante(jogo, agora2) {
-  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || !ehNumeroFinito2(jogo.fimFase)) return 0;
-  const s = Math.ceil((jogo.fimFase - agora2) / 1e3);
-  return s < 0 ? 0 : s;
-}
-function tempoTexto(seg) {
-  if (!ehNumeroFinito2(seg) || seg < 0) return "0:00";
-  const s = Math.floor(seg);
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return m + ":" + (r < 10 ? "0" + r : "" + r);
-}
-function faixaTexto(jogo, agora2, nomeDe) {
-  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || typeof nomeDe !== "function") return "";
-  const cfg = Object.hasOwn(BRINCADEIRAS, jogo.tipo) ? BRINCADEIRAS[jogo.tipo] : null;
-  if (!cfg) return "";
-  const icone = cfg.icone;
-  const nome = cfg.nome;
-  const R = ehInteiro(jogo.rodada) ? jogo.rodada : 1;
-  const N2 = Array.isArray(jogo.fila) ? jogo.fila.length : 0;
-  const nomePeg = nomeDe(jogo.peg);
-  if (jogo.fase === "contando") {
-    return icone + " " + nome + " \u2014 rodada " + R + "/" + N2 + " \u2014 " + nomePeg + " est\xE1 contando: " + restante(jogo, agora2);
-  }
-  if (jogo.fase === "procurando") {
-    return icone + " " + nome + " \u2014 rodada " + R + "/" + N2 + " \u2014 quem procura: " + nomePeg + " \u2014 " + tempoTexto(restante(jogo, agora2));
-  }
-  if (jogo.fase === "rodada") {
-    return icone + " " + nome + " \u2014 fim da rodada " + R + "/" + N2;
-  }
-  if (jogo.fase === "fim") {
-    return icone + " " + nome + " \u2014 acabou!";
-  }
-  return "";
-}
-function resumoRodada(jogo) {
-  if (!ehObjeto3(jogo)) return { achados: [], escondidos: [], perderam: [] };
-  const perdSet = new Set(Array.isArray(jogo.perd) ? jogo.perd : []);
-  const achSet = new Set(Array.isArray(jogo.ach) ? jogo.ach : []);
-  const achados = [];
-  for (const u of jogo.ach) if (!perdSet.has(u)) achados.push(u);
-  const escondidos = [];
-  if (ehObjeto3(jogo.esc)) {
-    for (const u in jogo.esc) {
-      if (!Object.hasOwn(jogo.esc, u)) continue;
-      if (!achSet.has(u)) escondidos.push(u);
-    }
-  }
-  const perderam = Array.isArray(jogo.perd) ? jogo.perd.slice() : [];
-  return { achados, escondidos, perderam };
-}
-function placarFinal(jogo) {
-  if (!ehObjeto3(jogo) || !Array.isArray(jogo.fila)) return [];
-  const arr = [];
-  for (let i = 0; i < jogo.fila.length; i++) {
-    const u = jogo.fila[i];
-    let achou = 0;
-    let escondeu = 0;
-    if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[u])) {
-      if (ehInteiro(jogo.placar[u][0])) achou = jogo.placar[u][0];
-      if (ehInteiro(jogo.placar[u][1])) escondeu = jogo.placar[u][1];
-    }
-    arr.push({ uid: u, achou, escondeu, total: achou + escondeu, _i: i });
-  }
-  arr.sort((a, b) => {
-    if (b.total !== a.total) return b.total - a.total;
-    return a._i - b._i;
-  });
-  return arr.map((x) => ({ uid: x.uid, achou: x.achou, escondeu: x.escondeu, total: x.total }));
-}
-function serializarJogo(jogo) {
-  if (!ehObjeto3(jogo)) return "";
-  let s;
-  try {
-    s = JSON.stringify(jogo);
-  } catch (e) {
-    return "";
-  }
-  if (typeof s !== "string" || s.length > 3e3) return "";
-  return s;
-}
-function lerJogo(texto) {
-  if (typeof texto !== "string" || texto.length > 3e3) return null;
-  let obj;
-  try {
-    obj = JSON.parse(texto);
-  } catch (e) {
-    return null;
-  }
-  if (!ehObjeto3(obj)) return null;
-  if (!Object.hasOwn(BRINCADEIRAS, obj.tipo)) return null;
-  if (!Array.isArray(obj.fila) || obj.fila.length < 2 || obj.fila.length > 12) return null;
-  for (const u of obj.fila) {
-    if (!uidValido(u)) return null;
-  }
-  if (!listaUnica(obj.fila)) return null;
-  const filaSet = new Set(obj.fila);
-  if (!ehInteiro(obj.rodada) || obj.rodada < 1 || obj.rodada > obj.fila.length) return null;
-  if (obj.peg !== obj.fila[obj.rodada - 1]) return null;
-  const fases = ["contando", "procurando", "rodada", "fim"];
-  if (!fases.includes(obj.fase)) return null;
-  if (!ehNumeroFinito2(obj.fimFase)) return null;
-  const esc = {};
-  if (ehObjeto3(obj.esc)) {
-    for (const u in obj.esc) {
-      if (!Object.hasOwn(obj.esc, u)) continue;
-      if (!filaSet.has(u)) continue;
-      const v = obj.esc[u];
-      if (ehInteiro(v) && v >= 0 && v <= 9999) esc[u] = v;
-    }
-  }
-  const ach = [];
-  if (Array.isArray(obj.ach)) {
-    for (const u of obj.ach) {
-      if (ehTexto(u) && filaSet.has(u) && !ach.includes(u)) ach.push(u);
-    }
-  }
-  const perd = [];
-  if (Array.isArray(obj.perd)) {
-    for (const u of obj.perd) {
-      if (ehTexto(u) && filaSet.has(u) && !perd.includes(u)) perd.push(u);
-    }
-  }
-  const placar = {};
-  for (const u of obj.fila) {
-    let a = 0;
-    let e = 0;
-    if (ehObjeto3(obj.placar) && Array.isArray(obj.placar[u])) {
-      if (ehInteiro(obj.placar[u][0]) && obj.placar[u][0] >= 0 && obj.placar[u][0] <= 99) a = obj.placar[u][0];
-      if (ehInteiro(obj.placar[u][1]) && obj.placar[u][1] >= 0 && obj.placar[u][1] <= 99) e = obj.placar[u][1];
-    }
-    placar[u] = [a, e];
-  }
-  return {
-    tipo: obj.tipo,
-    fila: obj.fila.slice(),
-    rodada: obj.rodada,
-    peg: obj.peg,
-    fase: obj.fase,
-    fimFase: obj.fimFase,
-    esc,
-    ach,
-    perd,
-    placar
-  };
-}
-
 // js/votacao.js
 var TEXTOS_HORARIO = {
   dia: { fique: "de dia", ficou: "Ficou de dia!", continuou: "Continuou de dia." },
@@ -14692,7 +15202,7 @@ function comTempo4(p, ms = TEMPO_REDE) {
   return Promise.race([p, limite]).finally(() => clearTimeout(t));
 }
 var ehTipo = (t) => typeof t === "string" && Object.hasOwn(TIPOS_VOTACAO, t);
-function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao: conexao2, aoPapel, tempoVotacao = TEMPO_VOTACAO * 1e3, esperaRecusa = RECUSA_ESPERA }) {
+function criarAoVivo({ nuvem: nuvem2, THREE: THREE12, loadCat: loadCat2, conexao: conexao2, aoPapel, tempoVotacao = TEMPO_VOTACAO * 1e3, esperaRecusa = RECUSA_ESPERA }) {
   let S = null;
   let sessao = 0;
   let offset = 0;
@@ -14777,6 +15287,9 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
         jogoH: null,
         jogoFim: false,
         ultJogo: 0,
+        filaPega: [],
+        nPega: 0,
+        antPega: {},
         jogoTexto: "",
         jogoLido: null,
         // 0.9.7 brincadeiras: jogoH = cópia de trabalho do host
@@ -15031,23 +15544,72 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
       if (typeof t !== "string") return null;
       if (t !== st.jogoTexto) {
         st.jogoTexto = t;
-        st.jogoLido = lerJogo(t);
+        st.jogoLido = lerPega(t) || lerJogo(t);
       }
       j = st.jogoLido;
     }
     return j && agoraServ() <= j.fimFase + JOGO_VELHO ? j : null;
   }
   function gravarJogo(st) {
-    st.D.update(ref(st, "dinamico"), { jogo: serializarJogo(st.jogoH) || null }).catch(nada2);
+    const j = st.jogoH;
+    st.D.update(ref(st, "dinamico"), { jogo: (j && j.tipo === "pega" ? serializarPega(j) : serializarJogo(j)) || null }).catch(nada2);
   }
   function iniciarJogo(st, valor) {
     if (!souGestorGravado(st) || jogoDe(st)) return false;
-    const j = novoJogo(valor, jogadoresVivos(st).map((p) => p.uid), Math.round(agoraServ()), Math.random);
+    const j = valor === "pega" ? novoPegaHost(st) : novoJogo(valor, jogadoresVivos(st).map((p) => p.uid), Math.round(agoraServ()), Math.random);
     if (!j) return false;
     st.jogoH = j;
     st.jogoFim = false;
     gravarJogo(st);
     return true;
+  }
+  function posicoesVivas(st, vivos) {
+    const o = {}, M = st.mapa;
+    for (const u of vivos) {
+      const p = u === st.con.uid ? !st.semGato && !M.sub && M.gatoGroup && M.gatoGroup.position : observadorDe(st, u);
+      if (p && Number.isFinite(p.x) && Number.isFinite(p.z)) o[u] = { x: p.x, z: p.z };
+    }
+    return o;
+  }
+  function novoPegaHost(st) {
+    const vivos = jogadoresVivos(st).map((p) => p.uid);
+    if (vivos.some((u) => !st.filaPega.includes(u))) {
+      st.filaPega = filaInicial(vivos, Math.random) || vivos;
+      st.nPega = 0;
+    }
+    const pos = posicoesVivas(st, vivos), primeiro = escolherPego(st.filaPega, st.nPega, vivos);
+    const j = novoPega({ uids: vivos, posicoes: Object.values(pos), agora: Math.round(agoraServ()), seed: Math.floor(Math.random() * 1e9), primeiro, limite: 55 });
+    if (j) {
+      st.nPega++;
+      st.antPega = {};
+    }
+    return j;
+  }
+  function tocarPega(st, j) {
+    const agora2 = Math.round(agoraServ()), vivos = jogadoresVivos(st).map((p) => p.uid);
+    const pos = posicoesVivas(st, vivos);
+    const feitas = registrarPegadas(j, agora2, pos, st.antPega, PEGA.aura + 0.3);
+    st.antPega = pos;
+    const r = avancarPega(j, agora2, vivos);
+    if (r === "acabou") {
+      st.jogoH = null;
+      st.jogoFim = true;
+      st.antPega = {};
+      st.D.update(ref(st, "dinamico"), { jogo: null }).catch(nada2);
+      return;
+    }
+    if (feitas.length || r === "mudou") gravarJogo(st);
+  }
+  function tocarAuras(st, t) {
+    const j = jogoDe(st), pega = j && j.tipo === "pega" && j.fase === "jogando", ag = agoraServ();
+    const auraEm2 = st.mapa.auraEm;
+    if (!auraEm2) return;
+    if (!st.semGato && st.mapa.gatoGroup) auraEm2(st.mapa.gatoGroup, !!pega && !st.mapa.sub && Object.hasOwn(j.pegos, st.con.uid), t);
+    for (const r of st.remotos.values()) {
+      const zumbi = !!pega && Object.hasOwn(j.pegos, r.uid);
+      auraEm2(r.grupo, zumbi, t);
+      if (r.cat && r.cat.setMult) r.cat.setMult(zumbi ? multVelocidade((ag - j.pegos[r.uid]) / 1e3) : 1);
+    }
   }
   function escondidosAgora(st) {
     const o = {}, M = st.mapa;
@@ -15067,6 +15629,10 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
       const j2 = jogoDe(st);
       if (!j2) return;
       st.jogoH = JSON.parse(JSON.stringify(j2));
+    }
+    if (st.jogoH.tipo === "pega") {
+      tocarPega(st, st.jogoH);
+      return;
     }
     const j = st.jogoH, vivos = jogadoresVivos(st).map((p) => p.uid);
     const achou = j.fase === "contando" && registrarEscondidos(j, escondidosAgora(st));
@@ -15165,7 +15731,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     if (!v || typeof v !== "object" || typeof v.x !== "number" || typeof v.z !== "number") return;
     let r = st.remotos.get(uid);
     if (!r) {
-      r = { uid, cat: null, grupo: new THREE11.Group(), nome: null, buf: [], nAplicado: null, atraso: null };
+      r = { uid, cat: null, grupo: new THREE12.Group(), nome: null, buf: [], nAplicado: null, atraso: null };
       r.grupo.visible = false;
       st.mapa.scene.add(r.grupo);
       st.remotos.set(uid, r);
@@ -15188,7 +15754,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     }
     if (!look || typeof look !== "object") return;
     r.nomeTexto = String(look.nome || "Gatinho");
-    loadCat2(THREE11, look).then((cat) => {
+    loadCat2(THREE12, look).then((cat) => {
       if (S !== st || st.remotos.get(r.uid) !== r) {
         cat.dispose();
         return;
@@ -15196,7 +15762,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
       r.cat = cat;
       r.grupo.add(cat.object);
       r.grupo.updateMatrixWorld(true);
-      const alto = new THREE11.Box3().setFromObject(cat.object).max.y;
+      const alto = new THREE12.Box3().setFromObject(cat.object).max.y;
       r.nome = criarNome(look.nome || "Gatinho");
       r.nome.position.y = (Number.isFinite(alto) ? alto : 0.6) + 0.18;
       r.grupo.add(r.nome);
@@ -15215,9 +15781,9 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     x.strokeText(String(texto).slice(0, 16), 128, 34);
     x.fillStyle = "#fff";
     x.fillText(String(texto).slice(0, 16), 128, 34);
-    const tex = new THREE11.CanvasTexture(c);
-    tex.colorSpace = THREE11.SRGBColorSpace;
-    const sp = new THREE11.Sprite(new THREE11.SpriteMaterial({ map: tex, depthTest: false, transparent: true, fog: false, toneMapped: false }));
+    const tex = new THREE12.CanvasTexture(c);
+    tex.colorSpace = THREE12.SRGBColorSpace;
+    const sp = new THREE12.Sprite(new THREE12.SpriteMaterial({ map: tex, depthTest: false, transparent: true, fog: false, toneMapped: false }));
     sp.scale.set(0.8, 0.2, 1);
     sp.renderOrder = 10;
     return sp;
@@ -15324,6 +15890,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
         if (agora2 - st.ultBichos >= BICHOS && outrosVivos(st) > 0) publicarBichos(st);
       } else st.jogoH = null;
       enviar(st, agora2);
+      tocarAuras(st, t);
       const meuSub = mapa.sub ? mapa.sub.tipo + ":" + mapa.sub.id : "";
       for (const r of st.remotos.values()) animarRemoto(r, dt, agora2, meuSub);
     } catch {
@@ -16672,33 +17239,205 @@ function criarTelaBrincadeira() {
   return { elemento, atualizar, destruir };
 }
 
+// js/pega-ui.js
+var AVISO_MS = 3e3;
+var RAPIDO_MS = 2e3;
+function criarTelaPega() {
+  const raiz = document.createElement("div");
+  raiz.className = "pega";
+  raiz.hidden = true;
+  const faixa = document.createElement("p");
+  faixa.className = "pega-faixa";
+  const dica = document.createElement("p");
+  dica.className = "pega-dica";
+  dica.hidden = true;
+  const aviso = document.createElement("div");
+  aviso.className = "pega-aviso";
+  aviso.hidden = true;
+  const avisoTexto = document.createElement("p");
+  avisoTexto.textContent = "Voc\xEA virou zumbi! Pegue os outros!";
+  aviso.appendChild(avisoTexto);
+  const rapido = document.createElement("p");
+  rapido.className = "pega-rapido";
+  rapido.textContent = "\u26A1 mais r\xE1pido!";
+  rapido.hidden = true;
+  const placar = document.createElement("div");
+  placar.className = "pega-placar";
+  placar.hidden = true;
+  const placarTitulo = document.createElement("h2");
+  placarTitulo.className = "pega-placar-titulo";
+  placarTitulo.textContent = "\u{1F3C6} Acabou o pique-pega!";
+  const placarLista = document.createElement("ol");
+  placarLista.className = "pega-placar-lista";
+  placar.appendChild(placarTitulo);
+  placar.appendChild(placarLista);
+  raiz.appendChild(faixa);
+  raiz.appendChild(dica);
+  raiz.appendChild(aviso);
+  raiz.appendChild(rapido);
+  raiz.appendChild(placar);
+  let ultimoFaixa = "";
+  let ultimoDica = "";
+  let ultimoPlacar = "";
+  let euEraZumbi = false;
+  let ultimoM = 1;
+  let ultimaHora = null;
+  let timerAviso = 0;
+  let timerRapido = 0;
+  function limparTimers() {
+    if (timerAviso) {
+      clearTimeout(timerAviso);
+      timerAviso = 0;
+    }
+    if (timerRapido) {
+      clearTimeout(timerRapido);
+      timerRapido = 0;
+    }
+  }
+  function zerarMemoria() {
+    euEraZumbi = false;
+    ultimaHora = null;
+    ultimoM = 1;
+    limparTimers();
+  }
+  function mostrarAviso() {
+    aviso.hidden = false;
+    if (timerAviso) clearTimeout(timerAviso);
+    timerAviso = setTimeout(() => {
+      aviso.hidden = true;
+      timerAviso = 0;
+    }, AVISO_MS);
+  }
+  function mostrarRapido() {
+    rapido.hidden = false;
+    if (timerRapido) clearTimeout(timerRapido);
+    timerRapido = setTimeout(() => {
+      rapido.hidden = true;
+      timerRapido = 0;
+    }, RAPIDO_MS);
+  }
+  function setTexto(el, texto) {
+    if (el.textContent !== texto) el.textContent = texto;
+  }
+  function atualizar({ jogo, agora: agora2, eu, nomeDe, vivos }) {
+    if (!jogo || jogo.tipo !== "pega") {
+      raiz.hidden = true;
+      aviso.hidden = true;
+      rapido.hidden = true;
+      dica.hidden = true;
+      placar.hidden = true;
+      zerarMemoria();
+      return;
+    }
+    raiz.hidden = false;
+    const textoFaixa = faixaPega(jogo, agora2, vivos);
+    if (textoFaixa !== ultimoFaixa) {
+      setTexto(faixa, textoFaixa);
+      ultimoFaixa = textoFaixa;
+    }
+    const fase = jogo.fase;
+    const euNaFila = !!eu && Array.isArray(jogo.fila) && jogo.fila.includes(eu);
+    const euZumbi = !!eu && !!jogo.pegos && Object.prototype.hasOwnProperty.call(jogo.pegos, eu);
+    let textoDica = "";
+    if (fase === "jogando") {
+      if (!euNaFila) {
+        textoDica = "Voc\xEA est\xE1 assistindo a brincadeira.";
+      } else if (euZumbi) {
+        textoDica = "Voc\xEA \xE9 zumbi! Encoste nos amigos para pegar!";
+      } else {
+        textoDica = "Corra! N\xE3o deixe os zumbis encostarem em voc\xEA!";
+      }
+    }
+    if (textoDica) {
+      dica.hidden = false;
+      if (textoDica !== ultimoDica) {
+        setTexto(dica, textoDica);
+        ultimoDica = textoDica;
+      }
+    } else {
+      dica.hidden = true;
+      ultimoDica = "";
+    }
+    if (fase === "fim") {
+      aviso.hidden = true;
+    } else {
+      if (euZumbi && !euEraZumbi) {
+        mostrarAviso();
+      }
+    }
+    euEraZumbi = euZumbi;
+    if (fase === "fim" || !euZumbi) {
+      rapido.hidden = true;
+      ultimoM = 1;
+    } else {
+      if (jogo.pegos[eu] !== ultimaHora) {
+        ultimaHora = jogo.pegos[eu];
+        ultimoM = 1;
+        rapido.hidden = true;
+      }
+      const seg = (agora2 - jogo.pegos[eu]) / 1e3;
+      const m = multVelocidade(seg);
+      if (m > ultimoM) {
+        ultimoM = m;
+        mostrarRapido();
+      }
+    }
+    if (fase === "fim") {
+      placar.hidden = false;
+      const linhas = placarPega(jogo);
+      const chave = linhas.map((l) => l.uid + "|" + l.pegou + "|" + l.zumbi + "|" + l.venceu).join(";");
+      if (chave !== ultimoPlacar) {
+        ultimoPlacar = chave;
+        while (placarLista.firstChild) placarLista.removeChild(placarLista.firstChild);
+        for (const l of linhas) {
+          const li = document.createElement("li");
+          const nome = nomeDe && nomeDe(l.uid) || "Algu\xE9m";
+          const sufixo = l.zumbi ? "virou zumbi" : "ficou livre";
+          const texto = (l.venceu ? "\u{1F3C6} " : "") + nome + " \u2014 pegou " + l.pegou + " \xB7 " + sufixo;
+          li.textContent = texto;
+          if (l.venceu) li.className = "pega-placar-1";
+          placarLista.appendChild(li);
+        }
+      }
+    } else {
+      placar.hidden = true;
+      ultimoPlacar = "";
+    }
+  }
+  function destruir() {
+    limparTimers();
+    if (raiz.parentNode) raiz.parentNode.removeChild(raiz);
+  }
+  return { elemento: raiz, atualizar, destruir };
+}
+
 // js/main.js
 document.title = "Avel\xE3, o gatinho sobrevivente \u2014 v" + VERSION;
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {
 });
-var CEU = new THREE10.Color(12575743);
+var CEU = new THREE11.Color(12575743);
 var renderer;
 var scene;
 var camera;
 try {
-  renderer = new THREE10.WebGLRenderer({ antialias: true, alpha: true });
+  renderer = new THREE11.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0, 0);
-  renderer.outputColorSpace = THREE10.SRGBColorSpace;
-  renderer.toneMapping = THREE10.ACESFilmicToneMapping;
+  renderer.outputColorSpace = THREE11.SRGBColorSpace;
+  renderer.toneMapping = THREE11.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE10.PCFShadowMap;
+  renderer.shadowMap.type = THREE11.PCFShadowMap;
   const view = document.getElementById("view");
   if (view) view.appendChild(renderer.domElement);
 } catch (e) {
   renderer = null;
 }
-scene = new THREE10.Scene();
+scene = new THREE11.Scene();
 scene.background = CEU;
-var hemiEstudio = new THREE10.HemisphereLight(16773600, 13215114, 1.1);
+var hemiEstudio = new THREE11.HemisphereLight(16773600, 13215114, 1.1);
 scene.add(hemiEstudio);
-var luzChave = new THREE10.DirectionalLight(16773341, 2.4);
+var luzChave = new THREE11.DirectionalLight(16773341, 2.4);
 luzChave.position.set(2.2, 3.5, 2.6);
 luzChave.castShadow = true;
 luzChave.shadow.mapSize.set(2048, 2048);
@@ -16712,17 +17451,17 @@ luzChave.shadow.camera.bottom = -1.5;
 luzChave.shadow.camera.near = 0.5;
 luzChave.shadow.camera.far = 12;
 scene.add(luzChave);
-var luzContorno = new THREE10.DirectionalLight(14674175, 1.6);
+var luzContorno = new THREE11.DirectionalLight(14674175, 1.6);
 luzContorno.position.set(-2, 2.2, -3);
 scene.add(luzContorno);
-var luzPreenchimento = new THREE10.DirectionalLight(16769743, 0.5);
+var luzPreenchimento = new THREE11.DirectionalLight(16769743, 0.5);
 luzPreenchimento.position.set(-3, 1, 2);
 scene.add(luzPreenchimento);
 function luzesDoMapa(noMapa) {
   hemiEstudio.visible = luzChave.visible = luzPreenchimento.visible = !noMapa;
   luzContorno.intensity = noMapa ? 0.7 : 1.6;
 }
-camera = new THREE10.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+camera = new THREE11.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(0, 0.6, 6.8);
 camera.lookAt(0, -1.15, 0);
 window.addEventListener("resize", () => {
@@ -16755,6 +17494,11 @@ var tVotacao = 0;
 var painelMissao = null;
 var tMissao = 0;
 var festejada = 0;
+var telaPega = null;
+var tPega = 0;
+var tCerca = 0;
+var pegaMontada = null;
+var pegaVistos = /* @__PURE__ */ new Set();
 var telaBrinc = null;
 var tBrinc = 0;
 var tQuieto = 0;
@@ -16924,6 +17668,11 @@ function desmontarMapa() {
     brincChave = "";
     olhando = null;
   }
+  if (telaPega) {
+    telaPega.destruir();
+    telaPega = null;
+  }
+  pegaMontada = null;
   festejada = 0;
   if (fecharPergunta) {
     fecharPergunta();
@@ -17146,8 +17895,15 @@ function irPara(nome, opcoes) {
     mapaNovo.aoSair = () => trocarSub(() => sair(mapaNovo));
     mapaNovo.aoTrocar = (fn) => trocarSub(fn);
     mapaNovo.aoOlhar = (idx) => {
-      olhando = { t: performance.now(), n: (aovivo.jogo() || { ach: [] }).ach.length };
+      olhando = { t: performance.now(), n: ((aovivo.jogo() || {}).ach || []).length };
       aovivo.olhar(idx);
+    };
+    mapaNovo.aoCerca = () => {
+      const t = performance.now();
+      if (t - tCerca > 1500) {
+        tCerca = t;
+        avisar2("Volte para a brincadeira! \u{1F9DF}", 1500);
+      }
     };
     mapaNovo.aoQuieto = () => {
       const t = performance.now();
@@ -17237,6 +17993,8 @@ function irPara(nome, opcoes) {
     hud.appendChild(painelMissao.elemento);
     telaBrinc = criarTelaBrincadeira();
     hud.appendChild(telaBrinc.elemento);
+    telaPega = criarTelaPega();
+    hud.appendChild(telaPega.elemento);
     const aoVivoEl = document.createElement("div");
     aoVivoEl.id = "hud-aovivo";
     aoVivoEl.className = "hud-aovivo";
@@ -17576,7 +18334,7 @@ function abrirMissoes() {
         salvarMundoAgora();
       }
     },
-    brincadeiras: Object.entries(BRINCADEIRAS).map(([id, d]) => ({ id, nome: d.nome, icone: d.icone, dica: "Um conta at\xE9 10 e os outros se escondem!" })),
+    brincadeiras: Object.entries(BRINCADEIRAS).map(([id, d]) => ({ id, nome: d.nome, icone: d.icone, dica: d.dica })),
     jogando: !!aovivo.jogo(),
     aoBrincar: (id) => {
       if (!aovivo.podeBrincar()) {
@@ -17619,16 +18377,17 @@ function atualizarMissao(ms) {
 function atualizarBrincadeira(ms) {
   const M = mapaAtual;
   if (!telaBrinc || !M) return;
-  const eu = aovivo.meuUid(), j = aovivo.ativo() ? aovivo.jogo() : null;
+  const eu = aovivo.meuUid(), jj = aovivo.ativo() ? aovivo.jogo() : null, jp = jj && jj.tipo === "pega" ? jj : null, j = jp ? null : jj;
+  atualizarPega(ms, jp, eu);
   const ativo = !!j && !!eu && j.fila.includes(eu) && (j.fase === "contando" || j.fase === "procurando");
   const achado = ativo && j.ach.includes(eu), peg = ativo && j.peg === eu, sou = !!j && j.peg === eu;
   M.congelado = peg && j.fase === "contando";
   M.travado = ativo && !peg && !achado;
-  M.brincando = !ativo || achado ? null : peg ? j.fase === "procurando" ? "procura" : "nada" : "esconde";
+  if (!jp) M.brincando = !ativo || achado ? null : peg ? j.fase === "procurando" ? "procura" : "nada" : "esconde";
   if (achado && M.acaoEst && M.acaoEst.modo === "escondido") M.sairDoEsconderijo();
   if (ms - tBrinc < 100) return;
   tBrinc = ms;
-  document.body.classList.toggle("brincando", !!j);
+  document.body.classList.toggle("brincando", !!jj);
   const nomes = new Map(aovivo.presentes().map((p) => [p.uid, p.nome]));
   const nomeDe = (u) => nomes.get(u) || "Algu\xE9m";
   telaBrinc.atualizar({ jogo: j, agora: aovivo.agora(), eu, nomeDe });
@@ -17651,6 +18410,38 @@ function atualizarBrincadeira(ms) {
   if (olhando && ms - olhando.t > 1500) {
     if (sou && j.ach.length === olhando.n) avisar2("Aqui n\xE3o tem ningu\xE9m\u2026 \u{1F914}", 1500);
     olhando = null;
+  }
+}
+function atualizarPega(ms, j, eu) {
+  const M = mapaAtual;
+  if (!telaPega || !M) return;
+  const jogando = !!j && j.fase === "jogando", naFila = jogando && !!eu && j.fila.includes(eu);
+  const chave = jogando ? [j.cx, j.cz, j.raio, j.seed].join(",") : "";
+  if (pegaMontada && (pegaMontada.mapa !== M || pegaMontada.chave !== chave)) {
+    if (pegaMontada.mapa === M) pegaMontada.rem.remover();
+    pegaMontada = null;
+    M.cerca = null;
+  }
+  if (chave && !pegaMontada && !M.sub && M.montarPega) {
+    pegaMontada = { chave, mapa: M, rem: M.montarPega(j) };
+    pegaVistos = new Set(Object.keys(j.pegos));
+  }
+  M.cerca = naFila && pegaMontada ? pegaMontada.rem.cerca : null;
+  const zumbi = naFila && Object.hasOwn(j.pegos, eu);
+  M.multVel = zumbi ? multVelocidade((aovivo.agora() - j.pegos[eu]) / 1e3) : 1;
+  if (j) {
+    M.brincando = naFila ? "nada" : null;
+    M.congelado = false;
+    M.travado = false;
+  }
+  if (ms - tPega < 100) return;
+  tPega = ms;
+  const pres = aovivo.presentes(), nomes = new Map(pres.map((p) => [p.uid, p.nome])), nomeDe = (u) => nomes.get(u) || "Algu\xE9m";
+  telaPega.atualizar({ jogo: j, agora: aovivo.agora(), eu, nomeDe, vivos: pres.filter((p) => p.papel === "jogador").map((p) => p.uid) });
+  if (!jogando) return;
+  for (const u of Object.keys(j.pegos)) if (!pegaVistos.has(u)) {
+    pegaVistos.add(u);
+    if (u !== eu) avisar2("\u{1F9DF} " + nomeDe(u) + " virou zumbi!", 2200);
   }
 }
 function atualizarVotacao(ms) {
@@ -17827,10 +18618,10 @@ function configurarRenderCriador() {
     camAlvo.lerp(dados.alvo, 0.15);
     camAltura += (dados.altura - camAltura) * 0.15;
   }
-  const fovRad = THREE10.MathUtils.degToRad(camera.fov);
-  const dist = camAltura / (2 * Math.tan(fovRad / 2));
-  const direcao = new THREE10.Vector3(0, 0.35, 1).normalize();
-  camera.position.copy(camAlvo).addScaledVector(direcao, dist);
+  const fovRad = THREE11.MathUtils.degToRad(camera.fov);
+  const dist2 = camAltura / (2 * Math.tan(fovRad / 2));
+  const direcao = new THREE11.Vector3(0, 0.35, 1).normalize();
+  camera.position.copy(camAlvo).addScaledVector(direcao, dist2);
   camera.lookAt(camAlvo);
 }
 function restaurarRenderNormal() {
@@ -17983,7 +18774,7 @@ mundos.ganchos.aoJuntar = () => {
   if (cl && (cl.contains("tela-menu") || cl.contains("tela-gatos"))) irPara(telaAtual);
   setTimeout(() => nuvem.sincronizar({ forcar: true }), 500);
 };
-aovivo = criarAoVivo({ nuvem, THREE: THREE10, loadCat, conexao, aoPapel: papelMudou });
+aovivo = criarAoVivo({ nuvem, THREE: THREE11, loadCat, conexao, aoPapel: papelMudou });
 conexao.on((t) => {
   if (t === "sem-internet") avisar2("Sem internet \u2014 a brincadeira continua aqui!", 3e3);
   else if (t === "modo") modoMudou().catch(() => {
