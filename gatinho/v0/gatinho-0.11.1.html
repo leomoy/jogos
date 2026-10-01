@@ -1845,6 +1845,15 @@ canvas,
 #carga-inicial .carregando-botao { visibility: hidden; opacity: 0; animation: carga-ini-botao 0.4s ease-out 20s forwards; }
 @keyframes carga-ini { to { opacity: 1; } }
 @keyframes carga-ini-botao { to { opacity: 1; visibility: visible; } }
+
+/* 0.11.1 — 🆘 Destravar: botão no HUD (aparece ~8 s quando o gato empurra sem sair do lugar) e na Pausa */
+.botao-destravar { position: absolute; top: 146px; left: 118px; width: 38px; height: 38px; padding: 0; font-size: 1.2rem; line-height: 1; background: #ffe1e1; border: 3px solid #f28b82; border-radius: 50%; cursor: pointer; pointer-events: auto; touch-action: manipulation; animation: destravar-pulsa 1s ease-in-out infinite; }
+.botao-destravar[hidden] { display: none; }
+.em-servidor .botao-destravar, .em-espectador .botao-destravar { display: none; }
+@keyframes destravar-pulsa { 50% { transform: scale(1.15); } }
+@media (max-width: 480px) { .botao-destravar { top: 116px; } }
+.botao-destravar-pausa { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.botao-destravar-pausa small { font-size: 0.75rem; font-weight: 600; opacity: 0.8; }
 </style>
 <script type="importmap">{
   "imports": {
@@ -2341,7 +2350,7 @@ if (typeof window !== "undefined") {
 import * as THREE13 from "three";
 
 // js/data.js
-var VERSION = "0.11.0";
+var VERSION = "0.11.1";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -9521,6 +9530,105 @@ __export(caverna_exports, {
 });
 import * as THREE9 from "three";
 import { mergeGeometries as mergeGeometries2 } from "three/addons/utils/BufferGeometryUtils.js";
+
+// js/alcance.js
+function alcancaveis({ N: N2, lim, chao, de, raio = 0.3, res = 0.25 }) {
+  function idx(x, z) {
+    const i = Math.floor(x + lim);
+    const j = Math.floor(z + lim);
+    if (i < 0 || i >= N2 || j < 0 || j >= N2) return -1;
+    return j * N2 + i;
+  }
+  function eChao2(x, z) {
+    const k = idx(x, z);
+    return k >= 0 && chao[k] === 1;
+  }
+  function cabe2(x, z) {
+    if (!eChao2(x, z)) return false;
+    for (let k = 0; k < 12; k++) {
+      const a = k * Math.PI / 6;
+      if (!eChao2(x + raio * Math.cos(a), z + raio * Math.sin(a))) return false;
+    }
+    return true;
+  }
+  const M = Math.round(2 * lim / res);
+  if (M < 1) return { ok: () => false, n: 0, total: 0 };
+  const livre = new Uint8Array(M * M);
+  let total = 0;
+  for (let b = 0; b < M; b++) {
+    for (let a = 0; a < M; a++) {
+      const x = -lim + (a + 0.5) * res;
+      const z = -lim + (b + 0.5) * res;
+      if (cabe2(x, z)) {
+        livre[a + b * M] = 1;
+        total++;
+      }
+    }
+  }
+  if (total === 0) return { ok: () => false, n: 0, total: 0 };
+  let melhorA = -1, melhorB = -1;
+  let melhorD = Infinity;
+  for (let b = 0; b < M; b++) {
+    for (let a = 0; a < M; a++) {
+      if (!livre[a + b * M]) continue;
+      const x = -lim + (a + 0.5) * res;
+      const z = -lim + (b + 0.5) * res;
+      const d = (x - de.x) * (x - de.x) + (z - de.z) * (z - de.z);
+      if (d < melhorD) {
+        melhorD = d;
+        melhorA = a;
+        melhorB = b;
+      }
+    }
+  }
+  if (melhorA < 0) return { ok: () => false, n: 0, total: 0 };
+  const alcanca = new Uint8Array(M * M);
+  const fila = [melhorA + melhorB * M];
+  alcanca[melhorA + melhorB * M] = 1;
+  let n = 0;
+  const viz = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  let cabeca = 0;
+  while (cabeca < fila.length) {
+    const cur = fila[cabeca++];
+    const ca = cur % M;
+    const cb = Math.floor(cur / M);
+    n++;
+    for (const [da, db] of viz) {
+      const na = ca + da;
+      const nb = cb + db;
+      if (na < 0 || na >= M || nb < 0 || nb >= M) continue;
+      const ni = na + nb * M;
+      if (alcanca[ni] || !livre[ni]) continue;
+      alcanca[ni] = 1;
+      fila.push(ni);
+    }
+  }
+  const limDist = res * 1.6;
+  function ok(x, z) {
+    if (!Number.isFinite(x) || !Number.isFinite(z)) return false;
+    if (!cabe2(x, z)) return false;
+    const a0 = Math.floor((x + lim) / res);
+    const b0 = Math.floor((z + lim) / res);
+    for (let db = -1; db <= 1; db++) {
+      for (let da = -1; da <= 1; da++) {
+        const a = a0 + da;
+        const b = b0 + db;
+        if (a < 0 || a >= M || b < 0 || b >= M) continue;
+        const i = a + b * M;
+        if (!alcanca[i]) continue;
+        const cx = -lim + (a + 0.5) * res;
+        const cz = -lim + (b + 0.5) * res;
+        const dx = cx - x;
+        const dz = cz - z;
+        if (dx * dx + dz * dz <= limDist * limDist) return true;
+      }
+    }
+    return false;
+  }
+  return { ok, n, total };
+}
+
+// js/caverna.js
 var N = 30;
 var LIM = 15;
 var ALTURA = 1.7;
@@ -9858,51 +9966,14 @@ function gerarPontos(planta, seed) {
   return planta;
 }
 function colisoresParedes(planta) {
-  const chao = planta.chao;
-  const boxes = [];
+  const chao = planta.chao, boxes = [];
   for (let j = 0; j < N; j++) {
-    let i = 0;
-    while (i < N) {
-      if (chao[j * N + i] === 0) {
-        let hasFloor = false;
-        for (let dj = -1; dj <= 1 && !hasFloor; dj++) {
-          for (let di = -1; di <= 1 && !hasFloor; di++) {
-            const nj = j + dj;
-            const ni = i + di;
-            if (nj >= 0 && nj < N && ni >= 0 && ni < N && chao[nj * N + ni] === 1) {
-              hasFloor = true;
-            }
-          }
-        }
-        if (hasFloor) {
-          let i1 = i;
-          while (i1 + 1 < N && chao[j * N + i1 + 1] === 0) {
-            let hasFloorNext = false;
-            for (let dj = -1; dj <= 1 && !hasFloorNext; dj++) {
-              for (let di = -1; di <= 1 && !hasFloorNext; di++) {
-                const nj = j + dj;
-                const ni = i1 + 1 + di;
-                if (nj >= 0 && nj < N && ni >= 0 && ni < N && chao[nj * N + ni] === 1) {
-                  hasFloorNext = true;
-                }
-              }
-            }
-            if (hasFloorNext) i1++;
-            else break;
-          }
-          boxes.push({
-            cx: (i + i1 + 1) / 2 - LIM,
-            cz: j + 0.5 - LIM,
-            hx: (i1 - i + 1) / 2,
-            hz: 0.5
-          });
-          i = i1 + 1;
-        } else {
-          i++;
-        }
-      } else {
-        i++;
-      }
+    for (let i = 0; i < N; i++) {
+      if (chao[j * N + i] !== 0) continue;
+      let i1 = i;
+      while (i1 + 1 < N && chao[j * N + i1 + 1] === 0) i1++;
+      boxes.push({ cx: (i + i1 + 1) / 2 - LIM, cz: j + 0.5 - LIM, hx: (i1 - i + 1) / 2, hz: 0.5 });
+      i = i1;
     }
   }
   return boxes;
@@ -10367,6 +10438,7 @@ function criar(scene2, seed, salvo) {
   for (const l of planta.lajes) caixa(w, l.x, l.z, 0, l.hx, l.hz, -1, l.h);
   w.step();
   const fis = criarGato(w, { altura: () => 0, LIMITE: LIM, margem: 0.4 }, planta.entrada.x, planta.entrada.z);
+  const alc = alcancaveis({ N, lim: LIM, chao: planta.chao, de: planta.entrada });
   const nevoa = { mundo: { LIMITE: LIM }, descoberto: descobertoDeBase64(salvo && salvo.descoberto, LIM), nevoaVersao: 0 };
   revelar(nevoa, planta.entrada.x, planta.entrada.z, RAIO_REVELA);
   let tRev = 0;
@@ -10376,6 +10448,9 @@ function criar(scene2, seed, salvo) {
     limites: LIM,
     planta,
     entradaSaida: { entrada: planta.entrada, saida: planta.saida },
+    lugarValido: (x, z) => alc.ok(x, z),
+    // 0.11.1: piso onde o gato cabe e que se alcança da entrada (senão a posição salva é de dentro da pedra ou de um buraco isolado)
+    alcance: { n: alc.n, total: alc.total },
     fundo: new THREE9.Color(COR_FUNDO),
     nevoa: new THREE9.Fog(COR_FUNDO, 14, 34),
     descoberto: nevoa.descoberto,
@@ -10405,6 +10480,95 @@ function criar(scene2, seed, salvo) {
       });
     }
   };
+}
+
+// js/seguro.js
+function ehNumeroFinito2(v) {
+  return typeof v === "number" && Number.isFinite(v);
+}
+function garantirFinito(v) {
+  return ehNumeroFinito2(v) ? v : 0;
+}
+function limitar(v, min, max) {
+  if (v < min) return min;
+  if (v > max) return max;
+  return v;
+}
+function arredondar1(v) {
+  return Math.round(v * 10) / 10;
+}
+function lugarSeguro({
+  tipo,
+  x,
+  z,
+  rot,
+  valido,
+  livre,
+  entrada,
+  pouso,
+  limite,
+  forcar
+}) {
+  const rotFinito = garantirFinito(rot);
+  const xFinito = garantirFinito(x);
+  const zFinito = garantirFinito(z);
+  const fnValido = typeof valido === "function" ? valido : () => true;
+  const fnLivre = typeof livre === "function" ? livre : () => true;
+  const posicaoBoa = ehNumeroFinito2(x) && ehNumeroFinito2(z) && fnValido(x, z);
+  if (tipo === "caverna") {
+    if (!forcar && posicaoBoa) {
+      return { x, z, rot: rotFinito, mudou: false };
+    }
+    const destino = entrada || { x: 0, z: 0, rot: 0 };
+    return {
+      x: garantirFinito(destino.x),
+      z: garantirFinito(destino.z),
+      rot: garantirFinito(destino.rot),
+      mudou: true
+    };
+  }
+  if (tipo === "arvore") {
+    if (!forcar && posicaoBoa) {
+      return { x, z, rot: rotFinito, mudou: false };
+    }
+    const destino = pouso || { x: 0, z: 0, rot: 0 };
+    return {
+      x: garantirFinito(destino.x),
+      z: garantirFinito(destino.z),
+      rot: garantirFinito(destino.rot),
+      mudou: true
+    };
+  }
+  if (tipo === "mapa") {
+    if (!forcar && posicaoBoa) {
+      return { x, z, rot: rotFinito, mudou: false };
+    }
+    const lim = typeof limite === "number" && Number.isFinite(limite) ? limite : 60;
+    const margem = lim - 2;
+    const min = -margem;
+    const max = margem;
+    const px = limitar(ehNumeroFinito2(x) ? x : 0, min, max);
+    const pz = limitar(ehNumeroFinito2(z) ? z : 0, min, max);
+    const cx0 = limitar(px, min, max);
+    const cz0 = limitar(pz, min, max);
+    if (fnLivre(cx0, cz0)) {
+      return { x: arredondar1(cx0), z: arredondar1(cz0), rot: rotFinito, mudou: true };
+    }
+    const rMax = 2 * lim;
+    for (let r = 1; r <= rMax; r++) {
+      const n = Math.ceil(r * 6);
+      for (let k = 0; k < n; k++) {
+        const ang = k * 2 * Math.PI / n;
+        const cx = limitar(px + Math.cos(ang) * r, min, max);
+        const cz = limitar(pz + Math.sin(ang) * r, min, max);
+        if (fnLivre(cx, cz)) {
+          return { x: arredondar1(cx), z: arredondar1(cz), rot: rotFinito, mudou: true };
+        }
+      }
+    }
+    return { x: 0, z: 0, rot: rotFinito, mudou: true };
+  }
+  return { x: xFinito, z: zFinito, rot: rotFinito, mudou: false };
 }
 
 // js/arvore.js
@@ -11028,6 +11192,8 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
       fis.teleportar(PAD.pouso.x, PAD.pouso.z);
     },
     estadoSub: () => ({ andar }),
+    lugarValido: (x, z) => dentro(planta.andares[andar], x, z, -0.1) && Math.hypot(x, z) > R_TRONCO + 0.15,
+    // 0.11.1: sobre o galho do andar atual e fora do tronco (senão a posição salva é de um andar/galho que não existe)
     atualizar(dt, t) {
       VENTO.value = t;
       copiarLuz();
@@ -11091,7 +11257,7 @@ function ehTexto(v) {
 function ehInteiro(v) {
   return typeof v === "number" && Number.isInteger(v);
 }
-function ehNumeroFinito2(v) {
+function ehNumeroFinito3(v) {
   return typeof v === "number" && Number.isFinite(v);
 }
 function ehObjeto4(v) {
@@ -11127,7 +11293,7 @@ function filaInicial(uids, rnd = Math.random) {
 function novoJogo(tipo, uids, agora2, rnd, area) {
   if (tipo !== "esconde") return null;
   const cfg = BRINCADEIRAS[tipo];
-  if (!ehNumeroFinito2(agora2)) return null;
+  if (!ehNumeroFinito3(agora2)) return null;
   const fila = filaInicial(uids, rnd);
   if (!fila || fila.length < 2) return null;
   const placar = {};
@@ -11144,7 +11310,7 @@ function novoJogo(tipo, uids, agora2, rnd, area) {
     perd: [],
     placar
   };
-  if (area && ehNumeroFinito2(area.cx) && ehNumeroFinito2(area.cz) && ehNumeroFinito2(area.raio)) {
+  if (area && ehNumeroFinito3(area.cx) && ehNumeroFinito3(area.cz) && ehNumeroFinito3(area.raio)) {
     obj.cx = area.cx;
     obj.cz = area.cz;
     obj.raio = area.raio;
@@ -11184,7 +11350,7 @@ function olhar(jogo, uid, idx) {
   return achados;
 }
 function avancar(jogo, agora2, vivos) {
-  if (!ehObjeto4(jogo) || !ehNumeroFinito2(agora2) || !Array.isArray(vivos)) return "";
+  if (!ehObjeto4(jogo) || !ehNumeroFinito3(agora2) || !Array.isArray(vivos)) return "";
   const cfg = Object.hasOwn(BRINCADEIRAS, jogo.tipo) ? BRINCADEIRAS[jogo.tipo] : null;
   if (!cfg) return "";
   const vivosSet = new Set(vivos);
@@ -11274,19 +11440,19 @@ function avancar(jogo, agora2, vivos) {
   return "";
 }
 function restante(jogo, agora2) {
-  if (!ehObjeto4(jogo) || !ehNumeroFinito2(agora2) || !ehNumeroFinito2(jogo.fimFase)) return 0;
+  if (!ehObjeto4(jogo) || !ehNumeroFinito3(agora2) || !ehNumeroFinito3(jogo.fimFase)) return 0;
   const s = Math.ceil((jogo.fimFase - agora2) / 1e3);
   return s < 0 ? 0 : s;
 }
 function tempoTexto(seg) {
-  if (!ehNumeroFinito2(seg) || seg < 0) return "0:00";
+  if (!ehNumeroFinito3(seg) || seg < 0) return "0:00";
   const s = Math.floor(seg);
   const m = Math.floor(s / 60);
   const r = s % 60;
   return m + ":" + (r < 10 ? "0" + r : "" + r);
 }
 function faixaTexto(jogo, agora2, nomeDe) {
-  if (!ehObjeto4(jogo) || !ehNumeroFinito2(agora2) || typeof nomeDe !== "function") return "";
+  if (!ehObjeto4(jogo) || !ehNumeroFinito3(agora2) || typeof nomeDe !== "function") return "";
   const cfg = Object.hasOwn(BRINCADEIRAS, jogo.tipo) ? BRINCADEIRAS[jogo.tipo] : null;
   if (!cfg) return "";
   const icone = cfg.icone;
@@ -11374,7 +11540,7 @@ function lerJogo(texto) {
   if (obj.peg !== obj.fila[obj.rodada - 1]) return null;
   const fases = ["contando", "procurando", "rodada", "fim"];
   if (!fases.includes(obj.fase)) return null;
-  if (!ehNumeroFinito2(obj.fimFase)) return null;
+  if (!ehNumeroFinito3(obj.fimFase)) return null;
   const esc = {};
   if (ehObjeto4(obj.esc)) {
     for (const u in obj.esc) {
@@ -11406,7 +11572,7 @@ function lerJogo(texto) {
     }
     placar[u] = [a, e];
   }
-  const temArea = ehNumeroFinito2(obj.cx) && obj.cx >= -200 && obj.cx <= 200 && ehNumeroFinito2(obj.cz) && obj.cz >= -200 && obj.cz <= 200 && ehNumeroFinito2(obj.raio) && obj.raio >= 5 && obj.raio <= 80 && ehNumeroFinito2(obj.ini);
+  const temArea = ehNumeroFinito3(obj.cx) && obj.cx >= -200 && obj.cx <= 200 && ehNumeroFinito3(obj.cz) && obj.cz >= -200 && obj.cz <= 200 && ehNumeroFinito3(obj.raio) && obj.raio >= 5 && obj.raio <= 80 && ehNumeroFinito3(obj.ini);
   return {
     tipo: obj.tipo,
     fila: obj.fila.slice(),
@@ -12014,6 +12180,13 @@ function ondinhas(mapa, dt, gp) {
     m.material.opacity = 0.6 * (1 - u) * Math.min(1, u * 6);
   }
 }
+var posicaoValida = (m, x, z) => Math.abs(x) < m.LIMITE - 2 && Math.abs(z) < m.LIMITE - 2 && !m.colisores.some((c) => c.tipo !== "tronco" && c.top >= 1.2 && Math.hypot(c.x - x, c.z - z) < c.r * 0.9);
+function pontoLivreMundo(m, x, z) {
+  if (!(Math.abs(x) < m.LIMITE - 2 && Math.abs(z) < m.LIMITE - 2)) return false;
+  const rio = m.distRio(x, z);
+  if (rio.d < rio.hw + 1.5) return false;
+  return !m.colisores.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + 1.2) && !m.cavernas.some((c) => Math.hypot(c.x - x, c.z - z) < c.R + 2) && !m.arvores.some((a) => Math.hypot(a.x - x, a.z - z) < 3);
+}
 function criarMapa(scene2, gato, salvo) {
   const ok = salvo && typeof salvo === "object" && Number.isFinite(salvo.x) && Number.isFinite(salvo.z);
   const seed = salvo && Number.isFinite(salvo.seed) ? salvo.seed : 12345;
@@ -12258,7 +12431,12 @@ function criarMapa(scene2, gato, salvo) {
   grupo.add(bor);
   const gatoGroup = new THREE12.Group();
   gatoGroup.name = "gatoGroup";
-  const x0 = ok ? salvo.x : 0, z0 = ok ? salvo.z : 0;
+  let x0 = ok ? salvo.x : 0, z0 = ok ? salvo.z : 0;
+  if (ok) {
+    const r = lugarSeguro({ tipo: "mapa", x: x0, z: z0, rot: salvo.rot, valido: (x, z) => posicaoValida(mundo, x, z), livre: (x, z) => pontoLivreMundo(mundo, x, z), limite: mundo.LIMITE });
+    x0 = r.x;
+    z0 = r.z;
+  }
   const fis = criarFisica(mundo, x0, z0);
   mapa.fis = fis;
   gatoGroup.position.set(fis.x, fis.y, fis.z);
@@ -12288,12 +12466,14 @@ function criarMapa(scene2, gato, salvo) {
     contarEsconderijos: (x, z, r) => contarEsconderijos(mapa, x, z, r),
     // 0.10.1: quantos esconderijos num círculo (o raio da área do pique-esconde)
     // 0.10.1: ponto de chão livre (fora do rio, longe de árvore, rocha, tronco e boca de caverna, dentro do mundo): onde pôr a área de encontro e quem chega
-    pontoLivre: (x, z) => {
-      const m = mapa.mundo;
-      if (!(Math.abs(x) < m.LIMITE - 2 && Math.abs(z) < m.LIMITE - 2)) return false;
-      const rio = m.distRio(x, z);
-      if (rio.d < rio.hw + 1.5) return false;
-      return !m.colisores.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + 1.2) && !m.cavernas.some((c) => Math.hypot(c.x - x, c.z - z) < c.R + 2) && !m.arvores.some((a) => Math.hypot(a.x - x, a.z - z) < 3);
+    pontoLivre: (x, z) => pontoLivreMundo(mapa.mundo, x, z),
+    // 0.11.1: 🆘 Destravar no mapa grande: a grama livre mais perto (na brincadeira, sem sair da área de encontro)
+    destravar() {
+      const gp = gatoGroup.position, c = mapa.cerca;
+      const r = lugarSeguro({ tipo: "mapa", forcar: true, x: gp.x, z: gp.z, rot: gatoGroup.rotation.y, livre: (x, z) => mapa.pontoLivre(x, z) && (!c || Math.hypot(x - c.x, z - c.z) < c.r - 0.8), limite: mundo.LIMITE });
+      fis.teleportar(r.x, r.z);
+      gp.set(fis.x, fis.y, fis.z);
+      mapa.camY = fis.y;
     },
     acaoContextual: () => acaoContextual(mapa),
     usarAcao: () => usarAcao(mapa),
@@ -12556,8 +12736,8 @@ var GIRO_TECLA = 1.6;
 var GIRO_MOUSE = 6e-3;
 var EXCLUI = ".joystick, .acoes, button, #minimapa, .tela, .mapa-completo";
 function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
-  let dist3 = limitar(inicial);
-  function limitar(v) {
+  let dist3 = limitar2(inicial);
+  function limitar2(v) {
     if (typeof v !== "number" || !isFinite(v)) return min;
     if (v < min) return min;
     if (v > max) return max;
@@ -12613,7 +12793,7 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
     if (ativos.length === 2 && distIni >= 1) {
       const distAtual = distEntre(ativos[0], ativos[1]);
       if (distAtual > 0) {
-        dist3 = limitar(zoomIni * distIni / distAtual);
+        dist3 = limitar2(zoomIni * distIni / distAtual);
       }
       const ang = anguloEntre(ativos[0], ativos[1]);
       const r = passoGiro(giroEst, deltaAngulo(angPrev, ang));
@@ -12642,7 +12822,7 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
       return;
     }
     e.preventDefault();
-    dist3 = limitar(dist3 * Math.exp(e.deltaY * 12e-4));
+    dist3 = limitar2(dist3 * Math.exp(e.deltaY * 12e-4));
   }
   const campo = (e) => /^(INPUT|TEXTAREA|SELECT)$/.test(e.target && e.target.tagName || "");
   function aoTecla(e) {
@@ -12680,15 +12860,15 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
       return dist3;
     },
     set(v) {
-      dist3 = limitar(v);
+      dist3 = limitar2(v);
       return dist3;
     },
     mais() {
-      dist3 = limitar(dist3 / 1.25);
+      dist3 = limitar2(dist3 / 1.25);
       return dist3;
     },
     menos() {
-      dist3 = limitar(dist3 * 1.25);
+      dist3 = limitar2(dist3 * 1.25);
       return dist3;
     },
     yaw() {
@@ -12998,9 +13178,14 @@ function entrar(mapa, entrada, restaurar2) {
   scene2.background = inst.fundo;
   const g = mapa.gatoGroup, fis = inst.fisica, es = inst.entradaSaida;
   const volta = restaurar2 && Number.isFinite(restaurar2.x) && Number.isFinite(restaurar2.z);
-  if (volta) fis.teleportar(restaurar2.x, restaurar2.z);
+  let rot0 = es.entrada.rot;
+  if (volta) {
+    const r = lugarSeguro({ tipo: entrada.tipo, x: restaurar2.x, z: restaurar2.z, rot: restaurar2.rot, valido: inst.lugarValido, entrada: es.entrada, pouso: es.entrada });
+    fis.teleportar(r.x, r.z);
+    rot0 = r.mudou ? es.entrada.rot : r.rot;
+  }
   g.position.set(fis.x, fis.y, fis.z);
-  g.rotation.set(0, volta && Number.isFinite(restaurar2.rot) ? restaurar2.rot : es.entrada.rot, 0);
+  g.rotation.set(0, rot0, 0);
   const sub = {
     sub: true,
     tipo: entrada.tipo,
@@ -13057,6 +13242,14 @@ function entrar(mapa, entrada, restaurar2) {
         sub.camY = fis.y;
       });
     },
+    /** 🆘 Destravar (0.11.1): leva o gato para a porta (caverna: a entrada por dentro; árvore: a placa do andar em que está). */
+    destravar() {
+      const r = lugarSeguro({ tipo: entrada.tipo, forcar: true, x: g.position.x, z: g.position.z, rot: g.rotation.y, entrada: es.entrada, pouso: es.entrada });
+      fis.teleportar(r.x, r.z);
+      g.position.set(fis.x, fis.y, fis.z);
+      g.rotation.y = r.rot;
+      sub.camY = fis.y;
+    },
     atualizar(dt, input, t) {
       try {
         if (inst.aoArLivre) atualizarCiclo(mapa, scene2, dt);
@@ -13093,6 +13286,38 @@ function sair(mapa) {
 function restaurar(mapa, salvoSub) {
   const e = salvoSub && mapa.entradas.find((q) => q.tipo === salvoSub.tipo && q.id === salvoSub.id);
   return e ? entrar(mapa, e, salvoSub) : null;
+}
+
+// js/preso.js
+function criarDetectorPreso({ tempo = 3, minimo = 0.25, forcaMin = 0.3 } = {}) {
+  let t = 0;
+  let ax = null;
+  let az = null;
+  function passo(dt, x, z, forca) {
+    if (!Number.isFinite(dt) || !Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(forca)) {
+      return false;
+    }
+    if (forca < forcaMin) {
+      t = 0;
+      ax = null;
+      az = null;
+      return false;
+    }
+    if (ax === null || Math.hypot(x - ax, z - az) > minimo) {
+      ax = x;
+      az = z;
+      t = 0;
+      return false;
+    }
+    t += dt;
+    return t >= tempo;
+  }
+  function zerar() {
+    t = 0;
+    ax = null;
+    az = null;
+  }
+  return { passo, zerar };
 }
 
 // js/firebase.js
@@ -20144,6 +20369,32 @@ function trocarSub(fn, texto = "Um instante\u2026") {
     }));
   }, 200);
 }
+var detectorPreso = criarDetectorPreso();
+var botaoDestravar = null;
+var tBotaoDestravar = 0;
+function mostrarBotaoDestravar(ms = 8e3) {
+  if (!botaoDestravar) return;
+  botaoDestravar.hidden = false;
+  clearTimeout(tBotaoDestravar);
+  tBotaoDestravar = setTimeout(() => {
+    if (botaoDestravar) botaoDestravar.hidden = true;
+  }, ms);
+}
+function destravar2() {
+  const M = mapaAtual;
+  if (!M || trocando || servidorMundo || espectando || telaAtual !== "mapa") return false;
+  if (M.travado || M.congelado) {
+    avisar2("Agora n\xE3o: espere a brincadeira! \u{1F648}", 2e3);
+    return false;
+  }
+  if (botaoDestravar) botaoDestravar.hidden = true;
+  detectorPreso.zerar();
+  trocarSub(() => {
+    (mapaAtual.sub || mapaAtual).destravar();
+    avisar2("Pronto, livre! \u{1F43E}", 2500);
+  }, "Procurando um lugar seguro\u2026");
+  return true;
+}
 function desmontarMapa() {
   descarregarEstat();
   salvarMundoAgora();
@@ -20582,6 +20833,16 @@ function irPara(nome, opcoes) {
     botaoMissoes.setAttribute("aria-label", "Atividades");
     botaoMissoes.addEventListener("click", () => abrirMissoes());
     hud.appendChild(botaoMissoes);
+    botaoDestravar = document.createElement("button");
+    botaoDestravar.type = "button";
+    botaoDestravar.className = "botao-destravar";
+    botaoDestravar.hidden = true;
+    botaoDestravar.textContent = "\u{1F198}";
+    botaoDestravar.title = "Destravar";
+    botaoDestravar.setAttribute("aria-label", "Destravar: meu gatinho ficou preso");
+    botaoDestravar.addEventListener("click", () => destravar2());
+    hud.appendChild(botaoDestravar);
+    detectorPreso.zerar();
     painelMissao = criarPainelMissao();
     hud.appendChild(painelMissao.elemento);
     telaBrinc = criarTelaBrincadeira();
@@ -21244,6 +21505,18 @@ function abrirPausa() {
     bEstat.addEventListener("click", () => abrirEstatisticas(idGatoMapa, idMundoMapa));
     div.appendChild(bEstat);
   }
+  if (!servidorMundo && !espectando) {
+    const bDestravar = document.createElement("button");
+    bDestravar.className = "botao botao-destravar-pausa";
+    bDestravar.id = "botao-destravar";
+    bDestravar.innerHTML = "<span>\u{1F198} Destravar</span><small>Meu gatinho ficou preso</small>";
+    bDestravar.addEventListener("click", () => {
+      pausado = false;
+      if (div.parentNode) div.parentNode.removeChild(div);
+      destravar2();
+    });
+    div.appendChild(bDestravar);
+  }
   div.appendChild(Som.botao("botao"));
   const voltar = document.createElement("button");
   voltar.className = "botao";
@@ -21400,6 +21673,13 @@ if (renderer) {
         if (!trocando) {
           if (mapaAtual.sub) mapaAtual.sub.atualizar(dt, estadoMapa, tempoSegundos);
           else atualizarMapa(mapaAtual, dt, estadoMapa, tempoSegundos);
+          if (!espectando && !servidorMundo && alvo2.gatoGroup) {
+            const gp = alvo2.gatoGroup.position;
+            if (!mapaAtual.travado && !mapaAtual.congelado && detectorPreso.passo(dt, gp.x, gp.z, Math.min(1, Math.hypot(estadoMapa.dx, estadoMapa.dy)))) {
+              detectorPreso.zerar();
+              mostrarBotaoDestravar();
+            }
+          }
         }
         if (espectando) atualizarCameraEspectador(dt, estado);
       } catch (e) {
@@ -21517,6 +21797,8 @@ window.GATINHO = {
   get trocando() {
     return trocando;
   },
+  destravar: () => destravar2(),
+  // 0.11.1 (testes)
   salvarMundo: salvarMundoAgora,
   descarregarEstat,
   abrirEstatisticas,
