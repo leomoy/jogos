@@ -1721,6 +1721,32 @@ canvas,
 .hud-comida[hidden] { display: none; }
 .em-servidor .hud-comida, .em-espectador .hud-comida { display: none; }
 .gato-comida { font-size: 0.78rem; font-weight: 700; color: #6a5a4a; }
+
+/* 0.9.6 — missões: botão 🎯 ao lado dos botões do horário, painel pequeno embaixo deles, lista (diálogo) e festa de "Missão cumprida!" */
+.botao-missoes { position: absolute; top: 130px; left: 148px; width: 38px; height: 38px; padding: 0; font-size: 1.25rem; line-height: 1; background: rgba(255, 255, 255, 0.85); border: 3px solid #cdd6f0; border-radius: 50%; cursor: pointer; pointer-events: auto; touch-action: manipulation; }
+.em-servidor .botao-missoes, .em-espectador .botao-missoes { display: none; }
+.painel-missao { position: absolute; top: 176px; left: 14px; max-width: min(74vw, 320px); box-sizing: border-box; padding: 4px 10px; background: rgba(255, 255, 255, 0.85); border: 3px solid #cdd6f0; border-radius: 14px; color: #3a3a55; pointer-events: none; }
+.painel-missao[hidden], .painel-missao-quem[hidden] { display: none; }
+.painel-missao p { margin: 0; }
+.painel-missao-titulo { font-size: 1rem; font-weight: 700; line-height: 1.25; }
+.painel-missao-quem { font-size: 0.8rem; font-weight: 700; color: #6b6b8a; }
+.painel-missao.cumprida { background: #fff1b8; border-color: #f2c94c; }
+.dialogo-missoes { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; background: rgba(40, 40, 70, 0.45); }
+.dialogo-missoes-caixa { width: min(88vw, 360px); max-height: 90vh; overflow-y: auto; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; background: #fff; border: 3px solid #cdd6f0; border-radius: 18px; box-shadow: 0 4px 0 #cdd6f0; color: #3a3a55; }
+.dialogo-missoes-caixa h2 { margin: 0; font-size: 1.5rem; }
+.missoes-ativa { margin: 0; font-size: 1.1rem; font-weight: 700; text-align: center; }
+.missoes-lista { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.missoes-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; padding: 8px 10px; background: #f4f7ff; border: 2px solid #cdd6f0; border-radius: 14px; }
+.missoes-nome { flex: 1 1 100%; font-size: 1.15rem; font-weight: 700; }
+.missoes-vezes { font-size: 0.85rem; font-weight: 700; color: #6b6b8a; }
+.missoes-item .botao { min-height: 44px; min-width: 96px; padding: 6px 14px; font-size: 1.05rem; margin-left: auto; }
+.dialogo-missoes-caixa .botao-grande, .dialogo-missoes-caixa > .botao { width: 100%; box-sizing: border-box; }
+.festa-missao { width: max-content; max-width: 88vw; box-sizing: border-box; position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); z-index: 95; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 26px; background: #fff1b8; border: 4px solid #f2c94c; border-radius: 22px; box-shadow: 0 6px 0 #f2c94c; color: #3a3a55; text-align: center; pointer-events: none; animation: festa-missao-pula 0.6s ease-out; }
+.festa-missao p { margin: 0; font-size: 1.7rem; font-weight: 800; }
+.festa-missao-confete { font-size: 1.3rem; letter-spacing: 0.1em; white-space: nowrap; }
+@keyframes festa-missao-pula { 0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; } 70% { transform: translate(-50%, -50%) scale(1.12); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); } }
+@media (max-width: 480px) { .botao-missoes { top: 108px; } .painel-missao { top: 154px; } }
+@media (max-height: 520px) { .dialogo-missoes-caixa { padding: 10px; gap: 6px; } .missoes-item .botao { min-height: 40px; } .festa-missao { top: 45%; padding: 8px 20px; } .festa-missao p { font-size: 1.4rem; } }
 </style>
 <script type="importmap">{
   "imports": {
@@ -2221,7 +2247,7 @@ if (typeof window !== "undefined") {
 import * as THREE10 from "three";
 
 // js/data.js
-var VERSION = "0.9.5";
+var VERSION = "0.9.6";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -2856,6 +2882,34 @@ var Save = {
   totalComida(id) {
     const g = Save.pegar(id);
     return g ? totalComida(g.ficha) : 0;
+  },
+  // 0.9.6: o char cumpriu a missão `missaoId` (js/missoes.js): ficha.missoes = { <id>: n vezes }. Devolve o novo n ou null se não gravou.
+  missaoCumprida(id, missaoId) {
+    try {
+      if (typeof missaoId !== "string" || !/^[A-Za-z0-9_-]{1,40}$/.test(missaoId) || missaoId === "__proto__") return null;
+      const dados = lerBruto();
+      const g = dados && dados.gatos.find((x) => x && x.id === String(id));
+      if (!g) return null;
+      const ficha = g.ficha && typeof g.ficha === "object" && !Array.isArray(g.ficha) ? { ...g.ficha } : {};
+      const missoes = ficha.missoes && typeof ficha.missoes === "object" && !Array.isArray(ficha.missoes) ? { ...ficha.missoes } : {};
+      const n = (Number.isFinite(missoes[missaoId]) ? missoes[missaoId] : 0) + 1;
+      missoes[missaoId] = n;
+      ficha.missoes = missoes;
+      g.ficha = ficha;
+      g.atualizado = agoraISO();
+      if (!gravar(dados)) return null;
+      try {
+        Save.aoMudar?.(g.id);
+      } catch {
+      }
+      return n;
+    } catch {
+      return null;
+    }
+  },
+  vezesMissao(id, missaoId) {
+    const g = Save.pegar(id), n = g && g.ficha && g.ficha.missoes && Object.hasOwn(g.ficha.missoes, missaoId) ? g.ficha.missoes[missaoId] : 0;
+    return Number.isFinite(n) ? n : 0;
   },
   // 0.8.6: o mundo foi apagado: os chars que estavam nele ficam sem mundo atual e sem posição nele (o Jogar resolve na próxima vez)
   esquecerMundo(mundoId) {
@@ -5976,6 +6030,112 @@ function criarGato(w, mundo, x0, z0, bloqueiam = /* @__PURE__ */ new Set()) {
   return f;
 }
 
+// js/missoes.js
+var MISSOES = {
+  cacar10: {
+    nome: "Ca\xE7ar 10 comidas",
+    icone: "\u{1F356}",
+    alvo: 10,
+    conta: (evento2) => !!evento2 && evento2.tipo === "comida",
+    recompensa: null
+  }
+};
+function charIdValido(id) {
+  if (typeof id !== "string") return false;
+  if (id === "__proto__") return false;
+  if (id.length < 1 || id.length > 40) return false;
+  return /^[A-Za-z0-9_-]+$/.test(id);
+}
+function inteiroPositivo(n) {
+  return typeof n === "number" && Number.isFinite(n) && Number.isInteger(n) && n >= 0;
+}
+function novaMissao(id, agora2) {
+  if (!Object.hasOwn(MISSOES, id)) return null;
+  if (typeof agora2 !== "number" || !Number.isFinite(agora2)) return null;
+  return {
+    id,
+    inicio: agora2,
+    alvo: MISSOES[id].alvo,
+    feitas: 0,
+    por: {}
+  };
+}
+function concluida(missao) {
+  if (!missao || typeof missao !== "object") return false;
+  if (!Object.hasOwn(MISSOES, missao.id)) return false;
+  return missao.feitas >= MISSOES[missao.id].alvo;
+}
+function progredir(missao, evento2, charId) {
+  if (!missao || typeof missao !== "object") return false;
+  if (!Object.hasOwn(MISSOES, missao.id)) return false;
+  if (typeof missao.fim === "number") return false;
+  if (concluida(missao)) return false;
+  if (!charIdValido(charId)) return false;
+  if (!MISSOES[missao.id].conta(evento2)) return false;
+  if (!missao.por || typeof missao.por !== "object") missao.por = {};
+  missao.feitas = (missao.feitas || 0) + 1;
+  missao.por[charId] = (missao.por[charId] || 0) + 1;
+  return true;
+}
+function serializarMissao(missao) {
+  if (!missao || typeof missao !== "object") return "";
+  if (!Object.hasOwn(MISSOES, missao.id)) return "";
+  const id = missao.id;
+  const inicio = Math.round(missao.inicio);
+  const feitas = Math.round(missao.feitas);
+  const fim = typeof missao.fim === "number" && Number.isFinite(missao.fim) ? Math.round(missao.fim) : 0;
+  const por = missao.por && typeof missao.por === "object" ? missao.por : {};
+  const pares = [];
+  for (const chave of Object.keys(por)) {
+    if (pares.length >= 8) break;
+    if (!charIdValido(chave)) continue;
+    const v = por[chave];
+    if (typeof v !== "number" || !Number.isFinite(v) || v < 1) continue;
+    pares.push(chave + ":" + Math.round(v));
+  }
+  return [id, inicio, feitas, fim, pares.join(";")].join("~");
+}
+function lerMissao(texto) {
+  if (typeof texto !== "string") return null;
+  if (texto.length > 600) return null;
+  const partes = texto.split("~");
+  if (partes.length !== 5) return null;
+  const [id, inicioStr, feitasStr, fimStr, porStr] = partes;
+  if (!Object.hasOwn(MISSOES, id)) return null;
+  const inicio = Number(inicioStr);
+  const feitas = Number(feitasStr);
+  const fim = Number(fimStr);
+  if (!inteiroPositivo(inicio)) return null;
+  if (!inteiroPositivo(feitas)) return null;
+  if (!inteiroPositivo(fim)) return null;
+  const alvo2 = MISSOES[id].alvo;
+  const feitasFinal = Math.min(feitas, alvo2);
+  const por = {};
+  if (porStr) {
+    const pares = porStr.split(";");
+    for (const par of pares) {
+      if (Object.keys(por).length >= 8) break;
+      const idx = par.indexOf(":");
+      if (idx === -1) continue;
+      const chave = par.slice(0, idx);
+      const nStr = par.slice(idx + 1);
+      if (!charIdValido(chave)) continue;
+      const n = Number(nStr);
+      if (!inteiroPositivo(n) || n < 1) continue;
+      por[chave] = n;
+    }
+  }
+  const resultado = {
+    id,
+    inicio,
+    alvo: alvo2,
+    feitas: feitasFinal,
+    por
+  };
+  if (fim > 0) resultado.fim = fim;
+  return resultado;
+}
+
 // js/ovos.js
 var ESPERA_OVO_MS = 18e4;
 var RE_ID = /^(?!__proto__$)[A-Za-z0-9_-]{1,40}$/;
@@ -6006,6 +6166,7 @@ function podarPegos(pegos, agora2) {
   if (!ehObjeto2(pegos)) return false;
   let apagou = false;
   for (const k of Object.keys(pegos)) {
+    if (k === "missao") continue;
     const v = pegos[k];
     if (!ehNumeroFinito(v) || ehNumeroFinito(agora2) && v <= agora2) {
       delete pegos[k];
@@ -7924,11 +8085,12 @@ function criarAnimais(mapa, salvos) {
   const f2 = (v) => (Math.round(v * 100) / 100).toString();
   const letra = (m) => m.tipo === "passaro" ? "a" : m.tipo[0];
   function serializar() {
-    return mobs.map((m) => letra(m) + "," + f2(m.x) + "," + f2(m.z) + "," + f2(m.rot) + "," + (m.estado === "foge" ? 2 : m.vMov > 0.05 ? 1 : 0) + "," + (m.sumido > 0 ? 1 : 0) + (m.tipo === "passaro" ? "," + f2(m.y) : "")).join(";") + (mapa.ovos ? "|" + mapa.ovos.serializar() : "");
+    return mobs.map((m) => letra(m) + "," + f2(m.x) + "," + f2(m.z) + "," + f2(m.rot) + "," + (m.estado === "foge" ? 2 : m.vMov > 0.05 ? 1 : 0) + "," + (m.sumido > 0 ? 1 : 0) + (m.tipo === "passaro" ? "," + f2(m.y) : "")).join(";") + (mapa.ovos ? "|" + mapa.ovos.serializar() + (mapa.missao ? "|" + mapa.missao.serializar() : "") : "");
   }
   function espelho(texto) {
-    const [corpo2, ovos] = String(texto || "").split("|");
+    const [corpo2, ovos, miss] = String(texto || "").split("|");
     if (mapa.ovos) mapa.ovos.espelho(ovos || "");
+    if (mapa.missao) mapa.missao.espelho(miss || "");
     const it = corpo2.split(";").map((p, i) => {
       const q = p.split(","), m = mobs[i];
       const v = { x: +q[1], z: +q[2], r: +q[3], a: +q[4] || 0, s: +q[5] || 0, y: q[6] === void 0 ? NaN : +q[6] };
@@ -9801,6 +9963,44 @@ function criarMapa(scene2, gato, salvo) {
     return true;
   };
   mapa.pegarOvoRemoto = (id) => !espelhando() && mapa.idsOvos.has(id) && pegarOvo(mapa.pegos, id, Date.now());
+  if (mapa.pegos.missao) {
+    const m = lerMissao(serializarMissao(mapa.pegos.missao));
+    if (m) mapa.pegos.missao = m;
+    else delete mapa.pegos.missao;
+  }
+  mapa.missao = {
+    atual: () => mapa.pegos.missao || null,
+    iniciar(id) {
+      if (espelhando() || mapa.pegos.missao) return false;
+      const m = novaMissao(id, Date.now());
+      if (!m) return false;
+      mapa.pegos.missao = m;
+      return true;
+    },
+    cancelar() {
+      if (espelhando() || !mapa.pegos.missao) return false;
+      delete mapa.pegos.missao;
+      return true;
+    },
+    /** O char `charId` comeu `tipo` (rato, peixe, passaro, ovo): conta na missão. Só o gestor/solo; true se contou. */
+    comeu(charId, tipo) {
+      const m = mapa.pegos.missao;
+      if (espelhando() || !m || !progredir(m, { tipo: "comida", comida: tipo }, charId)) return false;
+      if (concluida(m)) m.fim = Date.now();
+      return true;
+    },
+    /** Gestor: a missão cumprida fica 6 s no estado (todos veem a festa) e depois sai. */
+    tick() {
+      const m = mapa.pegos.missao;
+      if (m && m.fim && !espelhando() && Date.now() - m.fim > 6e3) delete mapa.pegos.missao;
+    },
+    serializar: () => serializarMissao(mapa.pegos.missao),
+    espelho(texto) {
+      const m = lerMissao(texto);
+      if (m) mapa.pegos.missao = m;
+      else delete mapa.pegos.missao;
+    }
+  };
   const tex = criarTexturaTerreno(THREE9, mundo, 1024);
   mapa.texCanvas = tex.canvas;
   const detalhe = criarTexturaDetalhe(THREE9);
@@ -13914,6 +14114,7 @@ var TEXTOS_HORARIO = {
   anoitecer: { fique: "anoitecendo", ficou: "Est\xE1 anoitecendo!", continuou: "Continuou anoitecendo." },
   noite: { fique: "de noite", ficou: "Ficou de noite!", continuou: "Continuou de noite." }
 };
+var nomeMissao = (valor) => Object.hasOwn(MISSOES, valor) ? MISSOES[valor].nome : "nova";
 function textoHorario(valor) {
   return TEXTOS_HORARIO[valor] || TEXTOS_HORARIO.dia;
 }
@@ -13947,6 +14148,34 @@ var TIPOS_VOTACAO = {
       if (this.valido(valor, ctx2) && ctx2 && ctx2.mapa && typeof ctx2.mapa.setCiclo === "function") {
         ctx2.mapa.setCiclo(valor);
       }
+    }
+  },
+  // 0.9.6: missões. valor = id do catálogo (js/missoes.js) para começar, ou 'cancelar' para desistir da que está andando. O host aplica (mapa.missao em js/map.js).
+  missao: {
+    nome: "miss\xE3o",
+    valido(valor, ctx2) {
+      const m = ctx2 && ctx2.mapa && ctx2.mapa.missao ? ctx2.mapa.missao.atual() : null;
+      if (valor === "cancelar") return !ctx2 || !ctx2.mapa ? true : !!m && !m.fim;
+      return Object.hasOwn(MISSOES, valor) && !m;
+    },
+    convite(valor) {
+      return "Voc\xEA quer " + (valor === "cancelar" ? "parar a miss\xE3o" : "fazer a miss\xE3o " + nomeMissao(valor)) + "! Como tem mais gente, temos que abrir uma vota\xE7\xE3o! Vamos l\xE1?";
+    },
+    pedido(valor) {
+      return valor === "cancelar" ? "Voc\xEA pediu para parar a miss\xE3o! Esperando os outros votarem\u2026" : "Voc\xEA pediu a miss\xE3o " + nomeMissao(valor) + "! Esperando os outros votarem\u2026";
+    },
+    pergunta(nome, valor) {
+      return valor === "cancelar" ? nome + " quer parar a miss\xE3o. Voc\xEA quer?" : "Vamos fazer a miss\xE3o " + nomeMissao(valor) + "? " + nome + " quer. Voc\xEA quer?";
+    },
+    resultado(aprovada, valor) {
+      if (valor === "cancelar") return aprovada ? "A miss\xE3o parou." : "A miss\xE3o continua!";
+      return aprovada ? "Miss\xE3o " + nomeMissao(valor) + " come\xE7ou! \u{1F3AF}" : "Ficou sem miss\xE3o.";
+    },
+    aplicar(valor, ctx2) {
+      const M = ctx2 && ctx2.mapa && ctx2.mapa.missao;
+      if (!M || !this.valido(valor, ctx2)) return;
+      if (valor === "cancelar") M.cancelar();
+      else M.iniciar(valor);
     }
   }
 };
@@ -14276,11 +14505,21 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
       if (!precisaVotar(jogadoresVivos(st)) && validarPedido(v.tipo, v.valor, { mapa: st.mapa })) TIPOS_VOTACAO[v.tipo].aplicar(v.valor, { mapa: st.mapa });
     } else if (typeof v.tipo === "string" && v.tipo.startsWith("votacao:")) abrirVotacao(st, uid, v.tipo.slice(8), v.valor);
     else if (v.tipo === "ovo" && typeof v.valor === "string") {
-      if (st.mapa.pegarOvoRemoto && st.mapa.pegarOvoRemoto(v.valor)) publicarBichos(st);
+      if (st.mapa.pegarOvoRemoto && st.mapa.pegarOvoRemoto(v.valor)) {
+        contarMissao(st, uid, "ovo");
+        publicarBichos(st);
+      }
     } else if (v.tipo === "bote" && st.mapa.animais && typeof v.alvo === "number") {
-      const o = observadorDe(st, uid);
-      if (o && st.mapa.animais.boteRemoto(v.alvo, o)) publicarBichos(st);
+      const o = observadorDe(st, uid), m = st.mapa.animais.mobs[v.alvo], tipo = m && m.tipo;
+      if (o && st.mapa.animais.boteRemoto(v.alvo, o)) {
+        contarMissao(st, uid, tipo);
+        publicarBichos(st);
+      }
     }
+  }
+  function contarMissao(st, uid, tipo) {
+    const p = st.presencas.get(uid);
+    if (p && p.char && st.mapa.missao) st.mapa.missao.comeu(p.char, tipo);
   }
   const jogadoresVivos = (st) => {
     const a = agoraServ();
@@ -15498,6 +15737,170 @@ function criarAvisoVotacao({ aoVotar }) {
   };
 }
 
+// js/missoes-ui.js
+var dialogoAberto3 = null;
+function criarPainelMissao() {
+  const elemento = document.createElement("div");
+  elemento.className = "painel-missao";
+  elemento.hidden = true;
+  const titulo = document.createElement("p");
+  titulo.className = "painel-missao-titulo";
+  const quem = document.createElement("p");
+  quem.className = "painel-missao-quem";
+  quem.hidden = true;
+  elemento.appendChild(titulo);
+  elemento.appendChild(quem);
+  let ultimoTitulo = "";
+  let ultimoQuem = "";
+  function atualizar(vista) {
+    if (vista === null || vista === void 0) {
+      elemento.hidden = true;
+      return;
+    }
+    elemento.hidden = false;
+    const novoTitulo = `${vista.icone} ${vista.nome} \u2014 ${vista.feitas}/${vista.alvo}`;
+    if (novoTitulo !== ultimoTitulo) {
+      titulo.textContent = novoTitulo;
+      ultimoTitulo = novoTitulo;
+    }
+    elemento.classList.toggle("cumprida", !!vista.fim);
+    if (vista.por && vista.por.length >= 2) {
+      const novoQuem = vista.por.map((p) => p.nome + " " + p.n).join(" \xB7 ");
+      if (novoQuem !== ultimoQuem) {
+        quem.textContent = novoQuem;
+        ultimoQuem = novoQuem;
+      }
+      quem.hidden = false;
+    } else {
+      if (ultimoQuem !== "") {
+        quem.textContent = "";
+        ultimoQuem = "";
+      }
+      quem.hidden = true;
+    }
+  }
+  function destruir() {
+    if (elemento.parentNode) {
+      elemento.parentNode.removeChild(elemento);
+    }
+  }
+  return { elemento, atualizar, destruir };
+}
+function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir }) {
+  if (dialogoAberto3) {
+    return { fechar: dialogoAberto3.fechar };
+  }
+  const dialogo = document.createElement("div");
+  dialogo.className = "dialogo-missoes";
+  dialogo.setAttribute("role", "dialog");
+  dialogo.setAttribute("aria-modal", "true");
+  const caixa2 = document.createElement("div");
+  caixa2.className = "dialogo-missoes-caixa";
+  const titulo = document.createElement("h2");
+  titulo.textContent = "\u{1F3AF} Miss\xF5es";
+  caixa2.appendChild(titulo);
+  if (ativa) {
+    const ativaP = document.createElement("p");
+    ativaP.className = "missoes-ativa";
+    ativaP.textContent = `Agora: ${ativa.icone} ${ativa.nome}`;
+    caixa2.appendChild(ativaP);
+    const btnDesistir = document.createElement("button");
+    btnDesistir.className = "botao";
+    btnDesistir.type = "button";
+    btnDesistir.textContent = "Desistir da miss\xE3o";
+    btnDesistir.addEventListener("click", () => {
+      fechar();
+      try {
+        if (typeof aoDesistir === "function") aoDesistir();
+      } catch (e) {
+      }
+    });
+    caixa2.appendChild(btnDesistir);
+  }
+  const lista = document.createElement("ul");
+  lista.className = "missoes-lista";
+  (itens || []).forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "missoes-item";
+    const nome = document.createElement("span");
+    nome.className = "missoes-nome";
+    nome.textContent = `${item.icone} ${item.nome}`;
+    li.appendChild(nome);
+    const vezes = document.createElement("span");
+    vezes.className = "missoes-vezes";
+    if (item.vezes > 0) {
+      vezes.textContent = `J\xE1 fiz ${item.vezes}x`;
+    }
+    li.appendChild(vezes);
+    const btn = document.createElement("button");
+    btn.className = "botao";
+    btn.type = "button";
+    btn.textContent = "Come\xE7ar";
+    btn.setAttribute("data-missao", String(item.id));
+    if (ativa) {
+      btn.disabled = true;
+    }
+    btn.addEventListener("click", () => {
+      fechar();
+      try {
+        if (typeof aoComecar === "function") aoComecar(item.id);
+      } catch (e) {
+      }
+    });
+    li.appendChild(btn);
+    lista.appendChild(li);
+  });
+  caixa2.appendChild(lista);
+  const btnFechar = document.createElement("button");
+  btnFechar.className = "botao-grande";
+  btnFechar.type = "button";
+  btnFechar.textContent = "Fechar";
+  btnFechar.addEventListener("click", fechar);
+  caixa2.appendChild(btnFechar);
+  dialogo.appendChild(caixa2);
+  document.body.appendChild(dialogo);
+  let fechado = false;
+  function fechar() {
+    if (fechado) return;
+    fechado = true;
+    if (dialogo.parentNode) {
+      dialogo.parentNode.removeChild(dialogo);
+    }
+    if (dialogoAberto3 && dialogoAberto3.fechar === fechar) {
+      dialogoAberto3 = null;
+    }
+  }
+  dialogoAberto3 = { fechar };
+  return { fechar };
+}
+function mostrarFesta(texto = "Miss\xE3o cumprida! \u{1F389}", ms = 3e3) {
+  const festa = document.createElement("div");
+  festa.className = "festa-missao";
+  festa.setAttribute("role", "status");
+  const p = document.createElement("p");
+  p.textContent = texto;
+  festa.appendChild(p);
+  const confete = document.createElement("span");
+  confete.className = "festa-missao-confete";
+  confete.textContent = "\u{1F389} \u2728 \u{1F38A} \u2B50 \u{1F389}";
+  festa.appendChild(confete);
+  document.body.appendChild(festa);
+  let removido = false;
+  function remover() {
+    if (removido) return;
+    removido = true;
+    if (festa.parentNode) {
+      festa.parentNode.removeChild(festa);
+    }
+  }
+  const timer = setTimeout(remover, ms);
+  function removerAgora() {
+    clearTimeout(timer);
+    remover();
+  }
+  return removerAgora;
+}
+
 // js/main.js
 document.title = "Avel\xE3, o gatinho sobrevivente \u2014 v" + VERSION;
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {
@@ -15578,6 +15981,9 @@ var avisoVotacao = null;
 var fecharPergunta = null;
 var vistaResultado = "";
 var tVotacao = 0;
+var painelMissao = null;
+var tMissao = 0;
+var festejada = 0;
 var pararOfertas = null;
 var timerOfertas = null;
 var semSalvarChar = false;
@@ -15730,6 +16136,11 @@ function desmontarMapa() {
     avisoVotacao.destruir();
     avisoVotacao = null;
   }
+  if (painelMissao) {
+    painelMissao.destruir();
+    painelMissao = null;
+  }
+  festejada = 0;
   if (fecharPergunta) {
     fecharPergunta();
     fecharPergunta = null;
@@ -15951,6 +16362,7 @@ function irPara(nome, opcoes) {
     mapaNovo.aoSair = () => trocarSub(() => sair(mapaNovo));
     mapaNovo.aoTrocar = (fn) => trocarSub(fn);
     mapaNovo.aoComer = (tipo) => {
+      if (idGatoMapa && mapaNovo.missao) mapaNovo.missao.comeu(idGatoMapa, tipo);
       if (!idGatoMapa || semSalvarChar) return;
       const n = Save.somarComida(idGatoMapa, tipo, idMundoMapa, aovivo.ativo());
       if (n != null) atualizarHudComida(n);
@@ -16018,6 +16430,16 @@ function irPara(nome, opcoes) {
     hud.appendChild(cicloBox);
     avisoVotacao = criarAvisoVotacao({ aoVotar: (v) => aovivo.votar(v) });
     hud.appendChild(avisoVotacao.elemento);
+    const botaoMissoes = document.createElement("button");
+    botaoMissoes.type = "button";
+    botaoMissoes.className = "botao-missoes";
+    botaoMissoes.textContent = "\u{1F3AF}";
+    botaoMissoes.title = "Miss\xF5es";
+    botaoMissoes.setAttribute("aria-label", "Miss\xF5es");
+    botaoMissoes.addEventListener("click", () => abrirMissoes());
+    hud.appendChild(botaoMissoes);
+    painelMissao = criarPainelMissao();
+    hud.appendChild(painelMissao.elemento);
     const aoVivoEl = document.createElement("div");
     aoVivoEl.id = "hud-aovivo";
     aoVivoEl.className = "hud-aovivo";
@@ -16322,24 +16744,70 @@ function avisar2(texto, ms = 4e3) {
   }, ms);
 }
 var AVISOS_PEDIDO = { ocupada: "J\xE1 tem uma vota\xE7\xE3o acontecendo.", espere: "Espere um pouquinho para pedir de novo.", "so-jogadores": "S\xF3 quem est\xE1 jogando pode pedir." };
-function pedirHorario(id) {
-  const r = aovivo.pedirMudanca("ciclo", id);
+function pedirVotavel(tipo, id, aplicar) {
+  const r = aovivo.pedirMudanca(tipo, id);
   if (r === "perguntar") {
     fecharPergunta = perguntarVotacao({
-      texto: TIPOS_VOTACAO.ciclo.convite(id),
+      texto: TIPOS_VOTACAO[tipo].convite(id),
       aoSim: () => {
-        const a = aovivo.abrirVotacao("ciclo", id);
+        const a = aovivo.abrirVotacao(tipo, id);
         if (AVISOS_PEDIDO[a]) avisar2(AVISOS_PEDIDO[a]);
-        else if (a === "local" && mapaAtual) {
-          mapaAtual.setCiclo(id);
-          salvarMundoAgora();
-        }
+        else if (a === "local" && mapaAtual) aplicar();
       }
     }).fechar;
     return true;
   }
   if (AVISOS_PEDIDO[r]) avisar2(AVISOS_PEDIDO[r]);
   return r !== "local";
+}
+var pedirHorario = (id) => pedirVotavel("ciclo", id, () => {
+  mapaAtual.setCiclo(id);
+  salvarMundoAgora();
+});
+function abrirMissoes() {
+  if (!mapaAtual || !mapaAtual.missao) return;
+  const m = mapaAtual.missao.atual(), D = m && !m.fim && MISSOES[m.id];
+  abrirListaMissoes({
+    itens: Object.entries(MISSOES).map(([id, d]) => ({ id, nome: d.nome, icone: d.icone, alvo: d.alvo, vezes: idGatoMapa ? Save.vezesMissao(idGatoMapa, id) : 0 })),
+    ativa: D ? { nome: D.nome, icone: D.icone } : null,
+    aoComecar: (id) => {
+      if (!pedirVotavel("missao", id, () => {
+        mapaAtual.missao.iniciar(id);
+        salvarMundoAgora();
+      })) {
+        mapaAtual.missao.iniciar(id);
+        salvarMundoAgora();
+      }
+    },
+    aoDesistir: () => {
+      if (!pedirVotavel("missao", "cancelar", () => {
+        mapaAtual.missao.cancelar();
+        salvarMundoAgora();
+      })) {
+        mapaAtual.missao.cancelar();
+        salvarMundoAgora();
+      }
+    }
+  });
+}
+function atualizarMissao(ms) {
+  if (!painelMissao || !mapaAtual || !mapaAtual.missao || ms - tMissao < 250) return;
+  tMissao = ms;
+  mapaAtual.missao.tick();
+  const m = mapaAtual.missao.atual(), D = m && MISSOES[m.id];
+  if (!D) {
+    painelMissao.atualizar(null);
+    return;
+  }
+  const nomes = new Map(aovivo.jogadores().map((j) => [j.char, j.nome]));
+  const meuNome = idGatoMapa && Save.pegar(idGatoMapa)?.look?.nome || "Eu";
+  const por = Object.entries(m.por || {}).map(([c, n]) => ({ nome: c === idGatoMapa ? meuNome : nomes.get(c) || "Algu\xE9m", n })).sort((a, b) => b.n - a.n);
+  painelMissao.atualizar({ icone: D.icone, nome: D.nome, feitas: m.feitas, alvo: m.alvo, fim: !!m.fim, por });
+  if (m.fim && festejada !== m.inicio) {
+    festejada = m.inicio;
+    mostrarFesta();
+    if (idGatoMapa && !semSalvarChar && !servidorMundo) Save.missaoCumprida(idGatoMapa, m.id);
+  }
 }
 function atualizarVotacao(ms) {
   if (!avisoVotacao || ms - tVotacao < 250) return;
@@ -16594,6 +17062,7 @@ if (renderer) {
       aovivo.atualizar(dt, tempoSegundos);
       atualizarHudAoVivo(tempoMs);
       atualizarVotacao(tempoMs);
+      atualizarMissao(tempoMs);
     }
     if (telaAtual === "mapa" && !pausado && mapaAtual) {
       const alvo2 = alvoAtivo();
