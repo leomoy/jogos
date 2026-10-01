@@ -2373,7 +2373,7 @@ if (typeof window !== "undefined") {
 import * as THREE14 from "three";
 
 // js/data.js
-var VERSION = "0.11.2";
+var VERSION = "0.11.4";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -18583,6 +18583,301 @@ function eleger(presencas, gestor, agora2) {
   return gestorVivo.uid;
 }
 
+// js/direto.js
+var ICE_PADRAO = [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }];
+function criarDireto({ eu, sinal, aoMensagem, ice = ICE_PADRAO, esperaIce = 1500, tentarDeNovo = 8e3, desistir = 15e3 }) {
+  if (typeof RTCPeerConnection !== "function") {
+    return {
+      pares() {
+      },
+      mandar() {
+        return 0;
+      },
+      mandarPara() {
+        return false;
+      },
+      estado() {
+        return {};
+      },
+      fechar() {
+      }
+    };
+  }
+  try {
+    new RTCPeerConnection({ iceServers: [] }).close();
+  } catch (_) {
+  }
+  const mapa = /* @__PURE__ */ new Map();
+  const proximaTentativa = /* @__PURE__ */ new Map();
+  let desligarSinal = null;
+  function esperarIce(pc, ms) {
+    return new Promise((resolve) => {
+      try {
+        let fim = function() {
+          if (pc.iceGatheringState === "complete") {
+            clearTimeout(timer);
+            try {
+              pc.removeEventListener("icegatheringstatechange", fim);
+            } catch (_) {
+            }
+            resolve();
+          }
+        };
+        if (pc.iceGatheringState === "complete") {
+          resolve();
+          return;
+        }
+        const timer = setTimeout(() => {
+          try {
+            pc.removeEventListener("icegatheringstatechange", fim);
+          } catch (_) {
+          }
+          resolve();
+        }, ms);
+        pc.addEventListener("icegatheringstatechange", fim);
+      } catch (_) {
+        resolve();
+      }
+    });
+  }
+  function fecharPar(uid, par) {
+    try {
+      if (par && mapa.get(uid) === par) {
+        try {
+          if (par.dc) par.dc.close();
+        } catch (_) {
+        }
+        try {
+          if (par.pc) par.pc.close();
+        } catch (_) {
+        }
+        mapa.delete(uid);
+      }
+    } catch (_) {
+    }
+  }
+  function ligarCanal(uid, dc) {
+    try {
+      const par = mapa.get(uid);
+      if (!par) return;
+      par.dc = dc;
+      dc.onopen = () => {
+        try {
+          if (mapa.get(uid) === par) par.aberto = true;
+        } catch (_) {
+        }
+      };
+      dc.onclose = () => {
+        try {
+          if (mapa.get(uid) === par) {
+            par.aberto = false;
+            fecharPar(uid, par);
+            proximaTentativa.set(uid, performance.now() + tentarDeNovo);
+          }
+        } catch (_) {
+        }
+      };
+      dc.onmessage = (ev) => {
+        try {
+          let obj;
+          try {
+            obj = JSON.parse(ev.data);
+          } catch (_) {
+            return;
+          }
+          if (obj && obj.k === "~p") {
+            try {
+              if (dc.readyState === "open") dc.send(JSON.stringify({ k: "~q", t: obj.t }));
+            } catch (_) {
+            }
+            return;
+          }
+          if (obj && obj.k === "~q") {
+            const x = performance.now() - obj.t;
+            if (mapa.get(uid) === par) {
+              par.rtt = par.rtt == null ? x : par.rtt * 0.7 + x * 0.3;
+            }
+            return;
+          }
+          aoMensagem(uid, obj);
+        } catch (_) {
+        }
+      };
+    } catch (_) {
+    }
+  }
+  async function oferecer(uid) {
+    let par = null;
+    try {
+      const s = Math.random().toString(36).slice(2);
+      const pc = new RTCPeerConnection({ iceServers: ice });
+      const dc = pc.createDataChannel("g", { ordered: false, maxRetransmits: 0 });
+      par = { pc, dc, s, aberto: false, rtt: null, desde: performance.now() };
+      mapa.set(uid, par);
+      pc.onconnectionstatechange = () => {
+        try {
+          if ((pc.connectionState === "failed" || pc.connectionState === "closed") && mapa.get(uid) === par) {
+            fecharPar(uid, par);
+            proximaTentativa.set(uid, performance.now() + tentarDeNovo);
+          }
+        } catch (_) {
+        }
+      };
+      ligarCanal(uid, dc);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await esperarIce(pc, esperaIce);
+      sinal.enviar(uid, { tipo: "oferta", sdp: pc.localDescription.sdp, s });
+    } catch (_) {
+    }
+  }
+  async function responder(de, corpo2) {
+    try {
+      const antigo = mapa.get(de);
+      if (antigo) fecharPar(de, antigo);
+      const pc = new RTCPeerConnection({ iceServers: ice });
+      const par = { pc, dc: null, s: corpo2.s, aberto: false, rtt: null, desde: performance.now() };
+      mapa.set(de, par);
+      pc.onconnectionstatechange = () => {
+        try {
+          if ((pc.connectionState === "failed" || pc.connectionState === "closed") && mapa.get(de) === par) {
+            fecharPar(de, par);
+            proximaTentativa.set(de, performance.now() + tentarDeNovo);
+          }
+        } catch (_) {
+        }
+      };
+      pc.ondatachannel = (e) => {
+        try {
+          ligarCanal(de, e.channel);
+        } catch (_) {
+        }
+      };
+      await pc.setRemoteDescription({ type: "offer", sdp: corpo2.sdp });
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await esperarIce(pc, esperaIce);
+      sinal.enviar(de, { tipo: "resposta", sdp: pc.localDescription.sdp, s: corpo2.s });
+    } catch (_) {
+    }
+  }
+  function tratarSinal(de, corpo2) {
+    try {
+      if (!corpo2 || !de) return;
+      if (corpo2.tipo === "oferta") {
+        responder(de, corpo2);
+      } else if (corpo2.tipo === "resposta") {
+        const par = mapa.get(de);
+        if (par && par.s === corpo2.s && par.pc.signalingState === "have-local-offer") {
+          par.pc.setRemoteDescription({ type: "answer", sdp: corpo2.sdp }).catch(() => {
+          });
+        }
+      }
+    } catch (_) {
+    }
+  }
+  try {
+    desligarSinal = sinal.escutar((de, corpo2) => tratarSinal(de, corpo2));
+  } catch (_) {
+  }
+  const intervalo = setInterval(() => {
+    try {
+      const msg = JSON.stringify({ k: "~p", t: performance.now() });
+      for (const par of mapa.values()) {
+        try {
+          if (par.dc && par.dc.readyState === "open") par.dc.send(msg);
+        } catch (_) {
+        }
+      }
+    } catch (_) {
+    }
+  }, 1e3);
+  function pares(uids) {
+    try {
+      const agora2 = performance.now();
+      const vivos = new Set(uids || []);
+      vivos.delete(eu);
+      for (const uid of vivos) {
+        if (!mapa.has(uid) && eu < uid && agora2 >= (proximaTentativa.get(uid) || 0)) {
+          oferecer(uid);
+        }
+      }
+      for (const uid of Array.from(mapa.keys())) {
+        if (!vivos.has(uid)) {
+          fecharPar(uid, mapa.get(uid));
+        }
+      }
+      for (const uid of Array.from(mapa.keys())) {
+        const par = mapa.get(uid);
+        if (par && !par.aberto && agora2 - par.desde > desistir) {
+          fecharPar(uid, par);
+          proximaTentativa.set(uid, agora2 + tentarDeNovo);
+        }
+      }
+    } catch (_) {
+    }
+  }
+  function mandar(obj, exceto) {
+    let n = 0;
+    try {
+      const texto = JSON.stringify(obj);
+      for (const [uid, par] of mapa) {
+        if (uid === exceto) continue;
+        try {
+          if (par.dc && par.dc.readyState === "open" && par.dc.bufferedAmount < 65536) {
+            par.dc.send(texto);
+            n++;
+          }
+        } catch (_) {
+        }
+      }
+    } catch (_) {
+    }
+    return n;
+  }
+  function mandarPara(uid, obj) {
+    try {
+      const par = mapa.get(uid);
+      if (par && par.dc && par.dc.readyState === "open" && par.dc.bufferedAmount < 65536) {
+        par.dc.send(JSON.stringify(obj));
+        return true;
+      }
+    } catch (_) {
+    }
+    return false;
+  }
+  function estado() {
+    const out = {};
+    try {
+      for (const [uid, par] of mapa) {
+        out[uid] = {
+          aberto: !!par.aberto,
+          rtt: par.rtt == null ? null : Math.round(par.rtt)
+        };
+      }
+    } catch (_) {
+    }
+    return out;
+  }
+  function fechar() {
+    try {
+      clearInterval(intervalo);
+    } catch (_) {
+    }
+    try {
+      if (desligarSinal) desligarSinal();
+    } catch (_) {
+    }
+    try {
+      for (const uid of Array.from(mapa.keys())) {
+        fecharPar(uid, mapa.get(uid));
+      }
+    } catch (_) {
+    }
+  }
+  return { pares, mandar, mandarPara, estado, fechar };
+}
+
 // js/votacao.js
 var TEXTOS_HORARIO = {
   dia: { fique: "de dia", ficou: "Ficou de dia!", continuou: "Continuou de dia." },
@@ -18743,6 +19038,10 @@ function concluirVotacao({ tipo, valor, quem, votos }, ctx2) {
 var ENVIO = 100;
 var PARADO = 1e3;
 var ATRASO_DESENHO = 150;
+var ENVIO_DIRETO = 50;
+var NUVEM_LENTA = 1e3;
+var ATRASO_DIRETO = 90;
+var AVISO_NUVEM = 3e3;
 var TEMPO_REDE = 5e3;
 var PRESENCA = 2e3;
 var ELEICAO = 1e3;
@@ -18768,7 +19067,7 @@ function comTempo4(p, ms = TEMPO_REDE) {
   return Promise.race([p, limite]).finally(() => clearTimeout(t));
 }
 var ehTipo = (t) => typeof t === "string" && Object.hasOwn(TIPOS_VOTACAO, t);
-function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao: conexao2, aoPapel, tempoVotacao = TEMPO_VOTACAO * 1e3, esperaRecusa = RECUSA_ESPERA }) {
+function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao: conexao2, aoPapel, tempoVotacao = TEMPO_VOTACAO * 1e3, esperaRecusa = RECUSA_ESPERA, direto: comDireto = true }) {
   let S = null;
   let sessao = 0;
   let offset = 0;
@@ -18832,7 +19131,6 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
         visto: { presenca: false, gestor: false },
         avocado: false,
         carregando: false,
-        atraso: null,
         rtt: null,
         quadroMs: null,
         ultQuadro: 0,
@@ -18902,7 +19200,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
   }
   function registrarDesconexao(st) {
     const D = st.D, eu = st.con.uid;
-    for (const c of ["gestor", "gatos/" + eu, "pedidos/" + eu, "presenca/" + eu]) D.onDisconnect(ref(st, c)).remove().catch(nada2);
+    for (const c of ["gestor", "gatos/" + eu, "pedidos/" + eu, "presenca/" + eu, "sinal/" + eu]) D.onDisconnect(ref(st, c)).remove().catch(nada2);
   }
   function ligar(st) {
     const D = st.D, eu = st.con.uid;
@@ -18954,6 +19252,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       D.onValue(ref(st, "bichos"), (snap) => {
         const v = snap.val();
         if (typeof v !== "string") return;
+        if (performance.now() - (st.bichosDireto || 0) < 1e3) return;
         st.bichosTexto = v;
         if (papelDe(st) === "jogador" && st.mapa.animais) st.mapa.animais.espelho(v);
       }, nada2),
@@ -18979,7 +19278,13 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       if (S === st) publicarPresenca(st);
     }, PRESENCA));
     st.timers.push(setInterval(() => {
-      if (S === st) eleicao(st);
+      if (S === st) {
+        eleicao(st);
+        if (st.direto) {
+          st.direto.pares(quemLigar(st));
+          if (souHost(st)) st.direto.mandar({ k: "h", nuvem: !nuvemLenta(st) });
+        }
+      }
     }, ELEICAO));
     if (st.mapa.animais) st.mapa.animais.aoBote = (i) => pedir(st, { tipo: "bote", alvo: i });
     st.mapa.brincadeira = { atual: () => jogoDe(st), iniciar: (v, quem) => iniciarJogo(st, v, quem) };
@@ -19003,6 +19308,12 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       if (!l.length) return null;
       return { x: l.reduce((s, o) => s + o.x, 0) / l.length, z: l.reduce((s, o) => s + o.z, 0) / l.length };
     };
+    st.direto = comDireto ? criarDireto({ eu, sinal: sinalNuvem(st), aoMensagem: (de, m2) => {
+      try {
+        receberDireto(st, de, m2);
+      } catch {
+      }
+    } }) : null;
     st.pronto = true;
   }
   function eleicao(st) {
@@ -19028,11 +19339,60 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       st.tomando = false;
     });
   }
+  function sinalNuvem(st) {
+    const D = st.D, eu = st.con.uid;
+    return {
+      enviar: (para, corpo2) => {
+        try {
+          const r = ref(st, "sinal/" + para + "/" + eu);
+          D.set(r, { ...corpo2, t: D.serverTimestamp() }).catch(nada2);
+          D.onDisconnect(r).remove().catch(nada2);
+        } catch {
+        }
+      },
+      escutar: (cb) => {
+        const caixa2 = ref(st, "sinal/" + eu);
+        const f = (snap) => {
+          const v = snap.val();
+          D.remove(ref(st, "sinal/" + eu + "/" + snap.key)).catch(nada2);
+          if (v && typeof v === "object" && typeof v.sdp === "string" && typeof v.t === "number" && agoraServ() - v.t < 3e4) cb(snap.key, v);
+        };
+        const a = D.onChildAdded(caixa2, f, nada2), b = D.onChildChanged(caixa2, f, nada2);
+        return () => {
+          a();
+          b();
+        };
+      }
+    };
+  }
+  function receberDireto(st, de, m2) {
+    if (S !== st || !m2 || typeof m2 !== "object") return;
+    const snap = { key: de, val: () => m2 };
+    if (m2.k === "h") {
+      if (de === hostVivo(st)) st.avisoHost = { nuvem: m2.nuvem !== false, em: performance.now() };
+      return;
+    }
+    if (m2.k === "g") {
+      const uid = typeof m2.u === "string" && de === hostVivo(st) ? m2.u : de;
+      if (uid !== st.con.uid && st.remotos.has(uid)) receberGato(st, { key: uid, val: () => m2 }, true);
+      if (!m2.u && souHost(st) && st.direto) st.direto.mandar({ ...m2, u: de }, de);
+      return;
+    }
+    if (m2.k === "p") receberPedido(st, snap);
+    else if (m2.k === "b" && typeof m2.v === "string" && typeof m2.tc === "number" && st.gestor && st.gestor.uid === de && m2.tc >= (st.bichosTc || 0)) {
+      st.bichosTc = m2.tc;
+      st.bichosDireto = performance.now();
+      st.bichosTexto = m2.v;
+      if (papelDe(st) === "jogador" && st.mapa.animais) st.mapa.animais.espelho(m2.v);
+    }
+  }
   function pedir(st, corpo2) {
     try {
       if (S !== st) return;
       st.nPedido = Math.max(st.nPedido + 1, Math.round(agoraServ()));
-      st.D.set(ref(st, "pedidos/" + st.con.uid), { ...corpo2, n: st.nPedido }).catch(nada2);
+      const doc = { ...corpo2, n: st.nPedido };
+      st.D.set(ref(st, "pedidos/" + st.con.uid), doc).catch(nada2);
+      if (st.direto) st.direto.mandar({ k: "p", ...doc });
     } catch {
     }
   }
@@ -19045,8 +19405,9 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
     const uid = snap.key, v = snap.val();
     if (!v || typeof v !== "object" || typeof v.n !== "number") return;
     const antes = st.pedidoN.get(uid);
+    if (antes != null && v.n <= antes) return;
     st.pedidoN.set(uid, v.n);
-    if (uid === st.con.uid || antes === v.n) return;
+    if (uid === st.con.uid) return;
     if (v.tipo === "voto" && typeof v.voto === "boolean") {
       st.votos.set(uid, { voto: v.voto, n: v.n });
       return;
@@ -19275,14 +19636,36 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
     const c = st.dinamico && st.dinamico.ciclo;
     if (S === st && papelDe(st) === "jogador" && CICLOS2.includes(c) && c !== st.mapa.ciclo && st.mapa.setCiclo) st.mapa.setCiclo(c);
   }
-  function publicarBichos(st) {
+  function publicarBichos(st, nuvem3 = true) {
     try {
       if (!souGestorGravado(st) || !st.mapa.animais) return;
       st.ultBichos = performance.now();
-      st.D.set(ref(st, "bichos"), st.mapa.animais.serializar()).catch(nada2);
+      const texto = st.mapa.animais.serializar();
+      if (nuvem3) {
+        st.ultBichosNuvem = st.ultBichos;
+        st.D.set(ref(st, "bichos"), texto).catch(nada2);
+      }
+      if (st.direto) st.direto.mandar({ k: "b", v: texto, tc: Math.round(agoraServ()) });
     } catch {
     }
   }
+  const hostVivo = (st) => st.gestor && agoraServ() - st.gestor.t <= MORTO ? st.gestor.uid : null;
+  const souHost = (st) => hostVivo(st) === st.con.uid;
+  const canais = (st) => st.direto ? st.direto.estado() : {};
+  function quemLigar(st) {
+    const h = hostVivo(st);
+    return !h ? [] : h === st.con.uid ? outrosUids(st) : [h];
+  }
+  function nuvemLenta(st) {
+    const h = hostVivo(st), e = canais(st), ok = (u) => !!(e[u] && e[u].aberto);
+    if (!h) return false;
+    if (h === st.con.uid) return outrosUids(st).every(ok);
+    return ok(h) && !!st.avisoHost && st.avisoHost.nuvem === false && performance.now() - st.avisoHost.em < AVISO_NUVEM;
+  }
+  const outrosUids = (st) => {
+    const a = agoraServ();
+    return [...st.presencas.values()].filter((p) => p.uid !== st.con.uid && a - p.t < VIVA).map((p) => p.uid);
+  };
   const outrosVivos = (st) => {
     const agora2 = agoraServ();
     let n = 0;
@@ -19306,7 +19689,8 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
     };
     const u = st.ult;
     const mudou2 = !u || Math.hypot(e.x - u.x, e.z - u.z) > 0.02 || Math.abs(e.y - u.y) > 0.02 || Math.abs(menorArco(u.r, e.r)) > 0.02 || e.m !== u.m || e.ag !== u.ag || e.es !== u.es || e.n !== u.n || e.sub !== u.sub;
-    if (agora2 - st.ultEnvio < (mudou2 ? ENVIO : PARADO)) return;
+    const comCanal = Object.values(canais(st)).some((x) => x.aberto);
+    if (agora2 - st.ultEnvio < (mudou2 ? comCanal ? ENVIO_DIRETO : ENVIO : PARADO)) return;
     st.ult = e;
     st.ultEnvio = agora2;
     const doc = { look: st.lookJson, x: e.x, y: e.y, z: e.z, r: e.r, m: e.m, tc: Date.now() + offset };
@@ -19317,7 +19701,14 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       doc.n = st.n;
     }
     if (sub) doc.sub = sub;
-    st.D.set(ref(st, "gatos/" + st.con.uid), doc).catch(nada2);
+    if (agora2 - (st.ultNuvem || 0) >= (nuvemLenta(st) ? NUVEM_LENTA : mudou2 ? ENVIO : PARADO)) {
+      st.ultNuvem = agora2;
+      st.D.set(ref(st, "gatos/" + st.con.uid), doc).catch(nada2);
+    }
+    if (comCanal) {
+      const { look, ...leve } = doc;
+      st.direto.mandar({ k: "g", ...leve });
+    }
   }
   function vigiarGato(st) {
     const cat = st.mapa.cat;
@@ -19334,7 +19725,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       return setMove(v);
     };
   }
-  function receberGato(st, snap) {
+  function receberGato(st, snap, direto = false) {
     if (S !== st) return;
     const uid = snap.key;
     if (uid === st.con.uid) return;
@@ -19348,11 +19739,15 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       st.remotos.set(uid, r);
       carregarRemoto(st, r, v.look);
     }
+    if (typeof v.tc === "number") {
+      if (r.tc != null && v.tc <= r.tc) return;
+      r.tc = v.tc;
+    }
+    if (direto) r.ultDireto = performance.now();
     r.buf.push({ t: performance.now(), x: v.x, y: v.y || 0, z: v.z, r: v.r || 0, m: v.m || 0, ag: !!v.ag, es: !!v.es, a: v.a || "", n: v.n || 0, sub: v.sub || "" });
     if (r.buf.length > 60) r.buf.splice(0, r.buf.length - 60);
     const d = agoraServ() - v.tc;
     if (d > -1e3 && d < 5e3) {
-      st.atraso = st.atraso == null ? d : st.atraso * 0.8 + d * 0.2;
       r.atraso = r.atraso == null ? d : r.atraso * 0.8 + d * 0.2;
     }
   }
@@ -19414,7 +19809,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
   function animarRemoto(r, dt, agora2, meuSub) {
     const b = r.buf;
     if (!r.cat || !b.length) return;
-    const rt = agora2 - ATRASO_DESENHO;
+    const rt = agora2 - (agora2 - (r.ultDireto || -1e9) < 1e3 ? ATRASO_DIRETO : ATRASO_DESENHO);
     while (b.length > 2 && b[1].t <= rt) b.shift();
     const a = b[0], c = b[1];
     let x = a.x, y = a.y, z = a.z, rot = a.r, s = a;
@@ -19499,7 +19894,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
         }
         tocarVotacao(st);
         tocarBrincadeira(st);
-        if (agora2 - st.ultBichos >= BICHOS && outrosVivos(st) > 0) publicarBichos(st);
+        if (agora2 - st.ultBichos >= BICHOS && outrosVivos(st) > 0) publicarBichos(st, !nuvemLenta(st) || agora2 - (st.ultBichosNuvem || 0) >= NUVEM_LENTA);
       } else st.jogoH = null;
       enviar(st, agora2);
       tocarAuras(st, t);
@@ -19508,17 +19903,31 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
     } catch {
     }
   }
+  function atrasoPara(st, uid, e) {
+    const x = e[uid];
+    if (x && x.aberto && x.rtt != null) return Math.max(0, Math.round(x.rtt / 2));
+    const r = st.remotos.get(uid);
+    return r && r.atraso != null ? Math.max(0, Math.round(r.atraso)) : null;
+  }
   function info() {
     const st = S;
-    return { gatos: st ? st.remotos.size : 0, atrasoMs: st && st.atraso != null ? Math.max(0, Math.round(st.atraso)) : null, papel: st ? papelDe(st) : "gestor" };
+    let atrasoMs = null, direto = 0;
+    if (st) {
+      const e = canais(st);
+      for (const u of quemLigar(st)) {
+        const a = atrasoPara(st, u, e);
+        if (a != null && (atrasoMs == null || a > atrasoMs)) atrasoMs = a;
+      }
+      for (const x of Object.values(e)) if (x.aberto) direto++;
+    }
+    return { gatos: st ? st.remotos.size : 0, atrasoMs, direto, papel: st ? papelDe(st) : "gestor" };
   }
   function presentes() {
     const st = S;
     if (!st) return [];
-    const agora2 = agoraServ();
+    const agora2 = agoraServ(), e = canais(st);
     return [...st.presencas.values()].filter((p) => agora2 - p.t < VIVA).map((p) => {
-      const r = st.remotos.get(p.uid);
-      return { uid: p.uid, nome: p.nome, gato: p.gato, nota: p.nota, avocado: p.avocado, papel: p.papel, char: p.char, gestor: !!(st.gestor && st.gestor.uid === p.uid), eu: p.uid === st.con.uid, atrasoMs: r && r.atraso != null ? Math.max(0, Math.round(r.atraso)) : null };
+      return { uid: p.uid, nome: p.nome, gato: p.gato, nota: p.nota, avocado: p.avocado, papel: p.papel, char: p.char, gestor: !!(st.gestor && st.gestor.uid === p.uid), eu: p.uid === st.con.uid, atrasoMs: atrasoPara(st, p.uid, e), direto: !!(e[p.uid] && e[p.uid].aberto) };
     }).sort((a, b) => a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : a.uid < b.uid ? -1 : 1);
   }
   function jogadores() {
@@ -19612,6 +20021,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
     }
     try {
       for (const t of st.timers) clearInterval(t);
+      if (st.direto) st.direto.fechar();
       for (const u of st.unsub) {
         try {
           u();
@@ -19639,7 +20049,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
         }
       }
       const D = st.D, eu = st.con.uid;
-      const caminhos = ["gestor", "gatos/" + eu, "pedidos/" + eu, "presenca/" + eu];
+      const caminhos = ["gestor", "gatos/" + eu, "pedidos/" + eu, "presenca/" + eu, "sinal/" + eu];
       for (const c of caminhos) D.onDisconnect(ref(st, c)).cancel().catch(nada2);
       const apaga = st.gestor && st.gestor.uid === eu ? D.remove(ref(st, "gestor")).catch(nada2) : Promise.resolve();
       return apaga.then(() => Promise.all(caminhos.slice(1).map((c) => D.remove(ref(st, c)).catch(nada2)))).then(nada2, nada2);
@@ -22725,7 +23135,7 @@ function atualizarHudAoVivo(ms) {
   }
   const i = aovivo.info();
   const n = i.gatos + (servidorMundo ? 0 : 1);
-  el.textContent = "ao vivo \xB7 " + n + (n === 1 ? " gato" : " gatos") + (i.atrasoMs != null ? " \xB7 " + i.atrasoMs + " ms" : "") + (i.papel === "gestor" ? " \xB7 \u{1F451}" : "");
+  el.textContent = "ao vivo \xB7 " + n + (n === 1 ? " gato" : " gatos") + (i.atrasoMs != null ? " \xB7 " + (i.direto ? "\u26A1" + i.direto + " " : "\u2601\uFE0F ") + i.atrasoMs + " ms" : "") + (i.papel === "gestor" ? " \xB7 \u{1F451}" : "");
   el.hidden = false;
   if (painelEspectador) painelEspectador.atualizar({ mundo: mundos.pegar(idMundoMapa)?.registro.nome || "", jogadores: aovivo.jogadores().map((j) => ({ char: j.char, nome: j.nome })), seguindo: seguirChar });
   if (painelServidor) {
