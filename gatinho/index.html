@@ -2345,10 +2345,10 @@ if (typeof window !== "undefined") {
 }
 
 // js/main.js
-import * as THREE12 from "three";
+import * as THREE13 from "three";
 
 // js/data.js
-var VERSION = "0.10.3";
+var VERSION = "0.11.0";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -2663,7 +2663,7 @@ function totalComida(ficha) {
 }
 
 // js/estatisticas.js
-var CAMPOS_NUM = ["tempo", "distancia", "nado", "corrida", "pulos", "botes", "missoes", "arvores", "cavernas"];
+var CAMPOS_NUM = ["tempo", "distancia", "nado", "corrida", "pulos", "botes", "missoes", "brinquedos", "arvores", "cavernas"];
 var TIPOS_CACA = ["rato", "peixe", "passaro", "ovo"];
 var TIPOS_BRINC = ["esconde", "pega"];
 var CHAVES_PERIGOSAS2 = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
@@ -3801,9 +3801,9 @@ var ajusta = (g, v) => {
 function pronto(nome) {
   return !!(ctx && ligado && ctx.state === "running" && bufs[nome]);
 }
-function tocar(nome, vol, dist2 = 0) {
+function tocar(nome, vol, dist3 = 0) {
   if (!pronto(nome)) return false;
-  const v = vol * atenuacao(dist2);
+  const v = vol * atenuacao(dist3);
   if (v < 0.01) return false;
   const f = ctx.createBufferSource(), g = ctx.createGain();
   f.buffer = bufs[nome];
@@ -3816,8 +3816,8 @@ function tocar(nome, vol, dist2 = 0) {
   cont.ultimo = nome;
   return true;
 }
-function ronronar(dist2, dur) {
-  const v = V.ronronar * atenuacao(dist2);
+function ronronar(dist3, dur) {
+  const v = V.ronronar * atenuacao(dist3);
   if (!pronto("ronronar") || v < 0.01) return;
   const t = ctx.currentTime, { f, g } = laco("ronronar");
   g.gain.setValueAtTime(0, t);
@@ -4188,13 +4188,13 @@ function texturaBolinhas(hex) {
   tex.anisotropy = 4;
   return tex;
 }
-function criarAcessorio(tipo, modelo, hex) {
+function criarAcessorio(tipo, modelo2, hex) {
   const group = new THREE.Group();
   group.name = "acessorio";
   const materiais = [];
   const texturas = [];
   let matBase;
-  if (modelo === "bolinhas") {
+  if (modelo2 === "bolinhas") {
     const tex = texturaBolinhas(hex);
     texturas.push(tex);
     matBase = new THREE.MeshPhysicalMaterial({
@@ -4223,7 +4223,7 @@ function criarAcessorio(tipo, modelo, hex) {
     return t;
   }
   function matComRepeat(rx, ry) {
-    if (modelo !== "bolinhas") return matBase;
+    if (modelo2 !== "bolinhas") return matBase;
     const m = matBase.clone();
     m.map = clonarTex(rx, ry);
     materiais.push(m);
@@ -4332,7 +4332,7 @@ function descartarAcessorio(group) {
     });
   }
 }
-function criarRig(modelo, corpo2) {
+function criarRig(modelo2, corpo2) {
   const qM = new THREE.Quaternion();
   const qR = new THREE.Quaternion();
   const qO = new THREE.Quaternion();
@@ -4343,7 +4343,7 @@ function criarRig(modelo, corpo2) {
   const m3 = new THREE.Matrix3();
   const mInv = new THREE.Matrix4();
   const ossos = {};
-  modelo.traverse((obj) => {
+  modelo2.traverse((obj) => {
     if (obj.isBone) {
       const nome = obj.name.replace(/_\d+$/, "");
       if (!ossos[nome]) ossos[nome] = obj;
@@ -4353,7 +4353,7 @@ function criarRig(modelo, corpo2) {
   r.girar = function(nome, eixo, ang) {
     const o = ossos[nome];
     if (!o || !ang) return;
-    modelo.getWorldQuaternion(qM);
+    modelo2.getWorldQuaternion(qM);
     vEixo.set(eixo === "x" ? 1 : 0, eixo === "y" ? 1 : 0, eixo === "z" ? 1 : 0).applyQuaternion(qM);
     qR.setFromAxisAngle(vEixo, ang);
     o.getWorldQuaternion(qO);
@@ -4364,9 +4364,9 @@ function criarRig(modelo, corpo2) {
   r.mover = function(nome, dx, dy, dz) {
     const o = ossos[nome];
     if (!o) return;
-    modelo.getWorldQuaternion(qM);
+    modelo2.getWorldQuaternion(qM);
     vD.set(dx, dy, dz).applyQuaternion(qM);
-    vD.multiplyScalar(modelo.getWorldScale(vS).x);
+    vD.multiplyScalar(modelo2.getWorldScale(vS).x);
     m3.setFromMatrix4(mInv.copy(o.parent.matrixWorld).invert());
     vD.applyMatrix3(m3);
     o.position.add(vD);
@@ -4476,14 +4476,14 @@ function carregarGLTF() {
 }
 async function loadCat(_THREE, look) {
   const gltf = await carregarGLTF();
-  const modelo = clonarEsqueleto(gltf.scene);
-  modelo.traverse((o) => {
+  const modelo2 = clonarEsqueleto(gltf.scene);
+  modelo2.traverse((o) => {
     if (o.isSkinnedMesh) o.skeleton.pose();
   });
-  modelo.updateMatrixWorld(true);
+  modelo2.updateMatrixWorld(true);
   const materiais = [];
   let pelo = null, iris = null, pupila = null, vidro = null;
-  modelo.traverse((o) => {
+  modelo2.traverse((o) => {
     if (!o.isMesh) return;
     const nome = o.material && o.material.name;
     if (nome === "SomaliTexture") {
@@ -4541,7 +4541,7 @@ async function loadCat(_THREE, look) {
   });
   let pescoco = null;
   let cabeca = null;
-  modelo.traverse((o) => {
+  modelo2.traverse((o) => {
     if (!pescoco && o.isBone && /^Neck/.test(o.name)) pescoco = o;
     if (!cabeca && o.isBone && /^Head/.test(o.name)) cabeca = o;
   });
@@ -4554,8 +4554,9 @@ async function loadCat(_THREE, look) {
   }
   const ancora = ancorar(pescoco, new THREE.Vector3(...PESCOCO), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI));
   const ancoraCabeca = ancorar(cabeca, new THREE.Vector3(-0.18, 1.67, -1.62), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, -0.3)));
+  const ancoraBoca = ancorar(cabeca, new THREE.Vector3(0, 0.88, -2), new THREE.Quaternion());
   const olhos = [];
-  modelo.traverse((o) => {
+  modelo2.traverse((o) => {
     if (o.isBone && /^Eye[LR]/.test(o.name)) {
       const up = new THREE.Vector3(0, 1, 0).applyQuaternion(o.getWorldQuaternion(new THREE.Quaternion()).invert());
       const ax = [Math.abs(up.x), Math.abs(up.y), Math.abs(up.z)];
@@ -4582,12 +4583,12 @@ async function loadCat(_THREE, look) {
   const corpo2 = new THREE.Group();
   const ajuste = new THREE.Group();
   ajuste.position.set(0, -CHAO_Y, -CENTRO_Z);
-  ajuste.add(modelo);
+  ajuste.add(modelo2);
   corpo2.add(ajuste);
   pivot.add(corpo2);
   object.add(pivot);
-  const r = criarRig(modelo, corpo2);
-  const mixer = new THREE.AnimationMixer(modelo);
+  const r = criarRig(modelo2, corpo2);
+  const mixer = new THREE.AnimationMixer(modelo2);
   const acoes = {};
   for (const nome of ["Idle", "WalkClean", "SitDown", "SittingIdle", "StandUp"]) {
     const clip = THREE.AnimationClip.findByName(gltf.animations, nome);
@@ -4740,7 +4741,7 @@ async function loadCat(_THREE, look) {
     ar = { noAr: !!noAr, vy: vy || 0 };
   }
   const limpo = [];
-  modelo.traverse((o) => {
+  modelo2.traverse((o) => {
     if (o.isBone) limpo.push({ o, p: o.position.clone(), q: o.quaternion.clone(), s: o.scale.clone() });
   });
   function update(dt) {
@@ -4881,7 +4882,7 @@ async function loadCat(_THREE, look) {
     Som.solta(object);
     if (object.parent) object.parent.remove(object);
     mixer.stopAllAction();
-    mixer.uncacheRoot(modelo);
+    mixer.uncacheRoot(modelo2);
     if (acessorio) {
       if (acessorio.parent) acessorio.parent.remove(acessorio);
       descartarAcessorio(acessorio);
@@ -4890,7 +4891,7 @@ async function loadCat(_THREE, look) {
     for (const m of materiais) m.dispose();
     brilhoGeo.dispose();
   }
-  const cat = { object, setLook, play, setMove, setMult, setAgachado, setNadando, setAr, update, dispose, velocidade: () => vel, gesto: () => rt, base: () => base, nado: () => nd };
+  const cat = { object, boca: ancoraBoca, setLook, play, setMove, setMult, setAgachado, setNadando, setAr, update, dispose, velocidade: () => vel, gesto: () => rt, base: () => base, nado: () => nd };
   setLook(look);
   return cat;
 }
@@ -5120,10 +5121,10 @@ function criarInput(container, opcoes) {
     const cy = rect.top + rect.height / 2;
     let dx = clientX - cx;
     let dy = clientY - cy;
-    const dist2 = Math.sqrt(dx * dx + dy * dy);
-    if (dist2 > r) {
-      dx = dx / dist2 * r;
-      dy = dy / dist2 * r;
+    const dist3 = Math.sqrt(dx * dx + dy * dy);
+    if (dist3 > r) {
+      dx = dx / dist3 * r;
+      dy = dy / dist3 * r;
     }
     posicionarAlca(dx, dy);
   }
@@ -5410,9 +5411,9 @@ function moverNoEstudio(pos, dx, dy, correndo, dt, raio) {
   const velocidade = correndo ? 1.6 : 0.8;
   let x = pos.x + dx * velocidade * dt;
   let z = pos.z + dy * velocidade * dt;
-  const dist2 = Math.sqrt(x * x + z * z);
-  if (dist2 > raio) {
-    const escala = raio / dist2;
+  const dist3 = Math.sqrt(x * x + z * z);
+  if (dist3 > raio) {
+    const escala = raio / dist3;
     x *= escala;
     z *= escala;
   }
@@ -6025,7 +6026,7 @@ function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar, aoCopias, 
 }
 
 // js/map.js
-import * as THREE11 from "three";
+import * as THREE12 from "three";
 
 // js/world.js
 function mulberry32(seed) {
@@ -6538,14 +6539,205 @@ function criarGato(w, mundo, x0, z0, bloqueiam = /* @__PURE__ */ new Set()) {
   return f;
 }
 
+// js/carregar.js
+var RAIO_PEGAR = 1.2;
+var RAIO_CESTA = 2.2;
+var TIPOS_BRINQ = ["bolinha", "novelo", "ratinho", "pena", "sininho"];
+function mulberry322(seed) {
+  let a = seed >>> 0;
+  return function() {
+    a |= 0;
+    a = a + 1831565813 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function r2(v) {
+  return Math.round(v * 100) / 100;
+}
+function dist(ax, az, bx, bz) {
+  const dx = ax - bx;
+  const dz = az - bz;
+  return Math.sqrt(dx * dx + dz * dz);
+}
+function posValida(pos) {
+  return pos && typeof pos.x === "number" && isFinite(pos.x) && typeof pos.z === "number" && isFinite(pos.z);
+}
+function espalhar({ seed, cx, cz, n = 10, raio = 35, minCentro = 8, sep = 4, livre }) {
+  const rng = mulberry322(seed);
+  const pontos = [];
+  const maxTentativas = 4e3;
+  let tentativas = 0;
+  while (pontos.length < n && tentativas < maxTentativas) {
+    tentativas++;
+    const angulo = 2 * Math.PI * rng();
+    const distancia = raio * Math.sqrt(rng());
+    const x = r2(cx + distancia * Math.cos(angulo));
+    const z = r2(cz + distancia * Math.sin(angulo));
+    if (typeof livre === "function" && !livre(x, z)) continue;
+    if (dist(x, z, cx, cz) < minCentro) continue;
+    let ok = true;
+    for (const p of pontos) {
+      if (dist(x, z, p.x, p.z) < sep) {
+        ok = false;
+        break;
+      }
+    }
+    if (!ok) continue;
+    pontos.push({ x, z });
+  }
+  return pontos;
+}
+function novaCarga({ seed, cx, cz, cesta, pontos }) {
+  const itens = pontos.map((p) => ({ x: p.x, z: p.z, est: "chao", char: "" }));
+  return { seed, cx, cz, cesta: { x: cesta.x, z: cesta.z }, itens };
+}
+function carregando2(carga, char) {
+  if (!carga || !Array.isArray(carga.itens) || typeof char !== "string" || char === "") return -1;
+  for (let i = 0; i < carga.itens.length; i++) {
+    const item = carga.itens[i];
+    if (item.est === "boca" && item.char === char) return i;
+  }
+  return -1;
+}
+function pegar(carga, char, i, pos, folga = 0) {
+  if (!carga || !Array.isArray(carga.itens)) return false;
+  if (typeof char !== "string" || char === "") return false;
+  if (!Number.isInteger(i) || i < 0 || i >= carga.itens.length) return false;
+  if (!posValida(pos)) return false;
+  if (carregando2(carga, char) !== -1) return false;
+  const item = carga.itens[i];
+  if (item.est !== "chao") return false;
+  const d = dist(pos.x, pos.z, item.x, item.z);
+  if (d > RAIO_PEGAR + folga) return false;
+  item.est = "boca";
+  item.char = char;
+  return true;
+}
+function entregar(carga, char, pos, folga = 0) {
+  if (!carga || !Array.isArray(carga.itens) || !carga.cesta) return -1;
+  if (typeof char !== "string" || char === "") return -1;
+  if (!posValida(pos)) return -1;
+  const idx = carregando2(carga, char);
+  if (idx === -1) return -1;
+  const d = dist(pos.x, pos.z, carga.cesta.x, carga.cesta.z);
+  if (d > RAIO_CESTA + folga) return -1;
+  const item = carga.itens[idx];
+  item.est = "cesta";
+  item.char = "";
+  return idx;
+}
+function soltar2(carga, char, pos) {
+  if (!carga || !Array.isArray(carga.itens)) return -1;
+  if (typeof char !== "string" || char === "") return -1;
+  if (!posValida(pos)) return -1;
+  const idx = carregando2(carga, char);
+  if (idx === -1) return -1;
+  const item = carga.itens[idx];
+  item.est = "chao";
+  item.char = "";
+  item.x = r2(pos.x);
+  item.z = r2(pos.z);
+  return idx;
+}
+function soltarAusentes(carga, presentes) {
+  if (!carga || !Array.isArray(carga.itens) || !(presentes instanceof Set)) return 0;
+  let qtd = 0;
+  for (const item of carga.itens) {
+    if (item.est === "boca" && !presentes.has(item.char)) {
+      item.est = "chao";
+      item.char = "";
+      qtd++;
+    }
+  }
+  return qtd;
+}
+function serializarCarga(carga) {
+  if (!carga || typeof carga.seed !== "number" || !isFinite(carga.seed)) return "";
+  if (typeof carga.cx !== "number" || !isFinite(carga.cx)) return "";
+  if (typeof carga.cz !== "number" || !isFinite(carga.cz)) return "";
+  if (!carga.cesta || typeof carga.cesta.x !== "number" || !isFinite(carga.cesta.x)) return "";
+  if (typeof carga.cesta.z !== "number" || !isFinite(carga.cesta.z)) return "";
+  if (!Array.isArray(carga.itens) || carga.itens.length === 0) return "";
+  const partes = [];
+  partes.push(`${Math.trunc(carga.seed)},${r2(carga.cx)},${r2(carga.cz)},${r2(carga.cesta.x)},${r2(carga.cesta.z)}`);
+  for (const item of carga.itens) {
+    if (typeof item.x !== "number" || !isFinite(item.x)) return "";
+    if (typeof item.z !== "number" || !isFinite(item.z)) return "";
+    if (item.est === "chao") {
+      partes.push(`${r2(item.x)},${r2(item.z)}`);
+    } else if (item.est === "cesta") {
+      partes.push(`${r2(item.x)},${r2(item.z)},c`);
+    } else if (item.est === "boca") {
+      if (typeof item.char !== "string" || item.char === "") return "";
+      partes.push(`${r2(item.x)},${r2(item.z)},@${item.char}`);
+    } else {
+      return "";
+    }
+  }
+  return partes.join(";");
+}
+function lerCarga(texto) {
+  if (typeof texto !== "string" || texto.length === 0 || texto.length > 1500) return null;
+  const partes = texto.split(";");
+  if (partes.length < 2) return null;
+  const cab = partes[0].split(",");
+  if (cab.length !== 5) return null;
+  const seed = Number(cab[0]);
+  const cx = Number(cab[1]);
+  const cz = Number(cab[2]);
+  const bx = Number(cab[3]);
+  const bz = Number(cab[4]);
+  if (!isFinite(seed) || !isFinite(cx) || !isFinite(cz) || !isFinite(bx) || !isFinite(bz)) return null;
+  const itens = [];
+  const nItens = partes.length - 1;
+  if (nItens < 1 || nItens > 12) return null;
+  const reChar = /^[A-Za-z0-9_-]{1,40}$/;
+  for (let i = 1; i < partes.length; i++) {
+    const campos = partes[i].split(",");
+    if (campos.length < 2 || campos.length > 3) return null;
+    const x = Number(campos[0]);
+    const z = Number(campos[1]);
+    if (!isFinite(x) || !isFinite(z)) return null;
+    const item = { x, z, est: "chao", char: "" };
+    if (campos.length === 3) {
+      const campo3 = campos[2];
+      if (campo3 === "c") {
+        item.est = "cesta";
+      } else if (campo3.startsWith("@")) {
+        const char = campo3.slice(1);
+        if (!reChar.test(char) || char === "__proto__") return null;
+        item.est = "boca";
+        item.char = char;
+      } else {
+        return null;
+      }
+    }
+    itens.push(item);
+  }
+  return { seed: Math.trunc(seed), cx, cz, cesta: { x: bx, z: bz }, itens };
+}
+
 // js/missoes.js
 var MISSOES = {
   cacar10: {
     nome: "Ca\xE7ar 10 comidas",
     icone: "\u{1F356}",
+    dica: "Pegue 10 comidas!",
     alvo: 10,
     conta: (evento2) => !!evento2 && evento2.tipo === "comida",
     recompensa: null
+  },
+  // 0.11.0: o pai pediu "achar itens no mapa e trazer para o ponto de encontro". `brinq` (missão.brinq = carga de js/carregar.js) vai como 6º trecho do texto.
+  brinquedos: {
+    nome: "Achar os brinquedos",
+    icone: "\u{1F9F8}",
+    dica: "Ache 10 brinquedos e leve para a cesta!",
+    alvo: 10,
+    conta: (evento2) => !!evento2 && evento2.tipo === "brinquedo",
+    recompensa: null,
+    carga: true
   }
 };
 function charIdValido(id) {
@@ -6601,14 +6793,17 @@ function serializarMissao(missao) {
     if (typeof v !== "number" || !Number.isFinite(v) || v < 1) continue;
     pares.push(chave + ":" + Math.round(v));
   }
-  return [id, inicio, feitas, fim, pares.join(";")].join("~");
+  const partesTxt = [id, inicio, feitas, fim, pares.join(";")];
+  const extra = missao.brinq ? serializarCarga(missao.brinq) : "";
+  if (extra) partesTxt.push(extra);
+  return partesTxt.join("~");
 }
 function lerMissao(texto) {
   if (typeof texto !== "string") return null;
-  if (texto.length > 600) return null;
+  if (texto.length > 2200) return null;
   const partes = texto.split("~");
-  if (partes.length !== 5) return null;
-  const [id, inicioStr, feitasStr, fimStr, porStr] = partes;
+  if (partes.length !== 5 && partes.length !== 6) return null;
+  const [id, inicioStr, feitasStr, fimStr, porStr, extraStr] = partes;
   if (!Object.hasOwn(MISSOES, id)) return null;
   const inicio = Number(inicioStr);
   const feitas = Number(feitasStr);
@@ -6641,7 +6836,358 @@ function lerMissao(texto) {
     por
   };
   if (fim > 0) resultado.fim = fim;
+  if (extraStr) {
+    const brinq = MISSOES[id].carga ? lerCarga(extraStr) : null;
+    if (!brinq) return null;
+    resultado.brinq = brinq;
+  } else if (MISSOES[id].carga) return null;
   return resultado;
+}
+
+// js/encontro.js
+function mostrarJogadoresNoMapa(jogo) {
+  if (jogo && typeof jogo === "object" && jogo.tipo === "esconde" && jogo.fase === "procurando") {
+    return false;
+  }
+  return true;
+}
+function jogadoresNoMapa(lista, meuSub) {
+  if (!Array.isArray(lista)) return [];
+  const alvo2 = meuSub || "";
+  const out = [];
+  for (const it of lista) {
+    if (!it || typeof it !== "object") continue;
+    const x = it.x, z = it.z;
+    if (typeof x !== "number" || !Number.isFinite(x)) continue;
+    if (typeof z !== "number" || !Number.isFinite(z)) continue;
+    const sub = it.sub || "";
+    if (sub !== alvo2) continue;
+    out.push(it);
+  }
+  return out;
+}
+function pontoNoMapa(x, z, limite, lado) {
+  const px = (x + limite) * lado / (2 * limite);
+  const pz = (z + limite) * lado / (2 * limite);
+  return { x: px, y: pz };
+}
+function centroEncontro(pedido, raio, limite, livre) {
+  let bx = 0, bz = 0;
+  if (pedido && typeof pedido === "object") {
+    if (typeof pedido.x === "number" && Number.isFinite(pedido.x)) bx = pedido.x;
+    if (typeof pedido.z === "number" && Number.isFinite(pedido.z)) bz = pedido.z;
+  }
+  const margem = limite - raio;
+  const maxC = margem < 0 ? 0 : margem;
+  const minC = -maxC;
+  const clamp4 = (v) => Math.max(minC, Math.min(maxC, v));
+  const arred2 = (v) => Math.round(v * 10) / 10;
+  const cx0 = clamp4(bx);
+  const cz0 = clamp4(bz);
+  const isLivre = (x, z) => {
+    if (typeof livre !== "function") return true;
+    try {
+      return !!livre(x, z);
+    } catch {
+      return false;
+    }
+  };
+  if (isLivre(cx0, cz0)) {
+    return { x: arred2(cx0), z: arred2(cz0) };
+  }
+  for (let r = 2; r <= limite; r += 2) {
+    for (let k = 0; k < 16; k++) {
+      const ang = k * 2 * Math.PI / 16;
+      const px = clamp4(cx0 + Math.cos(ang) * r);
+      const pz = clamp4(cz0 + Math.sin(ang) * r);
+      if (isLivre(px, pz)) {
+        return { x: arred2(px), z: arred2(pz) };
+      }
+    }
+  }
+  return { x: arred2(cx0), z: arred2(cz0) };
+}
+function raioEsconde(contar, jogadores) {
+  const alvo2 = typeof jogadores === "number" && Number.isFinite(jogadores) ? jogadores : 0;
+  const precisa = alvo2 + 2;
+  for (let r = 30; r <= 40; r += 2) {
+    let q = 0;
+    if (typeof contar === "function") {
+      try {
+        q = contar(r);
+      } catch {
+        q = 0;
+      }
+    }
+    if (typeof q === "number" && Number.isFinite(q) && q >= precisa) {
+      return r;
+    }
+  }
+  return 40;
+}
+function posicoesChegada(centro, raio, n, livre) {
+  if (!Number.isInteger(n) || n < 0 || n > 12) return [];
+  if (n === 0) return [];
+  const cx = centro && typeof centro.x === "number" && Number.isFinite(centro.x) ? centro.x : 0;
+  const cz = centro && typeof centro.z === "number" && Number.isFinite(centro.z) ? centro.z : 0;
+  const r = typeof raio === "number" && Number.isFinite(raio) && raio > 0 ? raio : 1;
+  const isLivre = (x, z) => {
+    if (typeof livre !== "function") return true;
+    try {
+      return !!livre(x, z);
+    } catch {
+      return false;
+    }
+  };
+  const arred2 = (v) => Math.round(v * 10) / 10;
+  const dist3 = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+  const escolhidos = [];
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const a0 = i * 2 * Math.PI / n;
+    const d0 = r * 0.35;
+    const dMax = r * 0.8;
+    let achou = false;
+    let ponto = null;
+    for (let t = 0; t < 60; t++) {
+      const ang = a0 + t * 0.7;
+      let d = d0 + t % 5 * 1.5;
+      if (d > dMax) d = dMax;
+      const px = cx + Math.cos(ang) * d;
+      const pz = cz + Math.sin(ang) * d;
+      if (!isLivre(px, pz)) continue;
+      let ok = true;
+      for (const p of escolhidos) {
+        if (dist3({ x: px, z: pz }, p) < 2) {
+          ok = false;
+          break;
+        }
+      }
+      if (!ok) continue;
+      ponto = { x: arred2(px), z: arred2(pz) };
+      escolhidos.push(ponto);
+      out.push(ponto);
+      achou = true;
+      break;
+    }
+    if (!achou) {
+      const ang = a0;
+      let d = d0;
+      if (d > dMax) d = dMax;
+      const px = cx + Math.cos(ang) * d;
+      const pz = cz + Math.sin(ang) * d;
+      const p = { x: arred2(px), z: arred2(pz) };
+      escolhidos.push(p);
+      out.push(p);
+    }
+  }
+  return out;
+}
+function precisaTrazer(pos, area) {
+  if (!area || typeof area !== "object") return false;
+  const cx = area.cx, cz = area.cz, raio = area.raio;
+  if (typeof cx !== "number" || !Number.isFinite(cx)) return false;
+  if (typeof cz !== "number" || !Number.isFinite(cz)) return false;
+  if (typeof raio !== "number" || !Number.isFinite(raio)) return false;
+  if (!pos || typeof pos !== "object") return false;
+  const sub = pos.sub;
+  if (typeof sub === "string" && sub.length > 0) return true;
+  const x = pos.x, z = pos.z;
+  if (typeof x !== "number" || !Number.isFinite(x)) return false;
+  if (typeof z !== "number" || !Number.isFinite(z)) return false;
+  const d = Math.hypot(x - cx, z - cz);
+  return d > raio;
+}
+
+// js/brinquedos.js
+import * as THREE3 from "three";
+var COR = { bolinha: 16734815, novelo: 13073919, ratinho: 12169896, pena: 3065014, sininho: 16763187 };
+function mat(cor, extra) {
+  return new THREE3.MeshLambertMaterial({ color: cor, ...extra });
+}
+function malha(geo, m, x = 0, y = 0, z = 0) {
+  const o = new THREE3.Mesh(geo, m);
+  o.position.set(x, y, z);
+  o.castShadow = true;
+  return o;
+}
+function modelo(tipo) {
+  const g = new THREE3.Group();
+  if (tipo === "bolinha") {
+    g.add(malha(new THREE3.SphereGeometry(0.14, 14, 10), mat(16734815), 0, 0.14, 0));
+    const f = malha(new THREE3.TorusGeometry(0.141, 0.025, 6, 20), mat(16777215), 0, 0.14, 0);
+    g.add(f);
+  } else if (tipo === "novelo") {
+    g.add(malha(new THREE3.SphereGeometry(0.15, 14, 10), mat(13073919), 0, 0.15, 0));
+    for (const [rx, ry] of [[0.4, 0.2], [1.2, 0.9], [2, 0.4]]) {
+      const t = malha(new THREE3.TorusGeometry(0.152, 0.018, 5, 20), mat(9060305), 0, 0.15, 0);
+      t.rotation.set(rx, ry, 0);
+      g.add(t);
+    }
+    const fio = malha(new THREE3.CylinderGeometry(0.012, 0.012, 0.28, 5), mat(9060305), 0.22, 0.02, 0.05);
+    fio.rotation.z = Math.PI / 2;
+    g.add(fio);
+  } else if (tipo === "ratinho") {
+    const corpo2 = malha(new THREE3.SphereGeometry(0.12, 12, 9), mat(12169896), 0, 0.1, 0);
+    corpo2.scale.set(1, 0.8, 1.45);
+    g.add(corpo2);
+    for (const s of [-1, 1]) g.add(malha(new THREE3.SphereGeometry(0.05, 8, 6), mat(16031920), 0.07 * s, 0.2, 0.1));
+    g.add(malha(new THREE3.SphereGeometry(0.025, 6, 5), mat(16031920), 0, 0.1, 0.27));
+    const cauda = malha(new THREE3.CylinderGeometry(0.012, 0.012, 0.26, 5), mat(16031920), 0, 0.09, -0.3);
+    cauda.rotation.x = Math.PI / 2.4;
+    g.add(cauda);
+  } else if (tipo === "pena") {
+    const lamina = malha(new THREE3.SphereGeometry(0.1, 10, 6), mat(3065014, { side: THREE3.DoubleSide }), 0, 0.12, 0);
+    lamina.scale.set(0.45, 0.12, 2.1);
+    lamina.rotation.x = -0.5;
+    g.add(lamina);
+    const haste = malha(new THREE3.CylinderGeometry(8e-3, 8e-3, 0.46, 5), mat(16052702), 0, 0.12, 0);
+    haste.rotation.x = Math.PI / 2 - 0.5;
+    g.add(haste);
+  } else {
+    g.add(malha(new THREE3.SphereGeometry(0.11, 12, 9), mat(16763187), 0, 0.12, 0));
+    g.add(malha(new THREE3.TorusGeometry(0.035, 0.01, 5, 12), mat(16773288), 0, 0.245, 0));
+    const f = malha(new THREE3.BoxGeometry(0.2, 0.012, 0.012), mat(8019200), 0, 0.07, 0.1);
+    g.add(f);
+  }
+  return g;
+}
+function texturaBrilho() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const x = c.getContext("2d");
+  const gr = x.createRadialGradient(32, 32, 2, 32, 32, 32);
+  gr.addColorStop(0, "rgba(255,255,255,0.95)");
+  gr.addColorStop(0.35, "rgba(255,255,255,0.35)");
+  gr.addColorStop(1, "rgba(255,255,255,0)");
+  x.fillStyle = gr;
+  x.fillRect(0, 0, 64, 64);
+  const t = new THREE3.CanvasTexture(c);
+  t.colorSpace = THREE3.SRGBColorSpace;
+  return t;
+}
+function criarCesta() {
+  const g = new THREE3.Group();
+  const palha = mat(13212242), palha2 = mat(11041333);
+  const corpo2 = malha(new THREE3.CylinderGeometry(0.62, 0.48, 0.5, 20, 1, true), mat(13212242, { side: THREE3.DoubleSide }), 0, 0.25, 0);
+  g.add(corpo2);
+  g.add(malha(new THREE3.CylinderGeometry(0.48, 0.48, 0.04, 20), palha2, 0, 0.02, 0));
+  g.add(malha(new THREE3.TorusGeometry(0.62, 0.05, 6, 24), palha, 0, 0.5, 0).rotateX(Math.PI / 2));
+  for (const y of [0.17, 0.33]) g.add(malha(new THREE3.TorusGeometry(0.56 - (0.5 - y) * 0.25, 0.02, 5, 24), palha2, 0, y, 0).rotateX(Math.PI / 2));
+  const alca = malha(new THREE3.TorusGeometry(0.62, 0.035, 6, 20, Math.PI), palha, 0, 0.5, 0);
+  g.add(alca);
+  const mastro = malha(new THREE3.CylinderGeometry(0.02, 0.02, 1.7, 5), mat(9132587), 0, 0.85, 0);
+  mastro.castShadow = false;
+  g.add(mastro);
+  const bandeira = malha(new THREE3.BoxGeometry(0.5, 0.3, 0.02), mat(16734815, { side: THREE3.DoubleSide }), 0.27, 1.5, 0);
+  g.add(bandeira);
+  return g;
+}
+function criarBrinquedos(mapa) {
+  const grupo = new THREE3.Group();
+  grupo.name = "brinquedos";
+  mapa.grupo.add(grupo);
+  const brilhoTex = texturaBrilho();
+  let atual = null;
+  function brilho(cor, tam, op) {
+    const s = new THREE3.Sprite(new THREE3.SpriteMaterial({ map: brilhoTex, color: cor, transparent: true, opacity: op, depthWrite: false, blending: THREE3.AdditiveBlending, fog: false, toneMapped: false }));
+    s.scale.set(tam, tam, 1);
+    return s;
+  }
+  function limpar3() {
+    if (!atual) return;
+    for (const it of atual.itens) {
+      if (it.obj.parent) it.obj.parent.remove(it.obj);
+    }
+    if (atual.cesta.parent) atual.cesta.parent.remove(atual.cesta);
+    atual = null;
+  }
+  function montar(carga) {
+    limpar3();
+    const cesta = criarCesta();
+    const h = mapa.mundo.altura(carga.cesta.x, carga.cesta.z);
+    cesta.position.set(carga.cesta.x, h, carga.cesta.z);
+    cesta.add(brilho(16769162, 3.2, 0.55).translateY(1));
+    grupo.add(cesta);
+    const itens = carga.itens.map((_, i) => {
+      const tipo = TIPOS_BRINQ[i % TIPOS_BRINQ.length];
+      const obj = new THREE3.Group();
+      obj.add(modelo(tipo));
+      const luz = brilho(COR[tipo], 1.5, 0.6);
+      luz.position.y = 0.3;
+      obj.add(luz);
+      const orbe = brilho(16777215, 0.35, 0.9);
+      orbe.position.y = 1.15;
+      obj.add(orbe);
+      return { obj, luz, orbe, est: "", char: "", tipo, fase: i * 1.7 };
+    });
+    atual = { chave: carga.seed + ":" + carga.itens.length, cesta, itens };
+  }
+  function sincronizar(carga, gatos, t) {
+    if (!carga) {
+      limpar3();
+      return;
+    }
+    const chave = carga.seed + ":" + carga.itens.length;
+    if (!atual || atual.chave !== chave) montar(carga);
+    let nCesta = 0;
+    carga.itens.forEach((d, i) => {
+      const it = atual.itens[i];
+      if (d.est === "chao") {
+        if (it.est !== "chao") {
+          grupo.add(it.obj);
+          it.obj.scale.setScalar(1);
+          it.obj.rotation.set(0, 0, 0);
+          it.luz.visible = it.orbe.visible = true;
+          it.est = "chao";
+          it.char = "";
+        }
+        const y = mapa.mundo.altura(d.x, d.z);
+        it.obj.position.set(d.x, y + 0.06 + 0.04 * Math.sin(t * 2 + it.fase), d.z);
+        it.obj.rotation.y = t * 0.8 + it.fase;
+        it.orbe.position.y = 1.15 + 0.12 * Math.sin(t * 2.4 + it.fase);
+      } else if (d.est === "cesta") {
+        if (it.est !== "cesta") {
+          atual.cesta.add(it.obj);
+          it.obj.scale.setScalar(0.9);
+          it.obj.rotation.set(0, i * 1.3, 0);
+          it.luz.visible = it.orbe.visible = false;
+          it.est = "cesta";
+          it.char = "";
+        }
+        const k = nCesta++;
+        it.obj.position.set(Math.cos(k * 2.4) * 0.22 * (1 + k % 2 * 0.4), 0.18 + 0.07 * Math.floor(k / 3), Math.sin(k * 2.4) * 0.22 * (1 + k % 2 * 0.4));
+      } else {
+        const cat = gatos && gatos.get(d.char);
+        const ancora = cat && cat.boca;
+        if (!ancora) {
+          if (it.obj.parent) it.obj.parent.remove(it.obj);
+          it.est = "sem-gato";
+          it.char = "";
+          return;
+        }
+        if (it.est !== "boca" || it.char !== d.char || it.obj.parent !== ancora) {
+          ancora.add(it.obj);
+          it.est = "boca";
+          it.char = d.char;
+          it.luz.visible = it.orbe.visible = false;
+          it.obj.rotation.set(0, 0, 0);
+          ancora.updateWorldMatrix(true, false);
+          const e = new THREE3.Vector3();
+          ancora.getWorldScale(e);
+          it.obj.scale.setScalar(0.62 / (e.x || 1));
+          it.obj.position.set(0, -0.05 / (e.x || 1), 0);
+        }
+      }
+    });
+    atual.cesta.rotation.y = 0;
+  }
+  function descartar() {
+    limpar3();
+    if (grupo.parent) grupo.parent.remove(grupo);
+    brilhoTex.dispose();
+  }
+  return { grupo, sincronizar, descartar, ativo: () => !!atual };
 }
 
 // js/ovos.js
@@ -6809,7 +7355,7 @@ function criarCanvas(n) {
   const g = c.getContext("2d");
   return { c, g };
 }
-function criarTexturaTerreno(THREE13, mundo, tam = 1024) {
+function criarTexturaTerreno(THREE14, mundo, tam = 1024) {
   const { c: canvas, g: ctx2 } = criarCanvas(tam);
   const k = tam / TERRENO;
   const rnd = mulberry32(777);
@@ -6879,15 +7425,15 @@ function criarTexturaTerreno(THREE13, mundo, tam = 1024) {
     ctx2.fillStyle = i % 2 === 0 ? "rgba(255,255,200,0.12)" : "rgba(30,70,20,0.16)";
     ctx2.fillRect(x, y, tamP, tamP);
   }
-  const texture = new THREE13.CanvasTexture(canvas);
-  texture.colorSpace = THREE13.SRGBColorSpace;
+  const texture = new THREE14.CanvasTexture(canvas);
+  texture.colorSpace = THREE14.SRGBColorSpace;
   texture.anisotropy = 4;
-  texture.wrapS = THREE13.ClampToEdgeWrapping;
-  texture.wrapT = THREE13.ClampToEdgeWrapping;
+  texture.wrapS = THREE14.ClampToEdgeWrapping;
+  texture.wrapT = THREE14.ClampToEdgeWrapping;
   texture.needsUpdate = true;
   return { canvas, texture };
 }
-function criarTexturaDetalhe(THREE13) {
+function criarTexturaDetalhe(THREE14) {
   const n = 256;
   const { c: canvas, g: ctx2 } = criarCanvas(n);
   const rnd = mulberry32(1234);
@@ -6928,14 +7474,14 @@ function criarTexturaDetalhe(THREE13) {
       ctx2.stroke();
     }
   }
-  const texture = new THREE13.CanvasTexture(canvas);
-  texture.wrapS = THREE13.RepeatWrapping;
-  texture.wrapT = THREE13.RepeatWrapping;
-  texture.colorSpace = THREE13.NoColorSpace;
+  const texture = new THREE14.CanvasTexture(canvas);
+  texture.wrapS = THREE14.RepeatWrapping;
+  texture.wrapT = THREE14.RepeatWrapping;
+  texture.colorSpace = THREE14.NoColorSpace;
   texture.needsUpdate = true;
   return texture;
 }
-function criarTexturaRuido(THREE13) {
+function criarTexturaRuido(THREE14) {
   const n = 128;
   const { c: canvas, g: ctx2 } = criarCanvas(n);
   const img = ctx2.createImageData(n, n);
@@ -6996,20 +7542,20 @@ function criarTexturaRuido(THREE13) {
     }
   }
   ctx2.putImageData(img, 0, 0);
-  const texture = new THREE13.CanvasTexture(canvas);
-  texture.wrapS = THREE13.RepeatWrapping;
-  texture.wrapT = THREE13.RepeatWrapping;
-  texture.colorSpace = THREE13.NoColorSpace;
-  texture.minFilter = THREE13.LinearMipmapLinearFilter;
+  const texture = new THREE14.CanvasTexture(canvas);
+  texture.wrapS = THREE14.RepeatWrapping;
+  texture.wrapT = THREE14.RepeatWrapping;
+  texture.colorSpace = THREE14.NoColorSpace;
+  texture.minFilter = THREE14.LinearMipmapLinearFilter;
   texture.needsUpdate = true;
   return texture;
 }
 
 // js/formas.js
-import * as THREE3 from "three";
+import * as THREE4 from "three";
 import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 var VENTO = { value: 0 };
-var C = (hex) => new THREE3.Color(hex);
+var C = (hex) => new THREE4.Color(hex);
 var hash3 = (x, y, z) => {
   const s = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453;
   return s - Math.floor(s);
@@ -7024,7 +7570,7 @@ function parte(geo, { liso = false, m = null, desloca = 0, seed = 0, cor }) {
   const p = geo.attributes.position, n = p.count;
   if (desloca) {
     geo.computeBoundingSphere();
-    const c = geo.boundingSphere.center, v = new THREE3.Vector3();
+    const c = geo.boundingSphere.center, v = new THREE4.Vector3();
     for (let i = 0; i < n; i++) {
       v.fromBufferAttribute(p, i);
       const d = v.clone().sub(c);
@@ -7040,15 +7586,15 @@ function parte(geo, { liso = false, m = null, desloca = 0, seed = 0, cor }) {
     col[i * 3 + 1] = k.g;
     col[i * 3 + 2] = k.b;
   }
-  geo.setAttribute("color", new THREE3.BufferAttribute(col, 3));
+  geo.setAttribute("color", new THREE4.BufferAttribute(col, 3));
   geo.computeVertexNormals();
   return geo.index ? geo.toNonIndexed() : geo;
 }
-var T = (x, y, z, sx = 1, sy = sx, sz = sx) => new THREE3.Matrix4().compose(new THREE3.Vector3(x, y, z), new THREE3.Quaternion(), new THREE3.Vector3(sx, sy, sz));
+var T = (x, y, z, sx = 1, sy = sx, sz = sx) => new THREE4.Matrix4().compose(new THREE4.Vector3(x, y, z), new THREE4.Quaternion(), new THREE4.Vector3(sx, sy, sz));
 function grad(a, b, y0, y1, sal = 0.08) {
-  const ca = C(a), cb = C(b), o = new THREE3.Color();
+  const ca = C(a), cb = C(b), o = new THREE4.Color();
   return (x, y, z) => {
-    const t = THREE3.MathUtils.clamp((y - y0) / (y1 - y0), 0, 1);
+    const t = THREE4.MathUtils.clamp((y - y0) / (y1 - y0), 0, 1);
     o.copy(ca).lerp(cb, t);
     const k = 1 + (hash3(x, y, z) - 0.5) * sal * 2;
     return o.multiplyScalar(k);
@@ -7057,51 +7603,51 @@ function grad(a, b, y0, y1, sal = 0.08) {
 var unir = (partes) => mergeGeometries(partes, false);
 function geoPinho() {
   const p = [];
-  p.push(parte(new THREE3.CylinderGeometry(0.14, 0.27, 1.6, 7, 2), { m: T(0, 0.8, 0), cor: grad("#4a3222", "#6b4a2e", 0, 1.6) }));
-  [[1.55, 1.9, 1.15], [1.28, 1.75, 2.15], [1, 1.6, 3.1], [0.7, 1.45, 4], [0.4, 1.2, 4.8]].forEach(([r, h, y], i) => p.push(parte(new THREE3.ConeGeometry(r, h, 9, 2, true), { m: T(0, y + h / 2 - 0.2, 0), desloca: 0.13, seed: i * 3.1, cor: grad("#2f6a35", "#68a344", y - 0.2, y + h) })));
+  p.push(parte(new THREE4.CylinderGeometry(0.14, 0.27, 1.6, 7, 2), { m: T(0, 0.8, 0), cor: grad("#4a3222", "#6b4a2e", 0, 1.6) }));
+  [[1.55, 1.9, 1.15], [1.28, 1.75, 2.15], [1, 1.6, 3.1], [0.7, 1.45, 4], [0.4, 1.2, 4.8]].forEach(([r, h, y], i) => p.push(parte(new THREE4.ConeGeometry(r, h, 9, 2, true), { m: T(0, y + h / 2 - 0.2, 0), desloca: 0.13, seed: i * 3.1, cor: grad("#2f6a35", "#68a344", y - 0.2, y + h) })));
   return unir(p);
 }
 function geoFrondosa() {
   const p = [];
-  p.push(parte(new THREE3.CylinderGeometry(0.17, 0.34, 2.6, 7, 2), { desloca: 0.03, m: T(0, 1.3, 0), cor: grad("#5a3d27", "#7d5735", 0, 2.6) }));
-  p.push(parte(new THREE3.CylinderGeometry(0.06, 0.12, 1.1, 5), { m: new THREE3.Matrix4().compose(new THREE3.Vector3(0.45, 2.55, 0.1), new THREE3.Quaternion().setFromEuler(new THREE3.Euler(0, 0, -0.9)), new THREE3.Vector3(1, 1, 1)), cor: () => C("#6f4c2f") }));
-  [[0, 3.55, 0, 1.5], [1, 3.15, 0.35, 1.1], [-1, 3.1, -0.3, 1.15], [0.15, 4.5, -0.1, 1], [0.1, 3, 1, 0.9]].forEach(([x, y, z, r], i) => p.push(parte(new THREE3.IcosahedronGeometry(r, 1), { liso: true, m: T(x, y, z, 1, 0.82, 1), desloca: 0.22, seed: i * 5.3, cor: grad("#4a8f35", "#a5cf4c", 2.4, 5, 0.07) })));
+  p.push(parte(new THREE4.CylinderGeometry(0.17, 0.34, 2.6, 7, 2), { desloca: 0.03, m: T(0, 1.3, 0), cor: grad("#5a3d27", "#7d5735", 0, 2.6) }));
+  p.push(parte(new THREE4.CylinderGeometry(0.06, 0.12, 1.1, 5), { m: new THREE4.Matrix4().compose(new THREE4.Vector3(0.45, 2.55, 0.1), new THREE4.Quaternion().setFromEuler(new THREE4.Euler(0, 0, -0.9)), new THREE4.Vector3(1, 1, 1)), cor: () => C("#6f4c2f") }));
+  [[0, 3.55, 0, 1.5], [1, 3.15, 0.35, 1.1], [-1, 3.1, -0.3, 1.15], [0.15, 4.5, -0.1, 1], [0.1, 3, 1, 0.9]].forEach(([x, y, z, r], i) => p.push(parte(new THREE4.IcosahedronGeometry(r, 1), { liso: true, m: T(x, y, z, 1, 0.82, 1), desloca: 0.22, seed: i * 5.3, cor: grad("#4a8f35", "#a5cf4c", 2.4, 5, 0.07) })));
   return unir(p);
 }
 function geoBetula() {
   const p = [];
-  p.push(parte(new THREE3.CylinderGeometry(0.1, 0.17, 3.7, 6, 8), {
+  p.push(parte(new THREE4.CylinderGeometry(0.1, 0.17, 3.7, 6, 8), {
     liso: false,
     m: T(0, 1.85, 0),
     cor: (x, y, z) => Math.sin(y * 8.5 + hash3(Math.round(y * 8.5), 1, 2) * 5) > 0.82 && hash3(x, y, z) > 0.3 ? C("#3c3a38") : C("#efece2")
   }));
-  [[0, 3.9, 0, 1], [0.55, 3.35, 0.3, 0.75], [-0.5, 3.2, -0.25, 0.7], [0.1, 4.6, 0, 0.7]].forEach(([x, y, z, r], i) => p.push(parte(new THREE3.IcosahedronGeometry(r, 1), { liso: true, m: T(x, y, z, 0.9, 1.15, 0.9), desloca: 0.16, seed: i * 2.7, cor: grad("#8fb845", "#dbe06a", 2.7, 5.2, 0.07) })));
+  [[0, 3.9, 0, 1], [0.55, 3.35, 0.3, 0.75], [-0.5, 3.2, -0.25, 0.7], [0.1, 4.6, 0, 0.7]].forEach(([x, y, z, r], i) => p.push(parte(new THREE4.IcosahedronGeometry(r, 1), { liso: true, m: T(x, y, z, 0.9, 1.15, 0.9), desloca: 0.16, seed: i * 2.7, cor: grad("#8fb845", "#dbe06a", 2.7, 5.2, 0.07) })));
   return unir(p);
 }
 function geoArbusto() {
   const p = [];
-  [[0, 0.42, 0, 0.62], [0.42, 0.34, 0.15, 0.46], [-0.38, 0.33, -0.1, 0.48], [0.05, 0.3, 0.42, 0.4]].forEach(([x, y, z, r], i) => p.push(parte(new THREE3.IcosahedronGeometry(r, 1), { liso: true, m: T(x, y, z, 1, 0.78, 1), desloca: 0.1, seed: i * 4.1, cor: grad("#3c8438", "#8dc24d", 0.05, 0.9, 0.09) })));
+  [[0, 0.42, 0, 0.62], [0.42, 0.34, 0.15, 0.46], [-0.38, 0.33, -0.1, 0.48], [0.05, 0.3, 0.42, 0.4]].forEach(([x, y, z, r], i) => p.push(parte(new THREE4.IcosahedronGeometry(r, 1), { liso: true, m: T(x, y, z, 1, 0.78, 1), desloca: 0.1, seed: i * 4.1, cor: grad("#3c8438", "#8dc24d", 0.05, 0.9, 0.09) })));
   return unir(p);
 }
 function pedraCor(claro = "#b9b2a4", escuro = "#7b756c", musgo = null) {
-  const a = C(escuro), b = C(claro), m = musgo ? C(musgo) : null, o = new THREE3.Color();
+  const a = C(escuro), b = C(claro), m = musgo ? C(musgo) : null, o = new THREE4.Color();
   return (x, y, z) => {
-    o.copy(a).lerp(b, THREE3.MathUtils.clamp((y + 0.1) / 0.9, 0, 1));
+    o.copy(a).lerp(b, THREE4.MathUtils.clamp((y + 0.1) / 0.9, 0, 1));
     if (m && y > 0.55) o.lerp(m, 0.55 * (hash3(x, y, z) + 0.3));
     return o.multiplyScalar(1 + (hash3(x, y, z) - 0.5) * 0.14);
   };
 }
 function geoPedra() {
-  return unir([parte(new THREE3.IcosahedronGeometry(0.5, 1), { liso: false, m: T(0, 0.22, 0, 1, 0.7, 0.9), desloca: 0.12, seed: 1, cor: pedraCor() })]);
+  return unir([parte(new THREE4.IcosahedronGeometry(0.5, 1), { liso: false, m: T(0, 0.22, 0, 1, 0.7, 0.9), desloca: 0.12, seed: 1, cor: pedraCor() })]);
 }
 function geoRocha() {
   return unir([
-    parte(new THREE3.IcosahedronGeometry(0.75, 2), { liso: true, m: T(0, 0.45, 0, 1, 0.8, 0.9), desloca: 0.24, seed: 2, cor: pedraCor("#c2baa8", "#6f695f", "#6c9145") }),
-    parte(new THREE3.IcosahedronGeometry(0.45, 1), { liso: true, m: T(0.6, 0.25, 0.25, 1, 0.8, 1), desloca: 0.16, seed: 5, cor: pedraCor("#c2baa8", "#6f695f", "#6c9145") })
+    parte(new THREE4.IcosahedronGeometry(0.75, 2), { liso: true, m: T(0, 0.45, 0, 1, 0.8, 0.9), desloca: 0.24, seed: 2, cor: pedraCor("#c2baa8", "#6f695f", "#6c9145") }),
+    parte(new THREE4.IcosahedronGeometry(0.45, 1), { liso: true, m: T(0.6, 0.25, 0.25, 1, 0.8, 1), desloca: 0.16, seed: 5, cor: pedraCor("#c2baa8", "#6f695f", "#6c9145") })
   ]);
 }
 function geoTronco() {
-  const g = new THREE3.CylinderGeometry(0.28, 0.32, 3.6, 12, 5);
+  const g = new THREE4.CylinderGeometry(0.28, 0.32, 3.6, 12, 5);
   g.rotateX(Math.PI / 2);
   return unir([parte(g, { m: T(0, 0.3, 0), desloca: 0.03, cor: (x, y, z) => Math.abs(z) > 1.78 ? C("#d9b57f") : grad("#5a3d27", "#7b5836", 0, 0.6, 0.05)(x, y, z).multiplyScalar(0.8 + 0.4 * hash3(Math.round(Math.atan2(x, y - 0.3) * 2.2), 4, 9)) })]);
 }
@@ -7111,8 +7657,8 @@ function geoGrama() {
     const a = i / 5 * Math.PI * 2 + hash3(i, 1, 2), r = 0.02 + 0.09 * hash3(i, 3, 4), h = 0.32 + 0.3 * hash3(i, 5, 6), w = 0.045, bx = Math.cos(a) * r, bz = Math.sin(a) * r;
     const cx = -Math.sin(a), cz = Math.cos(a), tx = Math.cos(a) * (0.05 + 0.1 * hash3(i, 7, 8)), tz = Math.sin(a) * (0.05 + 0.1 * hash3(i, 7, 8));
     const v = [bx - cx * w, 0, bz - cz * w, bx + cx * w, 0, bz + cz * w, bx - cx * w * 0.6 + tx * 0.35, h * 0.55, bz - cz * w * 0.6 + tz * 0.35, bx + cx * w * 0.6 + tx * 0.35, h * 0.55, bz + cz * w * 0.6 + tz * 0.35, bx + tx, h, bz + tz];
-    const g2 = new THREE3.BufferGeometry();
-    g2.setAttribute("position", new THREE3.Float32BufferAttribute(v, 3));
+    const g2 = new THREE4.BufferGeometry();
+    g2.setAttribute("position", new THREE4.Float32BufferAttribute(v, 3));
     g2.setIndex([0, 1, 3, 0, 3, 2, 2, 3, 4]);
     partes.push(parte(g2, { cor: grad("#3f7429", "#a9d15c", 0, h, 0.06) }));
   }
@@ -7122,20 +7668,20 @@ function geoGrama() {
 }
 function geoFlor() {
   return unir([
-    parte(new THREE3.CylinderGeometry(0.012, 0.016, 0.3, 4), { m: T(0, 0.15, 0), cor: () => C("#4f8f36") }),
-    parte(new THREE3.CylinderGeometry(0.11, 0.06, 0.035, 7), { m: T(0, 0.31, 0), cor: () => new THREE3.Color(1, 1, 1) }),
+    parte(new THREE4.CylinderGeometry(0.012, 0.016, 0.3, 4), { m: T(0, 0.15, 0), cor: () => C("#4f8f36") }),
+    parte(new THREE4.CylinderGeometry(0.11, 0.06, 0.035, 7), { m: T(0, 0.31, 0), cor: () => new THREE4.Color(1, 1, 1) }),
     // pétalas: branco = recebe a cor da instância
-    parte(new THREE3.CylinderGeometry(0.045, 0.045, 0.045, 6), { m: T(0, 0.325, 0), cor: () => C("#f2b91d") })
+    parte(new THREE4.CylinderGeometry(0.045, 0.045, 0.045, 6), { m: T(0, 0.325, 0), cor: () => C("#f2b91d") })
   ]);
 }
 function geoCogumelo() {
   return unir([
-    parte(new THREE3.CylinderGeometry(0.03, 0.04, 0.13, 6), { m: T(0, 0.065, 0), cor: () => C("#efe2c6") }),
-    parte(new THREE3.SphereGeometry(0.11, 9, 4, 0, Math.PI * 2, 0, Math.PI / 2), { m: T(0, 0.12, 0, 1, 0.75, 1), cor: (x, y, z) => hash3(Math.round(x * 30), Math.round(y * 30), Math.round(z * 30)) > 0.82 ? C("#fff3e6") : C("#d64a2c") })
+    parte(new THREE4.CylinderGeometry(0.03, 0.04, 0.13, 6), { m: T(0, 0.065, 0), cor: () => C("#efe2c6") }),
+    parte(new THREE4.SphereGeometry(0.11, 9, 4, 0, Math.PI * 2, 0, Math.PI / 2), { m: T(0, 0.12, 0, 1, 0.75, 1), cor: (x, y, z) => hash3(Math.round(x * 30), Math.round(y * 30), Math.round(z * 30)) > 0.82 ? C("#fff3e6") : C("#d64a2c") })
   ]);
 }
 function materialVento({ amp = 0.12, H = 5, lados = false, tintaSelet = false } = {}) {
-  const mat = new THREE3.MeshLambertMaterial({ vertexColors: true, side: lados ? THREE3.DoubleSide : THREE3.FrontSide });
+  const mat2 = new THREE4.MeshLambertMaterial({ vertexColors: true, side: lados ? THREE4.DoubleSide : THREE4.FrontSide });
   const aplicarVento = (sh) => {
     sh.uniforms.uTime = VENTO;
     sh.uniforms.uAmp = { value: amp };
@@ -7152,97 +7698,97 @@ function materialVento({ amp = 0.12, H = 5, lados = false, tintaSelet = false } 
         vec3 dv = vec3(rj, 0.0, rj * 0.35 + sin(uTime * 1.9 + ph * 1.5) * 0.15) * uAmp * hg;
         transformed += transpose(vim) * dv / max(dot(vim[0], vim[0]), 1e-4);`);
   };
-  mat.onBeforeCompile = (sh) => {
+  mat2.onBeforeCompile = (sh) => {
     aplicarVento(sh);
     if (tintaSelet) sh.vertexShader = sh.vertexShader.replace("vColor.xyz *= instanceColor.xyz;", "vColor.xyz *= mix(vec3(1.0), instanceColor.xyz, step(0.9, min(color.r, min(color.g, color.b))));");
   };
-  const prof = new THREE3.MeshDepthMaterial({ depthPacking: THREE3.RGBADepthPacking });
+  const prof = new THREE4.MeshDepthMaterial({ depthPacking: THREE4.RGBADepthPacking });
   prof.onBeforeCompile = aplicarVento;
   prof.customProgramCacheKey = () => "ventoProf";
-  mat.userData.profundidade = prof;
-  mat.shadowSide = THREE3.DoubleSide;
-  mat.customProgramCacheKey = () => "vento" + (lados ? "L" : "") + (tintaSelet ? "S" : "");
-  return mat;
+  mat2.userData.profundidade = prof;
+  mat2.shadowSide = THREE4.DoubleSide;
+  mat2.customProgramCacheKey = () => "vento" + (lados ? "L" : "") + (tintaSelet ? "S" : "");
+  return mat2;
 }
 function geoArvoreGrande() {
   const p = [];
-  p.push(parte(new THREE3.CylinderGeometry(0.65, 1.1, 6.6, 9, 4), { desloca: 0.05, m: T(0, 3.3, 0), cor: grad("#6b4a30", "#a37c4e", 0, 6.6, 0.1) }));
+  p.push(parte(new THREE4.CylinderGeometry(0.65, 1.1, 6.6, 9, 4), { desloca: 0.05, m: T(0, 3.3, 0), cor: grad("#6b4a30", "#a37c4e", 0, 6.6, 0.1) }));
   for (let i = 0; i < 5; i++) {
     const a = i * 1.2566 + 0.3;
-    p.push(parte(new THREE3.ConeGeometry(0.42, 1.5, 6), { m: new THREE3.Matrix4().compose(new THREE3.Vector3(Math.cos(a) * 1.15, 0.3, Math.sin(a) * 1.15), new THREE3.Quaternion().setFromEuler(new THREE3.Euler(Math.sin(a) * 1.25, 0, -Math.cos(a) * 1.25)), new THREE3.Vector3(1, 1, 1)), cor: grad("#5c3f27", "#8a6540", -0.5, 1.5) }));
+    p.push(parte(new THREE4.ConeGeometry(0.42, 1.5, 6), { m: new THREE4.Matrix4().compose(new THREE4.Vector3(Math.cos(a) * 1.15, 0.3, Math.sin(a) * 1.15), new THREE4.Quaternion().setFromEuler(new THREE4.Euler(Math.sin(a) * 1.25, 0, -Math.cos(a) * 1.25)), new THREE4.Vector3(1, 1, 1)), cor: grad("#5c3f27", "#8a6540", -0.5, 1.5) }));
   }
   for (let j = 0; j < 3; j++) {
     const b = j * 2.094 + 0.7;
-    p.push(parte(new THREE3.CylinderGeometry(0.16, 0.34, 3.2, 6), { m: new THREE3.Matrix4().compose(new THREE3.Vector3(Math.cos(b) * 1.3, 7.6, Math.sin(b) * 1.3), new THREE3.Quaternion().setFromEuler(new THREE3.Euler(Math.sin(b) * 0.7, 0, -Math.cos(b) * 0.7)), new THREE3.Vector3(1, 1, 1)), cor: () => C("#7a5636") }));
+    p.push(parte(new THREE4.CylinderGeometry(0.16, 0.34, 3.2, 6), { m: new THREE4.Matrix4().compose(new THREE4.Vector3(Math.cos(b) * 1.3, 7.6, Math.sin(b) * 1.3), new THREE4.Quaternion().setFromEuler(new THREE4.Euler(Math.sin(b) * 0.7, 0, -Math.cos(b) * 0.7)), new THREE4.Vector3(1, 1, 1)), cor: () => C("#7a5636") }));
   }
   const blobs = [[0, 9.4, 0, 2.6], [3.3, 8, 0.6, 2.3], [-3.2, 8.2, -0.4, 2.4], [0.5, 8.1, 3.4, 2.3], [-0.6, 8, -3.3, 2.3], [2.5, 8.6, -2.6, 2.1], [-2.6, 8.7, 2.6, 2.1], [4.6, 7.3, -1.7, 1.7], [-4.6, 7.4, 1.5, 1.7], [1.6, 10.4, 1.2, 1.7], [-1.5, 10.3, -1, 1.6]];
-  blobs.forEach(([x, y, z, r], i) => p.push(parte(new THREE3.IcosahedronGeometry(r, 1), { liso: true, m: T(x, y, z, 1, 0.8, 1), desloca: 0.3, seed: i * 4.7, cor: grad("#3f8f3a", "#b9e050", 6, 10.5, 0.08) })));
+  blobs.forEach(([x, y, z, r], i) => p.push(parte(new THREE4.IcosahedronGeometry(r, 1), { liso: true, m: T(x, y, z, 1, 0.8, 1), desloca: 0.3, seed: i * 4.7, cor: grad("#3f8f3a", "#b9e050", 6, 10.5, 0.08) })));
   for (let i = 0; i < 26; i++) {
     const [bx, by, bz, r] = blobs[i % 11];
     const aa = hash3(i, 1, 2) * 6.283, bb = 0.2 + hash3(i, 3, 4) * 1;
     const x = bx + Math.sin(bb) * Math.cos(aa) * r * 1.02, y = by + Math.cos(bb) * r * 0.8 * 1.02, z = bz + Math.sin(bb) * Math.sin(aa) * r * 1.02;
     const hex = i % 3 === 0 ? "#ff9fc0" : i % 3 === 1 ? "#fff3f0" : "#ff6a4a";
-    p.push(parte(new THREE3.IcosahedronGeometry(0.24, 0), { m: T(x, y, z), cor: () => C(hex) }));
+    p.push(parte(new THREE4.IcosahedronGeometry(0.24, 0), { m: T(x, y, z), cor: () => C(hex) }));
   }
   return unir(p);
 }
 function geoTufo() {
-  return unir([[0, 0.14, 0, 0.42], [0.3, 0.1, 0.12, 0.3], [-0.28, 0.1, -0.1, 0.3]].map(([x, y, z, r], i) => parte(new THREE3.IcosahedronGeometry(r, 1), { liso: true, m: T(x, y, z, 1, 0.6, 1), desloca: 0.08, seed: i * 3.3, cor: grad("#3f8f3a", "#b9e050", 0, 0.5, 0.1) })));
+  return unir([[0, 0.14, 0, 0.42], [0.3, 0.1, 0.12, 0.3], [-0.28, 0.1, -0.1, 0.3]].map(([x, y, z, r], i) => parte(new THREE4.IcosahedronGeometry(r, 1), { liso: true, m: T(x, y, z, 1, 0.6, 1), desloca: 0.08, seed: i * 3.3, cor: grad("#3f8f3a", "#b9e050", 0, 0.5, 0.1) })));
 }
 function geoTroncoSeg(y0, y1, r0, r12) {
-  return unir([parte(new THREE3.CylinderGeometry(r12, r0, y1 - y0, 11, 2), { desloca: 0.03, m: T(0, (y0 + y1) / 2, 0), cor: (x, y, z) => grad("#6b4a30", "#a37c4e", y0, y1, 0.1)(x, y, z).multiplyScalar(0.8 + 0.35 * hash3(Math.round(Math.atan2(x, z) * 3.5), 4, 9)) })]);
+  return unir([parte(new THREE4.CylinderGeometry(r12, r0, y1 - y0, 11, 2), { desloca: 0.03, m: T(0, (y0 + y1) / 2, 0), cor: (x, y, z) => grad("#6b4a30", "#a37c4e", y0, y1, 0.1)(x, y, z).multiplyScalar(0.8 + 0.35 * hash3(Math.round(Math.atan2(x, z) * 3.5), 4, 9)) })]);
 }
 function geoGalhos(andar) {
   const { y, segs, juntas } = andar;
   const p = [];
   for (const s of segs) {
-    const A = new THREE3.Vector3(s.x0, y - s.hw0, s.z0), B = new THREE3.Vector3(s.x1, y - s.hw1, s.z1);
+    const A = new THREE4.Vector3(s.x0, y - s.hw0, s.z0), B = new THREE4.Vector3(s.x1, y - s.hw1, s.z1);
     const dir = B.clone().sub(A), len = dir.length();
     dir.normalize();
-    const m = new THREE3.Matrix4().compose(A.clone().add(B).multiplyScalar(0.5), new THREE3.Quaternion().setFromUnitVectors(new THREE3.Vector3(0, 1, 0), dir), new THREE3.Vector3(1, 1, 1));
-    p.push(parte(new THREE3.CylinderGeometry(s.hw1 * 1.08, s.hw0 * 1.08, len, 8, 1), { desloca: 0.02, m, cor: grad("#6b4a30", "#a37c4e", y - 1, y, 0.12) }));
+    const m = new THREE4.Matrix4().compose(A.clone().add(B).multiplyScalar(0.5), new THREE4.Quaternion().setFromUnitVectors(new THREE4.Vector3(0, 1, 0), dir), new THREE4.Vector3(1, 1, 1));
+    p.push(parte(new THREE4.CylinderGeometry(s.hw1 * 1.08, s.hw0 * 1.08, len, 8, 1), { desloca: 0.02, m, cor: grad("#6b4a30", "#a37c4e", y - 1, y, 0.12) }));
   }
   for (const j of juntas) {
     if (j.r < 1) {
       const cy = y - j.r * 1.05;
-      p.push(parte(new THREE3.SphereGeometry(j.r * 1.05, 10, 6), { m: T(j.x, cy, j.z), cor: grad("#6b4a30", "#b08752", y - 1, y, 0.12) }));
+      p.push(parte(new THREE4.SphereGeometry(j.r * 1.05, 10, 6), { m: T(j.x, cy, j.z), cor: grad("#6b4a30", "#b08752", y - 1, y, 0.12) }));
     } else {
-      p.push(parte(new THREE3.CylinderGeometry(j.r, j.r * 0.9, 0.7, 16, 1), { m: T(j.x, y - 0.35, j.z), cor: grad("#6b4a30", "#b08752", y - 1, y, 0.12) }));
+      p.push(parte(new THREE4.CylinderGeometry(j.r, j.r * 0.9, 0.7, 16, 1), { m: T(j.x, y - 0.35, j.z), cor: grad("#6b4a30", "#b08752", y - 1, y, 0.12) }));
     }
   }
-  return p.length ? unir(p) : new THREE3.BufferGeometry();
+  return p.length ? unir(p) : new THREE4.BufferGeometry();
 }
 function geoNinho() {
   return unir([
-    parte(new THREE3.TorusGeometry(0.3, 0.09, 6, 14), { liso: true, m: new THREE3.Matrix4().compose(new THREE3.Vector3(0, 0.11, 0), new THREE3.Quaternion().setFromEuler(new THREE3.Euler(Math.PI / 2, 0, 0)), new THREE3.Vector3(1, 1, 1)), desloca: 0.03, cor: (x, y, z) => C(hash3(Math.round(x * 20), 1, Math.round(z * 20)) > 0.5 ? "#8a6238" : "#5b3d22") }),
-    parte(new THREE3.CylinderGeometry(0.28, 0.2, 0.12, 12), { m: T(0, 0.08, 0), cor: () => C("#5b3d22") })
+    parte(new THREE4.TorusGeometry(0.3, 0.09, 6, 14), { liso: true, m: new THREE4.Matrix4().compose(new THREE4.Vector3(0, 0.11, 0), new THREE4.Quaternion().setFromEuler(new THREE4.Euler(Math.PI / 2, 0, 0)), new THREE4.Vector3(1, 1, 1)), desloca: 0.03, cor: (x, y, z) => C(hash3(Math.round(x * 20), 1, Math.round(z * 20)) > 0.5 ? "#8a6238" : "#5b3d22") }),
+    parte(new THREE4.CylinderGeometry(0.28, 0.2, 0.12, 12), { m: T(0, 0.08, 0), cor: () => C("#5b3d22") })
     // (0.9.4: os 3 ovos saíram da malha do ninho: são objetos à parte em js/arvore.js, para sumirem quando o gato pega)
   ]);
 }
 function geoCasinha() {
   return unir([
-    parte(new THREE3.CylinderGeometry(0.05, 0.06, 0.25, 6), { m: T(0, 0.125, 0), cor: () => C("#6b4a2e") }),
-    parte(new THREE3.BoxGeometry(0.5, 0.42, 0.42), { m: T(0, 0.46, 0), cor: () => C("#f2c96b") }),
-    parte(new THREE3.ConeGeometry(0.42, 0.3, 4), { m: new THREE3.Matrix4().compose(new THREE3.Vector3(0, 0.82, 0), new THREE3.Quaternion().setFromAxisAngle(new THREE3.Vector3(0, 1, 0), Math.PI / 4), new THREE3.Vector3(1, 1, 1)), cor: () => C("#c2452d") }),
-    parte(new THREE3.CircleGeometry(0.09, 12), { m: T(0, 0.48, 0.215), cor: () => C("#2a1b12") }),
-    parte(new THREE3.CylinderGeometry(0.015, 0.015, 0.14, 5), { m: new THREE3.Matrix4().compose(new THREE3.Vector3(0, 0.34, 0.28), new THREE3.Quaternion().setFromEuler(new THREE3.Euler(Math.PI / 2, 0, 0)), new THREE3.Vector3(1, 1, 1)), cor: () => C("#6b4a2e") })
+    parte(new THREE4.CylinderGeometry(0.05, 0.06, 0.25, 6), { m: T(0, 0.125, 0), cor: () => C("#6b4a2e") }),
+    parte(new THREE4.BoxGeometry(0.5, 0.42, 0.42), { m: T(0, 0.46, 0), cor: () => C("#f2c96b") }),
+    parte(new THREE4.ConeGeometry(0.42, 0.3, 4), { m: new THREE4.Matrix4().compose(new THREE4.Vector3(0, 0.82, 0), new THREE4.Quaternion().setFromAxisAngle(new THREE4.Vector3(0, 1, 0), Math.PI / 4), new THREE4.Vector3(1, 1, 1)), cor: () => C("#c2452d") }),
+    parte(new THREE4.CircleGeometry(0.09, 12), { m: T(0, 0.48, 0.215), cor: () => C("#2a1b12") }),
+    parte(new THREE4.CylinderGeometry(0.015, 0.015, 0.14, 5), { m: new THREE4.Matrix4().compose(new THREE4.Vector3(0, 0.34, 0.28), new THREE4.Quaternion().setFromEuler(new THREE4.Euler(Math.PI / 2, 0, 0)), new THREE4.Vector3(1, 1, 1)), cor: () => C("#6b4a2e") })
   ]);
 }
 function geoFrutas() {
   const p = [];
   for (let i = 0; i < 6; i++) {
     const r = 0.17 * (i % 2 ? 1 : 0.6);
-    p.push(parte(new THREE3.SphereGeometry(0.075, 8, 6), { liso: true, m: T(Math.cos(i * 1.047) * r, 0.16 + i % 3 * 0.1, Math.sin(i * 1.047) * r), cor: () => C(i % 2 ? "#e0352b" : "#ff7a3a") }));
+    p.push(parte(new THREE4.SphereGeometry(0.075, 8, 6), { liso: true, m: T(Math.cos(i * 1.047) * r, 0.16 + i % 3 * 0.1, Math.sin(i * 1.047) * r), cor: () => C(i % 2 ? "#e0352b" : "#ff7a3a") }));
   }
   for (let j = 0; j < 3; j++) {
-    p.push(parte(new THREE3.ConeGeometry(0.06, 0.18, 4), { m: T(Math.cos(j * 2.094 + 0.5) * 0.08, 0.42 + j * 0.03, Math.sin(j * 2.094 + 0.5) * 0.08), cor: () => C("#4f9a3a") }));
+    p.push(parte(new THREE4.ConeGeometry(0.06, 0.18, 4), { m: T(Math.cos(j * 2.094 + 0.5) * 0.08, 0.42 + j * 0.03, Math.sin(j * 2.094 + 0.5) * 0.08), cor: () => C("#4f9a3a") }));
   }
   return unir(p);
 }
 function geoBorboleta() {
   const corAsa = (x, z) => {
     const t = Math.min(1, Math.max(0, (Math.abs(x) - 0.02) / 0.13));
-    return new THREE3.Color("#ff9a3c").lerp(new THREE3.Color("#ffd23f"), t);
+    return new THREE4.Color("#ff9a3c").lerp(new THREE4.Color("#ffd23f"), t);
   };
   const asa = (pts) => {
     const pos = [], col2 = [], nor = [];
@@ -7255,10 +7801,10 @@ function geoBorboleta() {
         nor.push(0, 1, 0);
       }
     }
-    const g = new THREE3.BufferGeometry();
-    g.setAttribute("position", new THREE3.Float32BufferAttribute(pos, 3));
-    g.setAttribute("color", new THREE3.Float32BufferAttribute(col2, 3));
-    g.setAttribute("normal", new THREE3.Float32BufferAttribute(nor, 3));
+    const g = new THREE4.BufferGeometry();
+    g.setAttribute("position", new THREE4.Float32BufferAttribute(pos, 3));
+    g.setAttribute("color", new THREE4.Float32BufferAttribute(col2, 3));
+    g.setAttribute("normal", new THREE4.Float32BufferAttribute(nor, 3));
     return g;
   };
   const d = [
@@ -7272,34 +7818,34 @@ function geoBorboleta() {
     [0.02, 0, 0]
   ];
   const e = d.map(([x, y, z]) => [-x, y, z]);
-  const corpo2 = new THREE3.CylinderGeometry(0.012, 0.012, 0.16, 5);
+  const corpo2 = new THREE4.CylinderGeometry(0.012, 0.012, 0.16, 5);
   corpo2.rotateX(Math.PI / 2);
   corpo2.deleteAttribute("uv");
   const n = corpo2.attributes.position.count;
-  const cc = new THREE3.Color("#2a1b12");
+  const cc = new THREE4.Color("#2a1b12");
   const col = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
     col[i * 3] = cc.r;
     col[i * 3 + 1] = cc.g;
     col[i * 3 + 2] = cc.b;
   }
-  corpo2.setAttribute("color", new THREE3.BufferAttribute(col, 3));
+  corpo2.setAttribute("color", new THREE4.BufferAttribute(col, 3));
   corpo2.computeVertexNormals();
   return unir([asa(d.slice(0, 4)), asa(d.slice(4)), asa(e.slice(0, 4)), asa(e.slice(4)), corpo2.index ? corpo2.toNonIndexed() : corpo2]);
 }
 
 // js/agua.js
-import * as THREE5 from "three";
+import * as THREE6 from "three";
 
 // js/leque.js
-import * as THREE4 from "three";
+import * as THREE5 from "three";
 var MAX_LEQUES = 8;
 var LEQUE = {
-  uLeqA: { value: Array.from({ length: MAX_LEQUES }, () => new THREE4.Vector4()) },
-  uLeqB: { value: Array.from({ length: MAX_LEQUES }, () => new THREE4.Vector4()) },
-  uLeqC0: { value: new THREE4.Color(16773800) },
+  uLeqA: { value: Array.from({ length: MAX_LEQUES }, () => new THREE5.Vector4()) },
+  uLeqB: { value: Array.from({ length: MAX_LEQUES }, () => new THREE5.Vector4()) },
+  uLeqC0: { value: new THREE5.Color(16773800) },
   // calmo (amarelo-claro)
-  uLeqC1: { value: new THREE4.Color(16732208) }
+  uLeqC1: { value: new THREE5.Color(16732208) }
   // viu o gato (vermelho)
 };
 var GLSL_DECL = `uniform vec4 uLeqA[${MAX_LEQUES}];
@@ -7349,29 +7895,29 @@ function criarAgua(mundo, texRuido, sol) {
       idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
     }
   });
-  const g = new THREE5.BufferGeometry();
-  g.setAttribute("position", new THREE5.Float32BufferAttribute(pos, 3));
-  g.setAttribute("uv", new THREE5.Float32BufferAttribute(uv, 2));
-  g.setAttribute("aAcross", new THREE5.Float32BufferAttribute(across, 2));
-  g.setAttribute("aAlong", new THREE5.Float32BufferAttribute(along, 2));
-  g.setAttribute("aHw", new THREE5.Float32BufferAttribute(hw, 1));
+  const g = new THREE6.BufferGeometry();
+  g.setAttribute("position", new THREE6.Float32BufferAttribute(pos, 3));
+  g.setAttribute("uv", new THREE6.Float32BufferAttribute(uv, 2));
+  g.setAttribute("aAcross", new THREE6.Float32BufferAttribute(across, 2));
+  g.setAttribute("aAlong", new THREE6.Float32BufferAttribute(along, 2));
+  g.setAttribute("aHw", new THREE6.Float32BufferAttribute(hw, 1));
   g.setIndex(idx);
-  const rochas = mundo.rochasAgua.slice(0, MAX_ROCHAS).map((r) => new THREE5.Vector3(r.x, r.z, r.r));
-  while (rochas.length < MAX_ROCHAS) rochas.push(new THREE5.Vector3(1e4, 1e4, 0));
-  const mat = new THREE5.ShaderMaterial({
+  const rochas = mundo.rochasAgua.slice(0, MAX_ROCHAS).map((r) => new THREE6.Vector3(r.x, r.z, r.r));
+  while (rochas.length < MAX_ROCHAS) rochas.push(new THREE6.Vector3(1e4, 1e4, 0));
+  const mat2 = new THREE6.ShaderMaterial({
     transparent: true,
     depthWrite: false,
     fog: true,
-    side: THREE5.DoubleSide,
-    uniforms: THREE5.UniformsUtils.merge([THREE5.UniformsLib.fog, {
+    side: THREE6.DoubleSide,
+    uniforms: THREE6.UniformsUtils.merge([THREE6.UniformsLib.fog, {
       uTime: VENTO,
       tRuido: { value: texRuido },
       uSol: { value: sol.clone().normalize() },
       uRochas: { value: rochas },
-      uProf: { value: new THREE5.Color("#1f6f8a") },
-      uRaso: { value: new THREE5.Color("#5fc0c4") },
-      uCeu: { value: new THREE5.Color("#bfe3ff") },
-      uEspuma: { value: new THREE5.Color("#f4fbff") }
+      uProf: { value: new THREE6.Color("#1f6f8a") },
+      uRaso: { value: new THREE6.Color("#5fc0c4") },
+      uCeu: { value: new THREE6.Color("#bfe3ff") },
+      uEspuma: { value: new THREE6.Color("#f4fbff") }
     }]),
     vertexShader: `
       attribute vec2 aAcross; attribute vec2 aAlong; attribute float aHw;
@@ -7428,9 +7974,9 @@ function criarAgua(mundo, texRuido, sol) {
         #include <fog_fragment>
       }`
   });
-  Object.assign(mat.uniforms, LEQUE);
-  mat.uniforms.uTime = VENTO;
-  const mesh = new THREE5.Mesh(g, mat);
+  Object.assign(mat2.uniforms, LEQUE);
+  mat2.uniforms.uTime = VENTO;
+  const mesh = new THREE6.Mesh(g, mat2);
   mesh.frustumCulled = false;
   mesh.renderOrder = 2;
   return mesh;
@@ -7597,7 +8143,7 @@ function texturaNuvem() {
 }
 
 // js/acoes-mapa.js
-import * as THREE6 from "three";
+import * as THREE7 from "three";
 var RAIO_ACAO = 1.5;
 function est(mapa) {
   if (!mapa.acaoEst) {
@@ -7679,9 +8225,15 @@ function acaoContextual(mapa) {
     if (!h) return null;
     return mapa.brincando === "procura" ? { id: "olhar", icone: "\u{1F440}", rotulo: "Olhar", alvo: h } : { id: "esconder", icone: "\u{1F33F}", rotulo: "Esconder", alvo: h.alvo };
   }
-  const presas = presasProximas(mapa, gp, RAIO_ACAO);
+  const car = mapa.carregar, levando = !!car && car.levando();
+  if (levando && car.pertoCesta(gp.x, gp.z)) return { id: "entregar", icone: "\u{1F9FA}", rotulo: "Entregar", alvo: null };
+  const presas = levando ? [] : presasProximas(mapa, gp, RAIO_ACAO);
   if (presas && presas.length) {
     return { id: "bote", icone: "\u{1F43E}", rotulo: "Bote", alvo: presas[0] };
+  }
+  if (car && !levando) {
+    const i = car.proximo(gp.x, gp.z);
+    if (i >= 0) return { id: "pegar", icone: "\u{1F9F8}", rotulo: "Pegar", alvo: i };
   }
   const ent = entradaProxima(mapa, gp.x, gp.z);
   if (ent) {
@@ -7691,6 +8243,7 @@ function acaoContextual(mapa) {
   if (arb) {
     return { id: "esconder", icone: "\u{1F33F}", rotulo: "Esconder", alvo: arb };
   }
+  if (levando) return { id: "soltar", icone: "\u2B07\uFE0F", rotulo: "Soltar", alvo: null };
   return null;
 }
 function usarAcao(mapa) {
@@ -7713,6 +8266,12 @@ function usarAcao(mapa) {
     if (mapa.aoOlhar) mapa.aoOlhar(a.alvo.idx);
   } else if (a.id === "entrar") {
     if (mapa.aoEntrar) mapa.aoEntrar(a.alvo);
+  } else if (a.id === "pegar") {
+    mapa.carregar.pegar(a.alvo);
+  } else if (a.id === "entregar") {
+    mapa.carregar.entregar();
+  } else if (a.id === "soltar") {
+    mapa.carregar.soltar();
   }
 }
 function sairDoEsconderijo(mapa) {
@@ -7756,23 +8315,23 @@ function esconderAgora(mapa) {
     return;
   }
   const { im, i } = ref;
-  e.matriz = new THREE6.Matrix4();
+  e.matriz = new THREE7.Matrix4();
   im.getMatrixAt(i, e.matriz);
-  im.setMatrixAt(i, new THREE6.Matrix4().makeScale(0, 0, 0));
+  im.setMatrixAt(i, new THREE7.Matrix4().makeScale(0, 0, 0));
   im.instanceMatrix.needsUpdate = true;
   const arb = e.arbusto;
-  const mat = new THREE6.MeshLambertMaterial({
+  const mat2 = new THREE7.MeshLambertMaterial({
     vertexColors: true,
     transparent: true,
     opacity: 0.35,
     depthWrite: false
   });
   if (arb.cor != null) {
-    mat.color = new THREE6.Color(arb.cor);
+    mat2.color = new THREE7.Color(arb.cor);
   } else {
-    mat.color = new THREE6.Color().setRGB(arb.tint[0], arb.tint[1], arb.tint[2]);
+    mat2.color = new THREE7.Color().setRGB(arb.tint[0], arb.tint[1], arb.tint[2]);
   }
-  const fantasma = new THREE6.Mesh(im.geometry, mat);
+  const fantasma = new THREE7.Mesh(im.geometry, mat2);
   fantasma.position.set(arb.x, arb.y, arb.z);
   fantasma.rotation.y = arb.rot;
   fantasma.scale.set(arb.s, arb.s * arb.sy, arb.s);
@@ -7839,7 +8398,7 @@ function atualizarAcao(mapa, dt, dx, dy) {
 }
 
 // js/animais.js
-import * as THREE7 from "three";
+import * as THREE8 from "three";
 import { GLTFLoader as GLTFLoader2 } from "three/addons/loaders/GLTFLoader.js";
 import { clone as clonarEsqueleto2 } from "three/addons/utils/SkeletonUtils.js";
 
@@ -8475,9 +9034,9 @@ function criarAnimais(mapa, salvos) {
     ctx2.textAlign = "center";
     ctx2.textBaseline = "middle";
     ctx2.fillText(txt, 160, 52);
-    const tex = new THREE7.CanvasTexture(canvas);
-    tex.colorSpace = THREE7.SRGBColorSpace;
-    balaoSprite = new THREE7.Sprite(new THREE7.SpriteMaterial({ map: tex, transparent: true, depthTest: false, fog: false }));
+    const tex = new THREE8.CanvasTexture(canvas);
+    tex.colorSpace = THREE8.SRGBColorSpace;
+    balaoSprite = new THREE8.Sprite(new THREE8.SpriteMaterial({ map: tex, transparent: true, depthTest: false, fog: false }));
     balaoSprite.scale.set(1.3, 0.49, 1);
     balaoSprite.position.set(0, 1.3, 0);
     balaoSprite.renderOrder = 10;
@@ -8500,12 +9059,12 @@ function criarAnimais(mapa, salvos) {
     const esp = ESPECIES[m.tipo];
     const mod = clonarEsqueleto2(gltf.scene);
     mod.updateMatrixWorld(true);
-    const cx = new THREE7.Box3(), v = new THREE7.Vector3();
+    const cx = new THREE8.Box3(), v = new THREE8.Vector3();
     mod.traverse((o) => {
       if (o.isBone) cx.expandByPoint(o.getWorldPosition(v));
     });
     if (cx.isEmpty()) cx.setFromObject(mod);
-    const tam = cx.getSize(new THREE7.Vector3());
+    const tam = cx.getSize(new THREE8.Vector3());
     const k = esp.comp ? esp.comp / Math.max(tam.x, tam.z, 1e-3) : 1;
     mod.scale.multiplyScalar(k);
     mod.position.y = esp.comp ? -cx.min.y * k : 0;
@@ -8516,14 +9075,14 @@ function criarAnimais(mapa, salvos) {
         o.frustumCulled = false;
       }
     });
-    const obj = new THREE7.Group();
+    const obj = new THREE8.Group();
     obj.name = "bicho";
     obj.add(mod);
     obj.position.set(m.x, m.y, m.z);
     m.obj = obj;
     m.mod = mod;
     if (gltf.animations.length) {
-      m.mixer = new THREE7.AnimationMixer(mod);
+      m.mixer = new THREE8.AnimationMixer(mod);
       m.acoes = {};
       for (const c of gltf.animations) m.acoes[c.name] = m.mixer.clipAction(c);
       tocar2(m, esp.pausa || "Idle");
@@ -8963,11 +9522,11 @@ __export(caverna_exports, {
   geoParedes: () => geoParedes,
   gerarPlanta: () => gerarPlanta,
   gerarPontos: () => gerarPontos,
-  texturaBrilho: () => texturaBrilho,
+  texturaBrilho: () => texturaBrilho2,
   texturaPedra: () => texturaPedra,
   texturaPoca: () => texturaPoca
 });
-import * as THREE8 from "three";
+import * as THREE9 from "three";
 import { mergeGeometries as mergeGeometries2 } from "three/addons/utils/BufferGeometryUtils.js";
 var N = 30;
 var LIM = 15;
@@ -9010,14 +9569,14 @@ function gerarPlanta(seed) {
       for (let j = minJ; j <= maxJ; j++) {
         const dx = i + 0.5 - cx;
         const dz = j + 0.5 - cz;
-        const dist2 = Math.hypot(dx, dz);
-        if (dist2 < 1e-3) {
+        const dist3 = Math.hypot(dx, dz);
+        if (dist3 < 1e-3) {
           chao[j * N + i] = 1;
           continue;
         }
         const ang = Math.atan2(dz, dx);
         const rLocal = r * (1 + 0.22 * Math.sin(3 * ang + f1) + 0.15 * Math.sin(5 * ang + f2));
-        if (dist2 < rLocal) chao[j * N + i] = 1;
+        if (dist3 < rLocal) chao[j * N + i] = 1;
       }
     }
   };
@@ -9050,8 +9609,8 @@ function gerarPlanta(seed) {
     for (let step = 0; step < 400; step++) {
       const dx = b.cx - x;
       const dz = b.cz - z;
-      const dist2 = Math.hypot(dx, dz);
-      if (dist2 < 0.8) break;
+      const dist3 = Math.hypot(dx, dz);
+      if (dist3 < 0.8) break;
       const targetAng = Math.atan2(dz, dx);
       let diff = targetAng - ang;
       while (diff > Math.PI) diff -= 2 * Math.PI;
@@ -9059,7 +9618,7 @@ function gerarPlanta(seed) {
       ang += (rc() - 0.5) * 0.6;
       if (ang > 0.9) ang = 0.9;
       if (ang < -0.9) ang = -0.9;
-      if (dist2 < 4) ang *= 0.5;
+      if (dist3 < 4) ang *= 0.5;
       const moveAng = targetAng + ang;
       x += Math.cos(moveAng) * 0.6;
       z += Math.sin(moveAng) * 0.6;
@@ -9402,10 +9961,10 @@ function texturaPedra(seed, tipo) {
       ctx2.stroke();
     }
   }
-  const tex = new THREE8.CanvasTexture(canvas);
-  tex.wrapS = THREE8.RepeatWrapping;
-  tex.wrapT = THREE8.RepeatWrapping;
-  tex.colorSpace = THREE8.SRGBColorSpace;
+  const tex = new THREE9.CanvasTexture(canvas);
+  tex.wrapS = THREE9.RepeatWrapping;
+  tex.wrapT = THREE9.RepeatWrapping;
+  tex.colorSpace = THREE9.SRGBColorSpace;
   tex.anisotropy = 4;
   return tex;
 }
@@ -9468,25 +10027,25 @@ function geoParedes(planta) {
       }
     }
   }
-  const g = new THREE8.BufferGeometry();
-  g.setAttribute("position", new THREE8.Float32BufferAttribute(pos, 3));
-  g.setAttribute("color", new THREE8.Float32BufferAttribute(cor, 3));
-  g.setAttribute("uv", new THREE8.Float32BufferAttribute(uv, 2));
+  const g = new THREE9.BufferGeometry();
+  g.setAttribute("position", new THREE9.Float32BufferAttribute(pos, 3));
+  g.setAttribute("color", new THREE9.Float32BufferAttribute(cor, 3));
+  g.setAttribute("uv", new THREE9.Float32BufferAttribute(uv, 2));
   g.computeVertexNormals();
   return g;
 }
 function geoCogumeloLuz() {
-  const talo = new THREE8.CylinderGeometry(0.03, 0.04, 0.13, 6).translate(0, 0.065, 0);
-  const chapeu = new THREE8.SphereGeometry(0.11, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.75, 1).translate(0, 0.12, 0);
+  const talo = new THREE9.CylinderGeometry(0.03, 0.04, 0.13, 6).translate(0, 0.065, 0);
+  const chapeu = new THREE9.SphereGeometry(0.11, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.75, 1).translate(0, 0.12, 0);
   return mergeGeometries2([talo, chapeu]);
 }
 function geoCristal() {
-  const main = new THREE8.ConeGeometry(0.1, 0.62, 5).translate(0, 0.31, 0);
-  const side1 = new THREE8.ConeGeometry(0.07, 0.4, 5).rotateZ(0.5).translate(0.09, 0.19, 0);
-  const side2 = new THREE8.ConeGeometry(0.06, 0.34, 5).rotateZ(-0.6).translate(-0.08, 0.16, 0.03);
+  const main = new THREE9.ConeGeometry(0.1, 0.62, 5).translate(0, 0.31, 0);
+  const side1 = new THREE9.ConeGeometry(0.07, 0.4, 5).rotateZ(0.5).translate(0.09, 0.19, 0);
+  const side2 = new THREE9.ConeGeometry(0.06, 0.34, 5).rotateZ(-0.6).translate(-0.08, 0.16, 0.03);
   return mergeGeometries2([main, side1, side2]);
 }
-function texturaBrilho() {
+function texturaBrilho2() {
   const canvas = document.createElement("canvas");
   canvas.width = 64;
   canvas.height = 64;
@@ -9497,8 +10056,8 @@ function texturaBrilho() {
   gradient.addColorStop(1, "rgba(255,255,255,0)");
   ctx2.fillStyle = gradient;
   ctx2.fillRect(0, 0, 64, 64);
-  const texture = new THREE8.CanvasTexture(canvas);
-  texture.colorSpace = THREE8.SRGBColorSpace;
+  const texture = new THREE9.CanvasTexture(canvas);
+  texture.colorSpace = THREE9.SRGBColorSpace;
   return texture;
 }
 function texturaPoca() {
@@ -9534,17 +10093,17 @@ function texturaPoca() {
   gradBorda.addColorStop(1, "rgba(0,0,0,0)");
   ctx2.fillStyle = gradBorda;
   ctx2.fillRect(0, 0, 128, 128);
-  const texture = new THREE8.CanvasTexture(canvas);
-  texture.colorSpace = THREE8.SRGBColorSpace;
+  const texture = new THREE9.CanvasTexture(canvas);
+  texture.colorSpace = THREE9.SRGBColorSpace;
   return texture;
 }
 function criarBrilhos(planta, seed) {
   const rnd = mulberry32(seed + 3);
-  const grupo = new THREE8.Group();
-  const m4 = new THREE8.Matrix4(), q = new THREE8.Quaternion(), yAxis = new THREE8.Vector3(0, 1, 0), pos = new THREE8.Vector3(), esc = new THREE8.Vector3(), cor = new THREE8.Color();
-  const instanciar = (geo, mat, lista, y, escala) => {
+  const grupo = new THREE9.Group();
+  const m4 = new THREE9.Matrix4(), q = new THREE9.Quaternion(), yAxis = new THREE9.Vector3(0, 1, 0), pos = new THREE9.Vector3(), esc = new THREE9.Vector3(), cor = new THREE9.Color();
+  const instanciar = (geo, mat2, lista, y, escala) => {
     if (!lista.length) return null;
-    const im = new THREE8.InstancedMesh(geo, mat, lista.length);
+    const im = new THREE9.InstancedMesh(geo, mat2, lista.length);
     lista.forEach((item, i) => {
       q.setFromAxisAngle(yAxis, rnd() * 6.283);
       pos.set(item.x, y, item.z);
@@ -9558,20 +10117,20 @@ function criarBrilhos(planta, seed) {
   };
   instanciar(geoCogumeloLuz(), materialBrilho(), planta.cogumelos, 0, (it) => it.s);
   instanciar(geoCristal(), materialBrilho(), planta.cristais, 0, (it) => it.s);
-  const matBrilho = new THREE8.MeshBasicMaterial({ map: texturaBrilho(), transparent: true, depthWrite: false, blending: THREE8.AdditiveBlending, opacity: 0.32, toneMapped: false });
-  const geoPlano = new THREE8.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  const matBrilho = new THREE9.MeshBasicMaterial({ map: texturaBrilho2(), transparent: true, depthWrite: false, blending: THREE9.AdditiveBlending, opacity: 0.32, toneMapped: false });
+  const geoPlano = new THREE9.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
   instanciar(geoPlano, matBrilho, [...planta.cogumelos, ...planta.cristais], 0.04, (it) => 1.6 + 0.9 * it.s);
-  const boca = new THREE8.Mesh(geoPlano, new THREE8.MeshBasicMaterial({ map: texturaBrilho(), color: 16769184, transparent: true, depthWrite: false, blending: THREE8.AdditiveBlending }));
+  const boca = new THREE9.Mesh(geoPlano, new THREE9.MeshBasicMaterial({ map: texturaBrilho2(), color: 16769184, transparent: true, depthWrite: false, blending: THREE9.AdditiveBlending }));
   boca.position.set(planta.saida.x, 0.05, LIM - 0.4);
   boca.scale.set(9, 1, 9);
   grupo.add(boca);
-  const fora = new THREE8.Mesh(new THREE8.PlaneGeometry(7, 4).rotateX(-Math.PI / 2), new THREE8.MeshBasicMaterial({ color: 16774358 }));
+  const fora = new THREE9.Mesh(new THREE9.PlaneGeometry(7, 4).rotateX(-Math.PI / 2), new THREE9.MeshBasicMaterial({ color: 16774358 }));
   fora.position.set(planta.saida.x, 0.02, LIM + 2.2);
   grupo.add(fora);
   let pm = null;
   if (planta.poca) {
     const poca = planta.poca;
-    pm = new THREE8.Mesh(new THREE8.CircleGeometry(1, 32).rotateX(-Math.PI / 2), new THREE8.MeshBasicMaterial({ map: texturaPoca(), transparent: true, depthWrite: false }));
+    pm = new THREE9.Mesh(new THREE9.CircleGeometry(1, 32).rotateX(-Math.PI / 2), new THREE9.MeshBasicMaterial({ map: texturaPoca(), transparent: true, depthWrite: false }));
     pm.position.set(poca.x, 0.03, poca.z);
     pm.rotation.y = poca.rot;
     pm.scale.set(poca.rx, 1, poca.rz);
@@ -9589,18 +10148,18 @@ function criarBrilhos(planta, seed) {
 }
 function criarRochas(planta) {
   const rnd = mulberry32(7);
-  const grupo = new THREE8.Group();
+  const grupo = new THREE9.Group();
   const instanciar = (geo, lista, dy) => {
     if (!lista || lista.length === 0) return;
-    const im = new THREE8.InstancedMesh(geo, new THREE8.MeshLambertMaterial({ vertexColors: true }), lista.length);
-    const m = new THREE8.Matrix4();
-    const q = new THREE8.Quaternion();
-    const p = new THREE8.Vector3();
-    const s = new THREE8.Vector3();
+    const im = new THREE9.InstancedMesh(geo, new THREE9.MeshLambertMaterial({ vertexColors: true }), lista.length);
+    const m = new THREE9.Matrix4();
+    const q = new THREE9.Quaternion();
+    const p = new THREE9.Vector3();
+    const s = new THREE9.Vector3();
     for (let i = 0; i < lista.length; i++) {
       const item = lista[i];
       p.set(item.x, dy * item.s, item.z);
-      q.setFromAxisAngle(new THREE8.Vector3(0, 1, 0), rnd() * 6.283);
+      q.setFromAxisAngle(new THREE9.Vector3(0, 1, 0), rnd() * 6.283);
       s.set(item.s, item.s * item.sy, item.s);
       m.compose(p, q, s);
       im.setMatrixAt(i, m);
@@ -9612,9 +10171,9 @@ function criarRochas(planta) {
   instanciar(geoPedra(), planta.pedras, -0.05);
   if (planta.lajes) {
     for (const laje of planta.lajes) {
-      const mesh = new THREE8.Mesh(
-        new THREE8.BoxGeometry(2 * laje.hx, laje.h, 2 * laje.hz),
-        new THREE8.MeshLambertMaterial({ map: texturaPedra(11, "parede"), color: 12103876 })
+      const mesh = new THREE9.Mesh(
+        new THREE9.BoxGeometry(2 * laje.hx, laje.h, 2 * laje.hz),
+        new THREE9.MeshLambertMaterial({ map: texturaPedra(11, "parede"), color: 12103876 })
       );
       mesh.position.set(laje.x, laje.h / 2, laje.z);
       grupo.add(mesh);
@@ -9689,20 +10248,20 @@ function desenharPlanta(ctx2, W, planta) {
   ctx2.fillRect(px(planta.saida.x) - 1.5 * e, W - 0.7 * e, 3 * e, 0.7 * e);
 }
 function criarBocas(cavernas) {
-  const g = new THREE8.Group();
+  const g = new THREE9.Group();
   g.name = "bocas";
   const geoR = geoRocha();
-  const matRocha = new THREE8.MeshLambertMaterial({ vertexColors: true });
+  const matRocha = new THREE9.MeshLambertMaterial({ vertexColors: true });
   const clamp4 = (v) => Math.min(1, Math.max(0, v));
   for (const c of cavernas) {
     const sx = Math.sin(c.dir), sz = Math.cos(c.dir);
-    const geo = new THREE8.IcosahedronGeometry(1, 4);
+    const geo = new THREE9.IcosahedronGeometry(1, 4);
     const pos = geo.attributes.position;
     const col = new Float32Array(pos.count * 3);
     const k = c.x * 0.13;
-    const cBase = new THREE8.Color("#6f695f");
-    const cTop = new THREE8.Color("#b9b2a4");
-    const cGrass = new THREE8.Color("#6c9145");
+    const cBase = new THREE9.Color("#6f695f");
+    const cTop = new THREE9.Color("#b9b2a4");
+    const cGrass = new THREE9.Color("#6c9145");
     for (let i = 0; i < pos.count; i++) {
       const dx = pos.getX(i), dy = pos.getY(i), dz = pos.getZ(i);
       const n = Math.sin(dx * 5.1 + k) * Math.sin(dz * 4.3 + k * 1.7) * 0.5 + Math.sin(dy * 6.2 + k * 0.6) * 0.5;
@@ -9721,26 +10280,26 @@ function criarBocas(cavernas) {
       col[i * 3 + 1] = color.g * mult;
       col[i * 3 + 2] = color.b * mult;
     }
-    geo.setAttribute("color", new THREE8.BufferAttribute(col, 3));
+    geo.setAttribute("color", new THREE9.BufferAttribute(col, 3));
     geo.computeVertexNormals();
-    const morro = new THREE8.Mesh(geo, new THREE8.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+    const morro = new THREE9.Mesh(geo, new THREE9.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
     morro.position.set(c.x, c.y - 0.4, c.z);
     morro.castShadow = morro.receiveShadow = true;
     g.add(morro);
     const rh = c.R * 1.05 * Math.sqrt(1 - Math.pow(0.85 / 3.4, 2));
     const bx = c.x + sx * (rh + 0.05), bz = c.z + sz * (rh + 0.05), by = c.y + 0.45;
-    const arco = new THREE8.Mesh(new THREE8.TorusGeometry(0.95, 0.3, 8, 18, Math.PI), new THREE8.MeshLambertMaterial({ color: 9077880, flatShading: true }));
+    const arco = new THREE9.Mesh(new THREE9.TorusGeometry(0.95, 0.3, 8, 18, Math.PI), new THREE9.MeshLambertMaterial({ color: 9077880, flatShading: true }));
     arco.position.set(bx, by, bz);
     arco.rotation.y = c.dir;
     arco.castShadow = true;
     g.add(arco);
-    const escuro = new THREE8.Mesh(new THREE8.CircleGeometry(0.95, 24).scale(1, 1.15, 1), new THREE8.MeshBasicMaterial({ color: 263434 }));
+    const escuro = new THREE9.Mesh(new THREE9.CircleGeometry(0.95, 24).scale(1, 1.15, 1), new THREE9.MeshBasicMaterial({ color: 263434 }));
     escuro.position.set(c.x + sx * (rh + 0.03), by, c.z + sz * (rh + 0.03));
     escuro.rotation.y = c.dir;
     g.add(escuro);
     const px = Math.cos(c.dir), pz = -Math.sin(c.dir);
     for (const lado of [-1, 1]) {
-      const bloco = new THREE8.Mesh(geoR, matRocha);
+      const bloco = new THREE9.Mesh(geoR, matRocha);
       bloco.position.set(c.x + sx * rh + px * lado * 1.35, c.y - 0.15, c.z + sz * rh + pz * lado * 1.35);
       bloco.scale.setScalar(0.6);
       bloco.rotation.y = lado + 1;
@@ -9754,7 +10313,7 @@ function criarBocas(cavernas) {
       while (diff > Math.PI) diff -= 2 * Math.PI;
       while (diff < -Math.PI) diff += 2 * Math.PI;
       if (Math.abs(diff) < 0.7) continue;
-      const pedra = new THREE8.Mesh(geoR, matRocha);
+      const pedra = new THREE9.Mesh(geoR, matRocha);
       pedra.position.set(c.x + Math.sin(a) * c.R * 1.15, c.y - 0.2, c.z + Math.cos(a) * c.R * 1.15);
       pedra.scale.setScalar(0.5 + rnd() * 0.5);
       pedra.rotation.y = rnd() * 6.283;
@@ -9765,15 +10324,15 @@ function criarBocas(cavernas) {
   return g;
 }
 function materialBrilho() {
-  const mat = new THREE8.MeshLambertMaterial({ toneMapped: false });
-  mat.onBeforeCompile = (sh) => {
+  const mat2 = new THREE9.MeshLambertMaterial({ toneMapped: false });
+  mat2.onBeforeCompile = (sh) => {
     sh.fragmentShader = sh.fragmentShader.replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n  totalEmissiveRadiance = diffuseColor.rgb * 0.8;");
   };
-  return mat;
+  return mat2;
 }
 function materialParedes(mapa, uGato) {
-  const mat = new THREE8.MeshLambertMaterial({ map: mapa, vertexColors: true, transparent: true });
-  mat.onBeforeCompile = (sh) => {
+  const mat2 = new THREE9.MeshLambertMaterial({ map: mapa, vertexColors: true, transparent: true });
+  mat2.onBeforeCompile = (sh) => {
     sh.uniforms.uGato = uGato;
     sh.vertexShader = "varying vec3 vMundo;\n" + sh.vertexShader.replace("#include <project_vertex>", "#include <project_vertex>\n  vMundo = (modelMatrix * vec4(transformed, 1.0)).xyz;");
     sh.fragmentShader = "uniform vec3 uGato;\nvarying vec3 vMundo;\n" + sh.fragmentShader.replace("#include <map_fragment>", `#include <map_fragment>
@@ -9786,25 +10345,25 @@ function materialParedes(mapa, uGato) {
     diffuseColor.a *= 1.0 - 0.92 * perto * antes;
   }`);
   };
-  return mat;
+  return mat2;
 }
 function criar(scene2, seed, salvo) {
   const planta = gerarPlanta(seed);
   gerarPontos(planta, seed);
-  const grupo = new THREE8.Group();
+  const grupo = new THREE9.Group();
   grupo.name = "caverna";
-  const uGato = { value: new THREE8.Vector3() };
+  const uGato = { value: new THREE9.Vector3() };
   const texChao = texturaPedra(seed, "chao");
   texChao.repeat.set(14, 14);
   const texParede = texturaPedra(seed + 1, "parede");
-  const chao = new THREE8.Mesh(new THREE8.PlaneGeometry(N + 4, N + 8).rotateX(-Math.PI / 2), new THREE8.MeshLambertMaterial({ map: texChao }));
+  const chao = new THREE9.Mesh(new THREE9.PlaneGeometry(N + 4, N + 8).rotateX(-Math.PI / 2), new THREE9.MeshLambertMaterial({ map: texChao }));
   chao.position.set(0, 0, 2);
   grupo.add(chao);
-  grupo.add(new THREE8.Mesh(geoParedes(planta), materialParedes(texParede, uGato)));
+  grupo.add(new THREE9.Mesh(geoParedes(planta), materialParedes(texParede, uGato)));
   const brilhos = criarBrilhos(planta, seed);
   grupo.add(brilhos.grupo, criarRochas(planta));
-  const hemi = new THREE8.HemisphereLight(8361696, 2830162, 0.75);
-  const luzGato = new THREE8.PointLight(16768168, 6, 8, 1.5);
+  const hemi = new THREE9.HemisphereLight(8361696, 2830162, 0.75);
+  const luzGato = new THREE9.PointLight(16768168, 6, 8, 1.5);
   grupo.add(hemi, luzGato);
   const w = new RAPIER.World({ x: 0, y: -GRAV, z: 0 });
   w.createCollider(RAPIER.ColliderDesc.cuboid(LIM + 3, 0.5, LIM + 3).setTranslation(0, -0.5, 0));
@@ -9824,8 +10383,8 @@ function criar(scene2, seed, salvo) {
     limites: LIM,
     planta,
     entradaSaida: { entrada: planta.entrada, saida: planta.saida },
-    fundo: new THREE8.Color(COR_FUNDO),
-    nevoa: new THREE8.Fog(COR_FUNDO, 14, 34),
+    fundo: new THREE9.Color(COR_FUNDO),
+    nevoa: new THREE9.Fog(COR_FUNDO, 14, 34),
     descoberto: nevoa.descoberto,
     get nevoaVersao() {
       return nevoa.nevoaVersao;
@@ -9872,7 +10431,7 @@ __export(arvore_exports, {
   gerarPlanta: () => gerarPlanta2,
   paredes: () => paredes
 });
-import * as THREE9 from "three";
+import * as THREE10 from "three";
 var LIM2 = 15;
 var Y = [5.4, 9, 12.6];
 var R_TRONCO = 1;
@@ -9954,14 +10513,14 @@ function gerarPlanta2(seed) {
     const pontoNoRamo = (r, t) => {
       if (r.segs.length === 0) return null;
       const total = r.segs.reduce((s, seg) => s + Math.hypot(seg.x1 - seg.x0, seg.z1 - seg.z0), 0);
-      let dist2 = t * total;
+      let dist3 = t * total;
       for (const seg of r.segs) {
         const len = Math.hypot(seg.x1 - seg.x0, seg.z1 - seg.z0);
-        if (dist2 <= len) {
-          const f = len === 0 ? 0 : dist2 / len;
+        if (dist3 <= len) {
+          const f = len === 0 ? 0 : dist3 / len;
           return { x: seg.x0 + (seg.x1 - seg.x0) * f, z: seg.z0 + (seg.z1 - seg.z0) * f, ang: Math.atan2(seg.z1 - seg.z0, seg.x1 - seg.x0) };
         }
-        dist2 -= len;
+        dist3 -= len;
       }
       const last = r.segs[r.segs.length - 1];
       return { x: last.x1, z: last.z1, ang: Math.atan2(last.z1 - last.z0, last.x1 - last.x0) };
@@ -10226,23 +10785,23 @@ function desenharPlanta2(ctx2, W, planta, ia) {
   }
 }
 function criarArvoresGrandes(arvores) {
-  const g = new THREE9.Group();
+  const g = new THREE10.Group();
   g.name = "arvoresGrandes";
   const geo = geoArvoreGrande();
-  const mat = materialVento({ amp: 0.22, H: 11 });
+  const mat2 = materialVento({ amp: 0.22, H: 11 });
   for (const a of arvores) {
-    const m = new THREE9.Mesh(geo, mat);
+    const m = new THREE10.Mesh(geo, mat2);
     m.position.set(a.x, a.y - 0.05, a.z);
     m.rotation.y = a.rot;
     m.castShadow = true;
     m.receiveShadow = true;
-    m.customDepthMaterial = mat.userData.profundidade;
+    m.customDepthMaterial = mat2.userData.profundidade;
     g.add(m);
   }
   return g;
 }
 function geoSeta(cima) {
-  const s = new THREE9.Shape();
+  const s = new THREE10.Shape();
   s.moveTo(0, 0.42);
   s.lineTo(0.3, 0.02);
   s.lineTo(0.12, 0.02);
@@ -10251,7 +10810,7 @@ function geoSeta(cima) {
   s.lineTo(-0.12, 0.02);
   s.lineTo(-0.3, 0.02);
   s.closePath();
-  const g = new THREE9.ShapeGeometry(s).rotateX(-Math.PI / 2);
+  const g = new THREE10.ShapeGeometry(s).rotateX(-Math.PI / 2);
   if (!cima) g.rotateY(Math.PI);
   return g;
 }
@@ -10260,10 +10819,10 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
   const planta = gerarPlanta2(seed);
   colocarDetalhes(planta, seed);
   let andar = restaurar2 && Number.isInteger(restaurar2.andar) && restaurar2.andar >= 0 && restaurar2.andar <= 2 ? restaurar2.andar : 0;
-  const grupo = new THREE9.Group();
+  const grupo = new THREE10.Group();
   grupo.name = "arvore";
-  const hemi = new THREE9.HemisphereLight(16777215, 8947848, 1);
-  const sol = new THREE9.DirectionalLight(16777215, 1);
+  const hemi = new THREE10.HemisphereLight(16777215, 8947848, 1);
+  const sol = new THREE10.DirectionalLight(16777215, 1);
   grupo.add(hemi, sol, sol.target);
   const copiarLuz = () => {
     if (!mapa) return;
@@ -10275,26 +10834,26 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
     sol.position.copy(mapa.solOffset);
   };
   copiarLuz();
-  const chao = new THREE9.Mesh(new THREE9.PlaneGeometry(400, 400).rotateX(-Math.PI / 2), new THREE9.MeshLambertMaterial({ color: 6262078 }));
+  const chao = new THREE10.Mesh(new THREE10.PlaneGeometry(400, 400).rotateX(-Math.PI / 2), new THREE10.MeshLambertMaterial({ color: 6262078 }));
   chao.position.y = -0.06;
   grupo.add(chao);
   if (mapa && mapa.texCanvas && entrada) {
-    const T2 = 130, S = 64, tex = new THREE9.CanvasTexture(mapa.texCanvas);
-    tex.colorSpace = THREE9.SRGBColorSpace;
+    const T2 = 130, S = 64, tex = new THREE10.CanvasTexture(mapa.texCanvas);
+    tex.colorSpace = THREE10.SRGBColorSpace;
     tex.repeat.set(S / T2, S / T2);
     tex.offset.set((entrada.x + T2 / 2) / T2 - S / (2 * T2), (T2 / 2 - entrada.z) / T2 - S / (2 * T2));
-    grupo.add(new THREE9.Mesh(new THREE9.PlaneGeometry(S, S).rotateX(-Math.PI / 2), new THREE9.MeshLambertMaterial({ map: tex })));
+    grupo.add(new THREE10.Mesh(new THREE10.PlaneGeometry(S, S).rotateX(-Math.PI / 2), new THREE10.MeshLambertMaterial({ map: tex })));
   }
   if (mapa && mapa.mundo && mapa.mundo.inst && entrada) {
-    const I = mapa.mundo.inst, liso = new THREE9.MeshLambertMaterial({ vertexColors: true });
-    const m4 = new THREE9.Matrix4(), q = new THREE9.Quaternion(), yAx = new THREE9.Vector3(0, 1, 0), pos = new THREE9.Vector3(), esc = new THREE9.Vector3(), cor = new THREE9.Color();
+    const I = mapa.mundo.inst, liso = new THREE10.MeshLambertMaterial({ vertexColors: true });
+    const m4 = new THREE10.Matrix4(), q = new THREE10.Quaternion(), yAx = new THREE10.Vector3(0, 1, 0), pos = new THREE10.Vector3(), esc = new THREE10.Vector3(), cor = new THREE10.Color();
     for (const [tipo, geo] of [["pino", geoPinho], ["frondosa", geoFrondosa], ["betula", geoBetula], ["arbusto", geoArbusto], ["pedra", geoPedra], ["rocha", geoRocha]]) {
       const lista = (I[tipo] || []).filter((it) => {
         const d = Math.hypot(it.x - entrada.x, it.z - entrada.z);
         return d > 3 && d < 34;
       });
       if (!lista.length) continue;
-      const im = new THREE9.InstancedMesh(geo(), liso, lista.length);
+      const im = new THREE10.InstancedMesh(geo(), liso, lista.length);
       lista.forEach((it, k) => {
         pos.set(it.x - entrada.x, 0, it.z - entrada.z);
         q.setFromAxisAngle(yAx, it.rot);
@@ -10314,7 +10873,7 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
   gr.addColorStop(1, "rgba(10,25,10,0)");
   cx2.fillStyle = gr;
   cx2.fillRect(0, 0, 64, 64);
-  const sombra = new THREE9.Mesh(new THREE9.PlaneGeometry(26, 26).rotateX(-Math.PI / 2), new THREE9.MeshBasicMaterial({ map: new THREE9.CanvasTexture(cv), transparent: true, depthWrite: false }));
+  const sombra = new THREE10.Mesh(new THREE10.PlaneGeometry(26, 26).rotateX(-Math.PI / 2), new THREE10.MeshBasicMaterial({ map: new THREE10.CanvasTexture(cv), transparent: true, depthWrite: false }));
   sombra.position.y = 0.03;
   grupo.add(sombra);
   {
@@ -10326,34 +10885,34 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
       }
       for (const j of A.juntas) spots.push([j.x, j.z, 2 * j.r + 1.4 + A.y * 0.18]);
     }
-    const sombras = new THREE9.InstancedMesh(new THREE9.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE9.MeshBasicMaterial({ map: sombra.material.map, transparent: true, depthWrite: false, opacity: 0.55 }), spots.length);
-    const m4 = new THREE9.Matrix4();
+    const sombras = new THREE10.InstancedMesh(new THREE10.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE10.MeshBasicMaterial({ map: sombra.material.map, transparent: true, depthWrite: false, opacity: 0.55 }), spots.length);
+    const m4 = new THREE10.Matrix4();
     spots.forEach((sp, k) => sombras.setMatrixAt(k, m4.makeScale(sp[2], 1, sp[2]).setPosition(sp[0], 0.05, sp[1])));
     sombras.frustumCulled = false;
     grupo.add(sombras);
   }
   const baseMat = () => {
-    const m = new THREE9.MeshLambertMaterial({ vertexColors: true, transparent: true });
+    const m = new THREE10.MeshLambertMaterial({ vertexColors: true, transparent: true });
     return m;
   };
   const geoItem = { ninho: geoNinho, casinha: geoCasinha, frutas: geoFrutas, borboleta: geoBorboleta };
   const pisos = [], borboletas = [];
   const ovos = [];
-  const geoOvo = new THREE9.SphereGeometry(0.085, 8, 6);
+  const geoOvo = new THREE10.SphereGeometry(0.085, 8, 6);
   let anel2 = null, bandeira = null;
   const mirante = planta.andares[2].mirante;
   planta.andares.forEach((A, i) => {
-    const g = new THREE9.Group(), mats = [];
+    const g = new THREE10.Group(), mats = [];
     const mGalho = baseMat(), mFolha = materialVento({ amp: 0.12, H: 0.8 }), mItem = baseMat();
-    mItem.side = THREE9.DoubleSide;
+    mItem.side = THREE10.DoubleSide;
     mFolha.transparent = true;
     mats.push(mGalho, mFolha, mItem);
-    g.add(new THREE9.Mesh(geoGalhos(A), mGalho));
+    g.add(new THREE10.Mesh(geoGalhos(A), mGalho));
     const yTr0 = i === 0 ? 0 : Y[i - 1] + 1;
-    g.add(new THREE9.Mesh(geoTroncoSeg(yTr0, A.y + 1, i === 0 ? 1.6 : R_TRONCO, R_TRONCO), mGalho));
+    g.add(new THREE10.Mesh(geoTroncoSeg(yTr0, A.y + 1, i === 0 ? 1.6 : R_TRONCO, R_TRONCO), mGalho));
     if (A.tufos.length) {
-      const im = new THREE9.InstancedMesh(geoTufo(), mFolha, A.tufos.length);
-      const m4 = new THREE9.Matrix4(), q = new THREE9.Quaternion(), yAx = new THREE9.Vector3(0, 1, 0), pos = new THREE9.Vector3(), esc = new THREE9.Vector3(), cor = new THREE9.Color();
+      const im = new THREE10.InstancedMesh(geoTufo(), mFolha, A.tufos.length);
+      const m4 = new THREE10.Matrix4(), q = new THREE10.Quaternion(), yAx = new THREE10.Vector3(0, 1, 0), pos = new THREE10.Vector3(), esc = new THREE10.Vector3(), cor = new THREE10.Color();
       A.tufos.forEach((t, k) => {
         pos.set(t.x, A.y - 0.05, t.z);
         q.setFromAxisAngle(yAx, t.rot);
@@ -10365,16 +10924,16 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
       g.add(im);
     }
     for (const it of A.itens) {
-      const m = new THREE9.Mesh(geoItem[it.tipo](), mItem);
+      const m = new THREE10.Mesh(geoItem[it.tipo](), mItem);
       m.position.set(it.x, A.y + (it.tipo === "frutas" ? 0.15 : it.tipo === "borboleta" ? 0.3 : 0), it.z);
       m.rotation.y = it.rot;
       g.add(m);
       if (it.tipo === "borboleta") borboletas.push(m);
       if (it.tipo === "ninho" && entrada) {
-        const mOvo = new THREE9.MeshLambertMaterial({ color: 12576498, transparent: true });
+        const mOvo = new THREE10.MeshLambertMaterial({ color: 12576498, transparent: true });
         mats.push(mOvo);
         for (let k = 0; k < 3; k++) {
-          const ovo = new THREE9.Mesh(geoOvo, mOvo);
+          const ovo = new THREE10.Mesh(geoOvo, mOvo);
           ovo.position.set(Math.cos(k * 2.094) * 0.11, 0.2, Math.sin(k * 2.094) * 0.11);
           ovo.scale.set(1, 1.3, 1);
           m.add(ovo);
@@ -10383,9 +10942,9 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
       }
     }
     const pad = (p, cor, cima) => {
-      const mp = new THREE9.MeshBasicMaterial({ color: cor, transparent: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-      const ma = new THREE9.MeshBasicMaterial({ color: 16777215, transparent: true, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
-      const d = new THREE9.Mesh(new THREE9.CircleGeometry(0.62, 24).rotateX(-Math.PI / 2), mp), s = new THREE9.Mesh(geoSeta(cima), ma);
+      const mp = new THREE10.MeshBasicMaterial({ color: cor, transparent: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+      const ma = new THREE10.MeshBasicMaterial({ color: 16777215, transparent: true, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+      const d = new THREE10.Mesh(new THREE10.CircleGeometry(0.62, 24).rotateX(-Math.PI / 2), mp), s = new THREE10.Mesh(geoSeta(cima), ma);
       d.position.set(p.x, A.y + 0.03, p.z);
       s.position.set(p.x, A.y + 0.06, p.z);
       g.add(d, s);
@@ -10394,19 +10953,19 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
     if (i < 2) pad(PAD.subir, 7330927, true);
     pad(PAD.descer, 16755002, false);
     if (A.mirante) {
-      const mb = new THREE9.MeshBasicMaterial({ color: 16765773, transparent: true, opacity: 0.4, depthWrite: false });
-      const disco = new THREE9.Mesh(new THREE9.CircleGeometry(1.2, 28).rotateX(-Math.PI / 2), mb);
+      const mb = new THREE10.MeshBasicMaterial({ color: 16765773, transparent: true, opacity: 0.4, depthWrite: false });
+      const disco = new THREE10.Mesh(new THREE10.CircleGeometry(1.2, 28).rotateX(-Math.PI / 2), mb);
       disco.position.set(A.mirante.x, A.y + 0.04, A.mirante.z);
-      const mast = new THREE9.Mesh(new THREE9.CylinderGeometry(0.04, 0.05, 1.7, 6), mGalho.clone());
+      const mast = new THREE10.Mesh(new THREE10.CylinderGeometry(0.04, 0.05, 1.7, 6), mGalho.clone());
       mast.position.set(A.mirante.x, A.y + 0.85, A.mirante.z - 0.75);
-      const fl = new THREE9.Shape();
+      const fl = new THREE10.Shape();
       fl.moveTo(0, 0);
       fl.lineTo(0.9, 0.2);
       fl.lineTo(0, 0.5);
       fl.closePath();
-      bandeira = new THREE9.Mesh(new THREE9.ShapeGeometry(fl), new THREE9.MeshBasicMaterial({ color: 16734794, side: THREE9.DoubleSide, transparent: true }));
+      bandeira = new THREE10.Mesh(new THREE10.ShapeGeometry(fl), new THREE10.MeshBasicMaterial({ color: 16734794, side: THREE10.DoubleSide, transparent: true }));
       bandeira.position.set(A.mirante.x + 0.02, A.y + 1.2, A.mirante.z - 0.75);
-      anel2 = new THREE9.Mesh(new THREE9.RingGeometry(0.85, 1, 40).rotateX(-Math.PI / 2), new THREE9.MeshBasicMaterial({ color: 16769658, transparent: true, opacity: 0, depthWrite: false }));
+      anel2 = new THREE10.Mesh(new THREE10.RingGeometry(0.85, 1, 40).rotateX(-Math.PI / 2), new THREE10.MeshBasicMaterial({ color: 16769658, transparent: true, opacity: 0, depthWrite: false }));
       anel2.position.set(A.mirante.x, A.y + 0.08, A.mirante.z);
       anel2.visible = false;
       mast.material.vertexColors = false;
@@ -10450,8 +11009,8 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
     planta,
     aoArLivre: true,
     entradaSaida: { entrada: PAD.pouso, saida: { x: 1e4, z: 1e4, raio: 0 } },
-    fundo: mapa ? mapa.fundo : new THREE9.Color(12575743),
-    nevoa: mapa ? mapa.fog : new THREE9.Fog(12575743, 40, 105),
+    fundo: mapa ? mapa.fundo : new THREE10.Color(12575743),
+    nevoa: mapa ? mapa.fog : new THREE10.Fog(12575743, 40, 105),
     descoberto,
     nevoaVersao: 0,
     get andar() {
@@ -10517,7 +11076,7 @@ function criar2(scene2, seed, salvo, ctx2 = {}) {
 }
 
 // js/pega-mapa.js
-import * as THREE10 from "three";
+import * as THREE11 from "three";
 
 // js/brincadeiras.js
 var BRINCADEIRAS = {
@@ -10889,16 +11448,16 @@ function num3(v) {
 function r1(v) {
   return Math.round(v * 10) / 10;
 }
-function r2(v) {
+function r22(v) {
   return Math.round(v * 100) / 100;
 }
-function dist(a, b) {
+function dist2(a, b) {
   if (!num3(a.x) || !num3(a.z) || !num3(b.x) || !num3(b.z)) return Infinity;
   const dx = a.x - b.x;
   const dz = a.z - b.z;
   return Math.sqrt(dx * dx + dz * dz);
 }
-function mulberry322(seed) {
+function mulberry323(seed) {
   let a = seed | 0;
   return function() {
     a = a + 1831565813 | 0;
@@ -10937,7 +11496,7 @@ function areaPega(posicoes, limite = 55) {
 }
 function troncosArea(centro, raio, seed) {
   if (!centro || !num3(centro.x) || !num3(centro.z) || !num3(raio) || raio <= 0) return [];
-  const rnd = mulberry322(seed | 0);
+  const rnd = mulberry323(seed | 0);
   const n = Math.round(Math.PI * raio * raio / 80);
   const tentativas = n * 12;
   const aceitos = [];
@@ -10960,7 +11519,7 @@ function troncosArea(centro, raio, seed) {
     const tipo = rnd() < 0.65 ? "tronco" : "rocha";
     const rot = rnd() * Math.PI * 2;
     const s = 0.9 + rnd() * 0.6;
-    aceitos.push({ tipo, x: r2(x), z: r2(z), rot: r2(rot), s: r2(s) });
+    aceitos.push({ tipo, x: r22(x), z: r22(z), rot: r22(rot), s: r22(s) });
   }
   return aceitos;
 }
@@ -10970,7 +11529,7 @@ function multVelocidade(seg) {
 }
 function pegou(a, b, raio) {
   if (!a || !b || !num3(raio)) return false;
-  return dist(a, b) <= raio;
+  return dist2(a, b) <= raio;
 }
 function pegouTrecho(a0, a1, b, raio) {
   if (!a0 || !a1 || !b || !num3(raio)) return false;
@@ -11239,19 +11798,19 @@ function anel(altura, cx, cz, r0, r12, y0, y1, vertical) {
       idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2);
     }
   }
-  const g = new THREE10.BufferGeometry();
-  g.setAttribute("position", new THREE10.Float32BufferAttribute(pos, 3));
+  const g = new THREE11.BufferGeometry();
+  g.setAttribute("position", new THREE11.Float32BufferAttribute(pos, 3));
   g.setIndex(idx);
   return g;
 }
 function montarArea(mapa, grupo, j) {
-  const mundo = mapa.mundo, fis = mapa.fis, g = new THREE10.Group(), cols = [], donos = [];
+  const mundo = mapa.mundo, fis = mapa.fis, g = new THREE11.Group(), cols = [], donos = [];
   g.name = "pega-area";
   const R = j.raio, cx = j.cx, cz = j.cz;
-  const fita = new THREE10.Mesh(anel(mundo.altura, cx, cz, R - 0.8, R, 0.1, 0, false), new THREE10.MeshBasicMaterial({ color: 16742932, side: THREE10.DoubleSide }));
-  const parede = new THREE10.Mesh(anel(mundo.altura, cx, cz, R, R, -0.3, 1.8, true), new THREE10.MeshBasicMaterial({ color: 16751164, transparent: true, opacity: 0.3, side: THREE10.DoubleSide, depthWrite: false }));
+  const fita = new THREE11.Mesh(anel(mundo.altura, cx, cz, R - 0.8, R, 0.1, 0, false), new THREE11.MeshBasicMaterial({ color: 16742932, side: THREE11.DoubleSide }));
+  const parede = new THREE11.Mesh(anel(mundo.altura, cx, cz, R, R, -0.3, 1.8, true), new THREE11.MeshBasicMaterial({ color: 16751164, transparent: true, opacity: 0.3, side: THREE11.DoubleSide, depthWrite: false }));
   g.add(fita, parede);
-  const liso = new THREE10.MeshLambertMaterial({ vertexColors: true });
+  const liso = new THREE11.MeshLambertMaterial({ vertexColors: true });
   const geoT = geoTronco(), geoR = geoRocha();
   for (const o of j.tipo === "pega" ? troncosArea({ x: cx, z: cz }, R, j.seed) : []) {
     const { x, z, s, rot } = o, h = mundo.altura(x, z), rio = mundo.distRio(x, z);
@@ -11262,7 +11821,7 @@ function montarArea(mapa, grupo, j) {
       const dx = Math.sin(rot) * s, dz = Math.cos(rot) * s, h1 = mundo.altura(x + dx, z + dz), h2 = mundo.altura(x - dx, z - dz);
       if (Math.abs(h1 - h2) > 0.5) continue;
       const M = Math.max(h1, h2, h), topo = M + 0.62 * s + 0.05;
-      const m = new THREE10.Mesh(geoT, liso);
+      const m = new THREE11.Mesh(geoT, liso);
       m.position.set(x, M + 0.05, z);
       m.rotation.y = rot;
       m.scale.setScalar(s);
@@ -11271,7 +11830,7 @@ function montarArea(mapa, grupo, j) {
       g.add(m);
       cols.push({ x, z, rot, hx: 0.34 * s, hz: 1.8 * s, yb: topo - 2, yt: topo });
     } else {
-      const sy = 0.9, m = new THREE10.Mesh(geoR, liso);
+      const sy = 0.9, m = new THREE11.Mesh(geoR, liso);
       m.position.set(x, h - 0.25 * s, z);
       m.rotation.y = rot;
       m.scale.set(s, s * sy, s);
@@ -11306,17 +11865,17 @@ function montarArea(mapa, grupo, j) {
 var _aura = null;
 function novaAura() {
   if (!_aura) {
-    const mat = (cor, op) => new THREE10.MeshBasicMaterial({ color: cor, transparent: true, opacity: op, depthTest: false, depthWrite: false, side: THREE10.DoubleSide });
+    const mat2 = (cor, op) => new THREE11.MeshBasicMaterial({ color: cor, transparent: true, opacity: op, depthTest: false, depthWrite: false, side: THREE11.DoubleSide });
     _aura = {
-      anel: new THREE10.RingGeometry(PEGA.aura - 0.1, PEGA.aura, 48).rotateX(-Math.PI / 2),
-      disco: new THREE10.CircleGeometry(PEGA.aura, 40).rotateX(-Math.PI / 2),
-      m1: mat(7077690, 0.85),
-      m2: mat(3856458, 0.22)
+      anel: new THREE11.RingGeometry(PEGA.aura - 0.1, PEGA.aura, 48).rotateX(-Math.PI / 2),
+      disco: new THREE11.CircleGeometry(PEGA.aura, 40).rotateX(-Math.PI / 2),
+      m1: mat2(7077690, 0.85),
+      m2: mat2(3856458, 0.22)
     };
   }
-  const a = new THREE10.Group();
+  const a = new THREE11.Group();
   a.name = "aura-pega";
-  const r = new THREE10.Mesh(_aura.anel, _aura.m1), d = new THREE10.Mesh(_aura.disco, _aura.m2);
+  const r = new THREE11.Mesh(_aura.anel, _aura.m1), d = new THREE11.Mesh(_aura.disco, _aura.m2);
   r.renderOrder = d.renderOrder = 9;
   r.position.y = d.position.y = 0.12;
   a.add(d, r);
@@ -11341,7 +11900,7 @@ function lerpAngle2(a, b, t) {
   while (diff < -Math.PI) diff += Math.PI * 2;
   return a + diff * t;
 }
-var SOL_OFFSET = new THREE11.Vector3(-13, 19, 4);
+var SOL_OFFSET = new THREE12.Vector3(-13, 19, 4);
 var CICLO_SEG = 1.5;
 var CICLOS = {
   dia: { sol: 16773341, solInt: 2.7, solPos: [-13, 19, 4], hemiCeu: 16773600, hemiSolo: 7178828, hemiInt: 1.15, fundo: 12575743, nevoa: 12575743, nevoaPerto: 40, nevoaLonge: 105, aguaCeu: 12575743, aguaProf: 2060170, aguaRaso: 6275268 },
@@ -11350,27 +11909,27 @@ var CICLOS = {
 };
 function estadoDoCiclo(def) {
   return {
-    sol: new THREE11.Color(def.sol),
+    sol: new THREE12.Color(def.sol),
     solInt: def.solInt,
-    solPos: new THREE11.Vector3(...def.solPos),
-    hemiCeu: new THREE11.Color(def.hemiCeu),
-    hemiSolo: new THREE11.Color(def.hemiSolo),
+    solPos: new THREE12.Vector3(...def.solPos),
+    hemiCeu: new THREE12.Color(def.hemiCeu),
+    hemiSolo: new THREE12.Color(def.hemiSolo),
     hemiInt: def.hemiInt,
-    fundo: new THREE11.Color(def.fundo),
-    nevoa: new THREE11.Color(def.nevoa),
+    fundo: new THREE12.Color(def.fundo),
+    nevoa: new THREE12.Color(def.nevoa),
     nevoaPerto: def.nevoaPerto,
     nevoaLonge: def.nevoaLonge,
-    aguaCeu: new THREE11.Color(def.aguaCeu),
-    aguaProf: new THREE11.Color(def.aguaProf),
-    aguaRaso: new THREE11.Color(def.aguaRaso)
+    aguaCeu: new THREE12.Color(def.aguaCeu),
+    aguaProf: new THREE12.Color(def.aguaProf),
+    aguaRaso: new THREE12.Color(def.aguaRaso)
   };
 }
 function misturarEstado(de, para, k, saida2) {
   for (const chave in para) {
     const v = para[chave];
-    if (v instanceof THREE11.Color) {
+    if (v instanceof THREE12.Color) {
       saida2[chave].lerpColors(de[chave], para[chave], k);
-    } else if (v instanceof THREE11.Vector3) {
+    } else if (v instanceof THREE12.Vector3) {
       saida2[chave].lerpVectors(de[chave], para[chave], k);
     } else {
       saida2[chave] = de[chave] + (para[chave] - de[chave]) * k;
@@ -11426,7 +11985,7 @@ function atualizarCiclo(mapa, scene2, dt) {
 var INCLINA_MAX = 0.35;
 var COM_SOMBRA = /* @__PURE__ */ new Set(["pino", "frondosa", "betula", "arbusto", "rocha", "tronco"]);
 function tiposDeInstancia() {
-  const liso = () => new THREE11.MeshLambertMaterial({ vertexColors: true });
+  const liso = () => new THREE12.MeshLambertMaterial({ vertexColors: true });
   return {
     pino: [geoPinho(), materialVento({ amp: 0.16, H: 5.6 })],
     frondosa: [geoFrondosa(), materialVento({ amp: 0.14, H: 5.4 })],
@@ -11444,7 +12003,7 @@ function ondinhas(mapa, dt, gp) {
   if (!mapa.ondas) {
     if (!mapa.nadando) return;
     mapa.ondas = [0, 0.5].map((fase) => {
-      const m = new THREE11.Mesh(new THREE11.RingGeometry(0.9, 1, 40).rotateX(-Math.PI / 2), new THREE11.MeshBasicMaterial({ color: 16777215, transparent: true, depthWrite: false, fog: true }));
+      const m = new THREE12.Mesh(new THREE12.RingGeometry(0.9, 1, 40).rotateX(-Math.PI / 2), new THREE12.MeshBasicMaterial({ color: 16777215, transparent: true, depthWrite: false, fog: true }));
       m.userData.fase = fase;
       m.renderOrder = 4;
       mapa.grupo.add(m);
@@ -11466,14 +12025,14 @@ function criarMapa(scene2, gato, salvo) {
   const ok = salvo && typeof salvo === "object" && Number.isFinite(salvo.x) && Number.isFinite(salvo.z);
   const seed = salvo && Number.isFinite(salvo.seed) ? salvo.seed : 12345;
   const mundo = criarMundo(seed);
-  const grupo = new THREE11.Group();
+  const grupo = new THREE12.Group();
   grupo.name = "mapa";
   scene2.add(grupo);
-  scene2.fog = new THREE11.Fog(CICLOS.dia.nevoa, CICLOS.dia.nevoaPerto, CICLOS.dia.nevoaLonge);
-  scene2.background = new THREE11.Color(CICLOS.dia.fundo);
-  const hemi = new THREE11.HemisphereLight(CICLOS.dia.hemiCeu, CICLOS.dia.hemiSolo, CICLOS.dia.hemiInt);
+  scene2.fog = new THREE12.Fog(CICLOS.dia.nevoa, CICLOS.dia.nevoaPerto, CICLOS.dia.nevoaLonge);
+  scene2.background = new THREE12.Color(CICLOS.dia.fundo);
+  const hemi = new THREE12.HemisphereLight(CICLOS.dia.hemiCeu, CICLOS.dia.hemiSolo, CICLOS.dia.hemiInt);
   grupo.add(hemi);
-  const sol = new THREE11.DirectionalLight(CICLOS.dia.sol, CICLOS.dia.solInt);
+  const sol = new THREE12.DirectionalLight(CICLOS.dia.sol, CICLOS.dia.solInt);
   const pequeno = matchMedia("(pointer: coarse)").matches;
   sol.castShadow = true;
   sol.shadow.mapSize.set(pequeno ? 1024 : 2048, pequeno ? 1024 : 2048);
@@ -11536,6 +12095,7 @@ function criarMapa(scene2, gato, salvo) {
       if (espelhando() || mapa.pegos.missao) return false;
       const m = novaMissao(id, Date.now());
       if (!m) return false;
+      if (MISSOES[id].carga && !(m.brinq = montarCarga())) return false;
       mapa.pegos.missao = m;
       return true;
     },
@@ -11555,6 +12115,7 @@ function criarMapa(scene2, gato, salvo) {
     tick() {
       const m = mapa.pegos.missao;
       if (m && m.fim && !espelhando() && Date.now() - m.fim > 6e3) delete mapa.pegos.missao;
+      else if (m && m.brinq && !m.fim && !espelhando()) soltarAusentes(m.brinq, /* @__PURE__ */ new Set([...mapa.charsPresentes ? mapa.charsPresentes() : [], mapa.meuChar]));
     },
     serializar: () => serializarMissao(mapa.pegos.missao),
     espelho(texto) {
@@ -11563,15 +12124,85 @@ function criarMapa(scene2, gato, salvo) {
       else delete mapa.pegos.missao;
     }
   };
-  const tex = criarTexturaTerreno(THREE11, mundo, 1024);
+  mapa.meuChar = null;
+  mapa.charsPresentes = null;
+  mapa.gatosPorChar = null;
+  mapa.aoPedirCarga = null;
+  mapa.brinquedos = criarBrinquedos(mapa);
+  function montarCarga() {
+    const g2 = mapa.centroGrupo && mapa.centroGrupo() || mapa.gatoGroup.position, lim = mundo.LIMITE - 5;
+    const c = centroEncontro({ x: g2.x, z: g2.z }, 12, lim, (x, z) => mapa.pontoLivre(x, z));
+    for (let k = 0; k < 6; k++) {
+      const seed2 = Math.floor(Math.random() * 1e9);
+      const pontos = espalhar({ seed: seed2, cx: c.x, cz: c.z, n: 10, raio: 35, minCentro: 8, sep: 4, livre: (x, z) => mapa.pontoLivre(x, z) });
+      if (pontos.length >= 10) return novaCarga({ seed: seed2, cx: c.x, cz: c.z, cesta: c, pontos });
+    }
+    return null;
+  }
+  const missaoCarga = () => {
+    const m = mapa.pegos.missao;
+    return m && m.brinq && !m.fim ? m : null;
+  };
+  function aplicarCarga(tipo, char, valor, pos2, folga) {
+    const m = missaoCarga();
+    if (!m || espelhando() || !char || !pos2) return false;
+    if (tipo === "pegar") return pegar(m.brinq, char, Number(valor), pos2, folga);
+    if (tipo === "soltar") return soltar2(m.brinq, char, pos2) >= 0;
+    if (tipo === "entregar") {
+      if (entregar(m.brinq, char, pos2, folga) < 0) return false;
+      if (progredir(m, { tipo: "brinquedo" }, char) && concluida(m)) m.fim = Date.now();
+      return true;
+    }
+    return false;
+  }
+  let esperaCarga = 0;
+  function pedirCarga(tipo, valor) {
+    if (!mapa.meuChar || !missaoCarga()) return false;
+    const gp = mapa.gatoGroup.position;
+    if (!espelhando()) return aplicarCarga(tipo, mapa.meuChar, valor, { x: gp.x, z: gp.z }, 0);
+    if (!mapa.aoPedirCarga || performance.now() < esperaCarga) return false;
+    esperaCarga = performance.now() + 1200;
+    mapa.aoPedirCarga(tipo, String(valor));
+    return true;
+  }
+  mapa.carregar = {
+    levando: () => {
+      const m = missaoCarga();
+      return !!m && !!mapa.meuChar && carregando2(m.brinq, mapa.meuChar) >= 0;
+    },
+    /** índice do brinquedo no chão mais perto de (x, z) dentro do alcance, ou -1 */
+    proximo(x, z) {
+      const m = missaoCarga();
+      if (!m || !mapa.meuChar) return -1;
+      let melhor = -1, menor = RAIO_PEGAR;
+      m.brinq.itens.forEach((it, i) => {
+        const d = it.est === "chao" ? Math.hypot(it.x - x, it.z - z) : Infinity;
+        if (d <= menor) {
+          menor = d;
+          melhor = i;
+        }
+      });
+      return melhor;
+    },
+    pertoCesta(x, z) {
+      const m = missaoCarga();
+      return !!m && Math.hypot(m.brinq.cesta.x - x, m.brinq.cesta.z - z) <= RAIO_CESTA;
+    },
+    pegar: (i) => pedirCarga("pegar", i),
+    entregar: () => pedirCarga("entregar", ""),
+    soltar: () => pedirCarga("soltar", ""),
+    remoto: (tipo, char, valor, pos2) => aplicarCarga(tipo, char, valor, pos2, 0.8)
+    // pedido de outro aparelho (a posição dele chega ~0,1 s atrasada)
+  };
+  const tex = criarTexturaTerreno(THREE12, mundo, 1024);
   mapa.texCanvas = tex.canvas;
-  const detalhe = criarTexturaDetalhe(THREE11);
-  const g = new THREE11.PlaneGeometry(TERRENO, TERRENO, 120, 120);
+  const detalhe = criarTexturaDetalhe(THREE12);
+  const g = new THREE12.PlaneGeometry(TERRENO, TERRENO, 120, 120);
   g.rotateX(-Math.PI / 2);
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) p.setY(i, mundo.altura(p.getX(i), p.getZ(i)));
   g.computeVertexNormals();
-  const matT = new THREE11.MeshLambertMaterial({ map: tex.texture });
+  const matT = new THREE12.MeshLambertMaterial({ map: tex.texture });
   matT.onBeforeCompile = (sh) => {
     sh.uniforms.tDet = { value: detalhe };
     Object.assign(sh.uniforms, LEQUE);
@@ -11581,20 +12212,20 @@ function criarMapa(scene2, gato, salvo) {
       "#include <map_fragment>\n  diffuseColor.rgb *= 0.6 + 0.6 * texture2D(tDet, vMapUv * 30.0).r;"
     ).replace("#include <color_fragment>", "#include <color_fragment>" + glslPintar("vLeqXZ", "diffuseColor.rgb"));
   };
-  const terreno = new THREE11.Mesh(g, matT);
+  const terreno = new THREE12.Mesh(g, matT);
   terreno.receiveShadow = true;
   grupo.add(terreno);
-  const anel2 = new THREE11.Shape([new THREE11.Vector2(-450, -450), new THREE11.Vector2(450, -450), new THREE11.Vector2(450, 450), new THREE11.Vector2(-450, 450)]);
+  const anel2 = new THREE12.Shape([new THREE12.Vector2(-450, -450), new THREE12.Vector2(450, -450), new THREE12.Vector2(450, 450), new THREE12.Vector2(-450, 450)]);
   const h = TERRENO / 2 - 0.3;
-  anel2.holes.push(new THREE11.Path([new THREE11.Vector2(-h, -h), new THREE11.Vector2(-h, h), new THREE11.Vector2(h, h), new THREE11.Vector2(h, -h)]));
-  const fora = new THREE11.Mesh(new THREE11.ShapeGeometry(anel2).rotateX(-Math.PI / 2), new THREE11.MeshLambertMaterial({ color: 6262078 }));
+  anel2.holes.push(new THREE12.Path([new THREE12.Vector2(-h, -h), new THREE12.Vector2(-h, h), new THREE12.Vector2(h, h), new THREE12.Vector2(h, -h)]));
+  const fora = new THREE12.Mesh(new THREE12.ShapeGeometry(anel2).rotateX(-Math.PI / 2), new THREE12.MeshLambertMaterial({ color: 6262078 }));
   fora.position.y = 0.4;
   grupo.add(fora);
-  const cor = new THREE11.Color(), m4 = new THREE11.Matrix4(), q = new THREE11.Quaternion(), yAxis = new THREE11.Vector3(0, 1, 0);
-  const pos = new THREE11.Vector3(), esc = new THREE11.Vector3();
-  for (const [tipo, [geo, mat]] of Object.entries(tiposDeInstancia())) {
+  const cor = new THREE12.Color(), m4 = new THREE12.Matrix4(), q = new THREE12.Quaternion(), yAxis = new THREE12.Vector3(0, 1, 0);
+  const pos = new THREE12.Vector3(), esc = new THREE12.Vector3();
+  for (const [tipo, [geo, mat2]] of Object.entries(tiposDeInstancia())) {
     for (const lista of mundo.porChunk(mundo.inst[tipo])) {
-      const im = new THREE11.InstancedMesh(geo, mat, lista.length);
+      const im = new THREE12.InstancedMesh(geo, mat2, lista.length);
       lista.forEach((it, i) => {
         pos.set(it.x, it.y, it.z);
         q.setFromAxisAngle(yAxis, it.rot);
@@ -11606,23 +12237,23 @@ function criarMapa(scene2, gato, salvo) {
         if (tipo === "arbusto") mapa.arbInst.set(it, { im, i });
       });
       im.castShadow = COM_SOMBRA.has(tipo);
-      if (mat.userData.profundidade) im.customDepthMaterial = mat.userData.profundidade;
+      if (mat2.userData.profundidade) im.customDepthMaterial = mat2.userData.profundidade;
       im.receiveShadow = tipo !== "grama" && tipo !== "flor";
       grupo.add(im);
     }
   }
-  mapa.agua = criarAgua(mundo, criarTexturaRuido(THREE11), SOL_OFFSET);
+  mapa.agua = criarAgua(mundo, criarTexturaRuido(THREE12), SOL_OFFSET);
   grupo.add(mapa.agua);
   const tr = mundo.travessias.find((t) => t.tipo === "tronco");
-  const troncoPonte = new THREE11.Mesh(geoTronco(), new THREE11.MeshLambertMaterial({ vertexColors: true }));
+  const troncoPonte = new THREE12.Mesh(geoTronco(), new THREE12.MeshLambertMaterial({ vertexColors: true }));
   troncoPonte.scale.set(1.35, 1.35, tr.comp / 3.6);
   troncoPonte.position.set(tr.cx, tr.y - 0.6 * 1.35, tr.cz);
   troncoPonte.rotation.y = tr.rot;
   troncoPonte.castShadow = troncoPonte.receiveShadow = true;
   grupo.add(troncoPonte);
-  const asa = new THREE11.BufferGeometry();
-  asa.setAttribute("position", new THREE11.Float32BufferAttribute([0, 0, 0, 0.11, 0, 0.07, 0.11, 0, -0.06, 0, 0, 0, -0.11, 0, -0.06, -0.11, 0, 0.07], 3));
-  const bor = new THREE11.InstancedMesh(asa, new THREE11.MeshBasicMaterial({ side: THREE11.DoubleSide }), 8);
+  const asa = new THREE12.BufferGeometry();
+  asa.setAttribute("position", new THREE12.Float32BufferAttribute([0, 0, 0, 0.11, 0, 0.07, 0.11, 0, -0.06, 0, 0, 0, -0.11, 0, -0.06, -0.11, 0, 0.07], 3));
+  const bor = new THREE12.InstancedMesh(asa, new THREE12.MeshBasicMaterial({ side: THREE12.DoubleSide }), 8);
   const rb = mulberry32(99);
   mapa.borboletas = Array.from({ length: 8 }, (_, i) => {
     const f = mundo.inst.flor[Math.floor(rb() * mundo.inst.flor.length)];
@@ -11632,7 +12263,7 @@ function criarMapa(scene2, gato, salvo) {
   bor.frustumCulled = false;
   mapa.bor = bor;
   grupo.add(bor);
-  const gatoGroup = new THREE11.Group();
+  const gatoGroup = new THREE12.Group();
   gatoGroup.name = "gatoGroup";
   const x0 = ok ? salvo.x : 0, z0 = ok ? salvo.z : 0;
   const fis = criarFisica(mundo, x0, z0);
@@ -11683,8 +12314,8 @@ function criarMapa(scene2, gato, salvo) {
       return { v: 1, seed, x: fora2 ? fora2.x : gatoGroup.position.x, z: fora2 ? fora2.z : gatoGroup.position.z, rot: fora2 ? fora2.rot : gatoGroup.rotation.y, agachado: mapa.agachado, ciclo: mapa.ciclo, mobs: mapa.animais ? mapa.animais.estado() : [], descoberto: descobertoParaBase64(mapa.descoberto), cavernas: mapa.cavernas, arvores: mapa.arvores, ...espelhando() ? {} : { pegos: (podarPegos(mapa.pegos, Date.now()), { ...mapa.pegos }) }, sub: s ? s.estadoSub() : null };
     },
     // sombra do sol: quanto mais longe a câmera, maior a área coberta
-    ajustarZoom(dist2) {
-      const r = THREE11.MathUtils.clamp(dist2 * 1.15 + 5, 10, 24);
+    ajustarZoom(dist3) {
+      const r = THREE12.MathUtils.clamp(dist3 * 1.15 + 5, 10, 24);
       if (Math.abs(r - mapa.raioSombra) < 0.4) return;
       const c = sol.shadow.camera;
       c.left = -r;
@@ -11695,6 +12326,7 @@ function criarMapa(scene2, gato, salvo) {
       mapa.raioSombra = r;
     },
     descartar() {
+      if (mapa.brinquedos) mapa.brinquedos.descartar();
       if (mapa.animais) mapa.animais.descartar();
       fis.descartar();
       scene2.fog = null;
@@ -11715,7 +12347,7 @@ function criarMapa(scene2, gato, salvo) {
   mapa.auraEm = auraEm;
   mapa.montarPega = (j) => montarArea(mapa, grupo, j);
   mapa.setCiclo = (id) => setCiclo(mapa, scene2, id);
-  loadCat(THREE11, gato).then((cat) => {
+  loadCat(THREE12, gato).then((cat) => {
     if (mapa.descartado) {
       cat.dispose();
       return;
@@ -11737,11 +12369,11 @@ function inclinarGato(mapa, dt) {
   mapa.pitch += (alvo2 - mapa.pitch) * Math.min(1, dt * 8);
   g.rotation.x = -mapa.pitch;
 }
-var _m = new THREE11.Matrix4();
-var _q = new THREE11.Quaternion();
-var _p = new THREE11.Vector3();
-var _s = new THREE11.Vector3();
-var _y = new THREE11.Vector3(0, 1, 0);
+var _m = new THREE12.Matrix4();
+var _q = new THREE12.Quaternion();
+var _p = new THREE12.Vector3();
+var _s = new THREE12.Vector3();
+var _y = new THREE12.Vector3(0, 1, 0);
 function moverGato(mapa, dt, input) {
   let dx = input ? input.dx || 0 : 0;
   let dy = input ? input.dy || 0 : 0;
@@ -11813,6 +12445,15 @@ function atualizarMapa(mapa, dt, input, tempoSegundos) {
     mapa.sol.target.position.copy(_p);
     mapa.sol.position.copy(_p).add(mapa.solOffset);
     if (mapa.animais) mapa.animais.atualizar(dt, tempoSegundos);
+    if (mapa.brinquedos) {
+      const car = mapa.pegos.missao && mapa.pegos.missao.brinq;
+      let gatos = null;
+      if (car && car.itens.some((i) => i.est === "boca")) {
+        gatos = new Map(mapa.gatosPorChar ? mapa.gatosPorChar() : []);
+        if (mapa.meuChar && mapa.cat) gatos.set(mapa.meuChar, mapa.cat);
+      }
+      mapa.brinquedos.sincronizar(car || null, gatos, tempoSegundos);
+    }
     const t = tempoSegundos;
     mapa.borboletas.forEach((b, i) => {
       const a = t * b.w + b.ph, x = b.x + Math.cos(a) * b.r, z = b.z + Math.sin(a * 1.3) * b.r;
@@ -11922,7 +12563,7 @@ var GIRO_TECLA = 1.6;
 var GIRO_MOUSE = 6e-3;
 var EXCLUI = ".joystick, .acoes, button, #minimapa, .tela, .mapa-completo";
 function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
-  let dist2 = limitar(inicial);
+  let dist3 = limitar(inicial);
   function limitar(v) {
     if (typeof v !== "number" || !isFinite(v)) return min;
     if (v < min) return min;
@@ -11959,7 +12600,7 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
     const ativos = ponteirosAtivos();
     if (ativos.length === 2) {
       distIni = distEntre(ativos[0], ativos[1]);
-      zoomIni = dist2;
+      zoomIni = dist3;
       angPrev = anguloEntre(ativos[0], ativos[1]);
       giroEst = { acum: 0, girando: false };
       volta = null;
@@ -11979,7 +12620,7 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
     if (ativos.length === 2 && distIni >= 1) {
       const distAtual = distEntre(ativos[0], ativos[1]);
       if (distAtual > 0) {
-        dist2 = limitar(zoomIni * distIni / distAtual);
+        dist3 = limitar(zoomIni * distIni / distAtual);
       }
       const ang = anguloEntre(ativos[0], ativos[1]);
       const r = passoGiro(giroEst, deltaAngulo(angPrev, ang));
@@ -12008,7 +12649,7 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
       return;
     }
     e.preventDefault();
-    dist2 = limitar(dist2 * Math.exp(e.deltaY * 12e-4));
+    dist3 = limitar(dist3 * Math.exp(e.deltaY * 12e-4));
   }
   const campo = (e) => /^(INPUT|TEXTAREA|SELECT)$/.test(e.target && e.target.tagName || "");
   function aoTecla(e) {
@@ -12043,19 +12684,19 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
   }
   return {
     get() {
-      return dist2;
+      return dist3;
     },
     set(v) {
-      dist2 = limitar(v);
-      return dist2;
+      dist3 = limitar(v);
+      return dist3;
     },
     mais() {
-      dist2 = limitar(dist2 / 1.25);
-      return dist2;
+      dist3 = limitar(dist3 / 1.25);
+      return dist3;
     },
     menos() {
-      dist2 = limitar(dist2 * 1.25);
-      return dist2;
+      dist3 = limitar(dist3 * 1.25);
+      return dist3;
     },
     yaw() {
       return yaw;
@@ -12081,161 +12722,6 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
     },
     destruir
   };
-}
-
-// js/encontro.js
-function mostrarJogadoresNoMapa(jogo) {
-  if (jogo && typeof jogo === "object" && jogo.tipo === "esconde" && jogo.fase === "procurando") {
-    return false;
-  }
-  return true;
-}
-function jogadoresNoMapa(lista, meuSub) {
-  if (!Array.isArray(lista)) return [];
-  const alvo2 = meuSub || "";
-  const out = [];
-  for (const it of lista) {
-    if (!it || typeof it !== "object") continue;
-    const x = it.x, z = it.z;
-    if (typeof x !== "number" || !Number.isFinite(x)) continue;
-    if (typeof z !== "number" || !Number.isFinite(z)) continue;
-    const sub = it.sub || "";
-    if (sub !== alvo2) continue;
-    out.push(it);
-  }
-  return out;
-}
-function pontoNoMapa(x, z, limite, lado) {
-  const px = (x + limite) * lado / (2 * limite);
-  const pz = (z + limite) * lado / (2 * limite);
-  return { x: px, y: pz };
-}
-function centroEncontro(pedido, raio, limite, livre) {
-  let bx = 0, bz = 0;
-  if (pedido && typeof pedido === "object") {
-    if (typeof pedido.x === "number" && Number.isFinite(pedido.x)) bx = pedido.x;
-    if (typeof pedido.z === "number" && Number.isFinite(pedido.z)) bz = pedido.z;
-  }
-  const margem = limite - raio;
-  const maxC = margem < 0 ? 0 : margem;
-  const minC = -maxC;
-  const clamp4 = (v) => Math.max(minC, Math.min(maxC, v));
-  const arred2 = (v) => Math.round(v * 10) / 10;
-  const cx0 = clamp4(bx);
-  const cz0 = clamp4(bz);
-  const isLivre = (x, z) => {
-    if (typeof livre !== "function") return true;
-    try {
-      return !!livre(x, z);
-    } catch {
-      return false;
-    }
-  };
-  if (isLivre(cx0, cz0)) {
-    return { x: arred2(cx0), z: arred2(cz0) };
-  }
-  for (let r = 2; r <= limite; r += 2) {
-    for (let k = 0; k < 16; k++) {
-      const ang = k * 2 * Math.PI / 16;
-      const px = clamp4(cx0 + Math.cos(ang) * r);
-      const pz = clamp4(cz0 + Math.sin(ang) * r);
-      if (isLivre(px, pz)) {
-        return { x: arred2(px), z: arred2(pz) };
-      }
-    }
-  }
-  return { x: arred2(cx0), z: arred2(cz0) };
-}
-function raioEsconde(contar, jogadores) {
-  const alvo2 = typeof jogadores === "number" && Number.isFinite(jogadores) ? jogadores : 0;
-  const precisa = alvo2 + 2;
-  for (let r = 30; r <= 40; r += 2) {
-    let q = 0;
-    if (typeof contar === "function") {
-      try {
-        q = contar(r);
-      } catch {
-        q = 0;
-      }
-    }
-    if (typeof q === "number" && Number.isFinite(q) && q >= precisa) {
-      return r;
-    }
-  }
-  return 40;
-}
-function posicoesChegada(centro, raio, n, livre) {
-  if (!Number.isInteger(n) || n < 0 || n > 12) return [];
-  if (n === 0) return [];
-  const cx = centro && typeof centro.x === "number" && Number.isFinite(centro.x) ? centro.x : 0;
-  const cz = centro && typeof centro.z === "number" && Number.isFinite(centro.z) ? centro.z : 0;
-  const r = typeof raio === "number" && Number.isFinite(raio) && raio > 0 ? raio : 1;
-  const isLivre = (x, z) => {
-    if (typeof livre !== "function") return true;
-    try {
-      return !!livre(x, z);
-    } catch {
-      return false;
-    }
-  };
-  const arred2 = (v) => Math.round(v * 10) / 10;
-  const dist2 = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
-  const escolhidos = [];
-  const out = [];
-  for (let i = 0; i < n; i++) {
-    const a0 = i * 2 * Math.PI / n;
-    const d0 = r * 0.35;
-    const dMax = r * 0.8;
-    let achou = false;
-    let ponto = null;
-    for (let t = 0; t < 60; t++) {
-      const ang = a0 + t * 0.7;
-      let d = d0 + t % 5 * 1.5;
-      if (d > dMax) d = dMax;
-      const px = cx + Math.cos(ang) * d;
-      const pz = cz + Math.sin(ang) * d;
-      if (!isLivre(px, pz)) continue;
-      let ok = true;
-      for (const p of escolhidos) {
-        if (dist2({ x: px, z: pz }, p) < 2) {
-          ok = false;
-          break;
-        }
-      }
-      if (!ok) continue;
-      ponto = { x: arred2(px), z: arred2(pz) };
-      escolhidos.push(ponto);
-      out.push(ponto);
-      achou = true;
-      break;
-    }
-    if (!achou) {
-      const ang = a0;
-      let d = d0;
-      if (d > dMax) d = dMax;
-      const px = cx + Math.cos(ang) * d;
-      const pz = cz + Math.sin(ang) * d;
-      const p = { x: arred2(px), z: arred2(pz) };
-      escolhidos.push(p);
-      out.push(p);
-    }
-  }
-  return out;
-}
-function precisaTrazer(pos, area) {
-  if (!area || typeof area !== "object") return false;
-  const cx = area.cx, cz = area.cz, raio = area.raio;
-  if (typeof cx !== "number" || !Number.isFinite(cx)) return false;
-  if (typeof cz !== "number" || !Number.isFinite(cz)) return false;
-  if (typeof raio !== "number" || !Number.isFinite(raio)) return false;
-  if (!pos || typeof pos !== "object") return false;
-  const sub = pos.sub;
-  if (typeof sub === "string" && sub.length > 0) return true;
-  const x = pos.x, z = pos.z;
-  if (typeof x !== "number" || !Number.isFinite(x)) return false;
-  if (typeof z !== "number" || !Number.isFinite(z)) return false;
-  const d = Math.hypot(x - cx, z - cz);
-  return d > raio;
 }
 
 // js/mapa-completo.js
@@ -13437,7 +13923,7 @@ function montarTela(container = document.body) {
   aoMudar2.aoErroClique = null;
   return aoMudar2;
 }
-function carregando2(texto, { botao = null, container, atraso } = {}) {
+function carregando3(texto, { botao = null, container, atraso } = {}) {
   const ui = montarTela(container);
   let c;
   let pularResolve = null;
@@ -13503,7 +13989,7 @@ function carregando2(texto, { botao = null, container, atraso } = {}) {
   return handle;
 }
 async function esperando(texto, promessa, { botao = "Voltar", container } = {}) {
-  const c = carregando2(texto, { botao: { rotulo: botao }, container });
+  const c = carregando3(texto, { botao: { rotulo: botao }, container });
   c.pular.then(() => c.fim());
   try {
     return await promessa;
@@ -14745,7 +15231,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     return t && t.mundos && typeof t.mundos === "object" ? t : { formato: 1, mundos: {} };
   };
   const gravarTudo = (t) => gravarJson2(CHAVE, t);
-  const pegar = (id) => {
+  const pegar2 = (id) => {
     const w = lerTudo().mundos[id];
     return w ? copia2(w) : null;
   };
@@ -14775,7 +15261,7 @@ function criarMundos({ nuvem: nuvem2 }) {
       const b = await comTempo3(nuvem2.conexao());
       for (const it of fila.slice()) {
         try {
-          if (!pegar(it.mundoId)?.registro.subido) continue;
+          if (!pegar2(it.mundoId)?.registro.subido) continue;
           const v = it.versao;
           await comTempo3(b.fs.setDoc(b.fs.doc(b.db, "mundos", it.mundoId, "versoes", v.id), copia2({
             quando: v.quando,
@@ -14798,7 +15284,7 @@ function criarMundos({ nuvem: nuvem2 }) {
   }
   function guardarVersao(id, motivo, estadoDe) {
     try {
-      const w = pegar(id);
+      const w = pegar2(id);
       const est2 = estadoDe || w && w.estado;
       if (!w || !est2) return null;
       const { mobs, ...dados } = est2;
@@ -14821,7 +15307,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     try {
       const locais = doMundo(id);
       let remotas = [];
-      if (online2() && pegar(id)?.registro.subido) {
+      if (online2() && pegar2(id)?.registro.subido) {
         try {
           const b = await comTempo3(nuvem2.conexao());
           const q = b.fs.query(b.fs.collection(b.db, "mundos", id, "versoes"), b.fs.orderBy("quando", "desc"), b.fs.limit(NA_LISTA2));
@@ -14839,11 +15325,11 @@ function criarMundos({ nuvem: nuvem2 }) {
     }
   }
   const souOrigem = (id) => {
-    const w = pegar(id);
+    const w = pegar2(id);
     return !!w && (!w.registro.familia || w.registro.familia === nuvem2.publico());
   };
   async function apagarVersoesNaNuvem(id, ids) {
-    if (!online2() || !pegar(id)?.registro.subido) return true;
+    if (!online2() || !pegar2(id)?.registro.subido) return true;
     try {
       const b = await comTempo3(nuvem2.conexao());
       await garantirUsuario(b);
@@ -14891,7 +15377,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     usuarioOk = b.uid + "|" + fam;
   }
   async function subir(b, id) {
-    const w = pegar(id);
+    const w = pegar2(id);
     if (!w || w.registro.subido || id === ID_LOCAL1) return;
     const pub = nuvem2.publico() || await nuvem2.garantirPublico();
     if (!pub) throw new Error("sem-publico");
@@ -14927,10 +15413,10 @@ function criarMundos({ nuvem: nuvem2 }) {
     });
   }
   function sincronizar(id, { forcar = false, emJogo = false } = {}) {
-    if (!online2() || !pegar(id)) return Promise.resolve(false);
+    if (!online2() || !pegar2(id)) return Promise.resolve(false);
     if (andamento.has(id)) return andamento.get(id);
     if (!forcar && Date.now() - (ultimaSync.get(id) || 0) < INTERVALO) return Promise.resolve(false);
-    if (emJogo && !pegar(id).pendente) return Promise.resolve(false);
+    if (emJogo && !pegar2(id).pendente) return Promise.resolve(false);
     ultimaSync.set(id, Date.now());
     const p = comTempo3((async () => {
       const b = await nuvem2.conexao();
@@ -14939,7 +15425,7 @@ function criarMundos({ nuvem: nuvem2 }) {
       const ref = b.fs.doc(b.db, "mundos", id, "estado", "principal");
       const snap = await b.fs.getDoc(ref);
       const remoto = snap.exists() ? snap.data() : null;
-      const w = pegar(id);
+      const w = pegar2(id);
       const local = w.estado;
       const junto = juntarEstado(local, remoto);
       if (remoto && local && mudou(junto, local) && !emJogo) guardarVersao(id, "antes-juntar");
@@ -14983,7 +15469,7 @@ function criarMundos({ nuvem: nuvem2 }) {
   }
   function salvarEstado(id, estado) {
     try {
-      const w = pegar(id);
+      const w = pegar2(id);
       if (!w || !estado) return false;
       const novo = { ...copia2(estado), pegos: estado.pegos || w.estado && w.estado.pegos || {}, formato: 1, geracao: w.estado && w.estado.geracao || 1 };
       novo.atualizado = mudou(novo, w.estado) ? agoraISO4() : w.estado && w.estado.atualizado || agoraISO4();
@@ -15008,7 +15494,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     if (!conv.exists() || typeof conv.data().mundo !== "string") throw new Error("C\xF3digo n\xE3o encontrado");
     const id = conv.data().mundo;
     const fam = nuvem2.codigo();
-    if (!pegar(id)) {
+    if (!pegar2(id)) {
       const lote = b.fs.writeBatch(b.db);
       lote.set(b.fs.doc(b.db, "mundos", id, "familias", pub), { nome: String(nomeFamilia || "").trim().slice(0, 30), codigo: cod });
       lote.set(b.fs.doc(b.db, "familias", fam, "mundos", id), { nome: "", codigo: cod });
@@ -15024,10 +15510,10 @@ function criarMundos({ nuvem: nuvem2 }) {
       gravarTudo(t);
     }
     await sincronizar(id, { forcar: true });
-    return pegar(id).registro;
+    return pegar2(id).registro;
   }
   async function obter(id) {
-    if (pegar(id)) return pegar(id).registro;
+    if (pegar2(id)) return pegar2(id).registro;
     if (!online2()) return null;
     try {
       const b = await comTempo3(nuvem2.conexao());
@@ -15074,7 +15560,7 @@ function criarMundos({ nuvem: nuvem2 }) {
         const pub = nuvem2.publico();
         for (const d of snap.docs) {
           await obter(d.id);
-          const w = pegar(d.id), cod = d.data().codigo;
+          const w = pegar2(d.id), cod = d.data().codigo;
           if (w && w.registro.familia === pub && typeof cod === "string" && cod && cod !== w.registro.codigo) alterar(d.id, (x) => {
             x.registro.codigo = cod;
           });
@@ -15096,7 +15582,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     }
   }
   async function tirarConvidada(id, publico) {
-    const w = pegar(id);
+    const w = pegar2(id);
     if (!w || !online2() || w.registro.familia !== nuvem2.publico()) throw new Error("S\xF3 a fam\xEDlia que criou o mundo pode tirar algu\xE9m.");
     const b = await comTempo3(nuvem2.conexao());
     await garantirUsuario(b);
@@ -15120,7 +15606,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     return novo;
   }
   async function sairDoMundo(id) {
-    const w = pegar(id);
+    const w = pegar2(id);
     if (!w || !online2()) throw new Error("Para isso, o aparelho precisa estar numa fam\xEDlia e com internet.");
     if (w.registro.familia === nuvem2.publico()) throw new Error("Este mundo \xE9 da sua fam\xEDlia.");
     const b = await comTempo3(nuvem2.conexao());
@@ -15132,7 +15618,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     return true;
   }
   async function verificar(id) {
-    const w = pegar(id);
+    const w = pegar2(id);
     if (!w || !online2() || !w.registro.subido || !w.registro.familia || w.registro.familia === nuvem2.publico()) return "ok";
     try {
       const b = await comTempo3(nuvem2.conexao());
@@ -15148,7 +15634,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     }
   }
   async function apagar(id) {
-    const w = pegar(id);
+    const w = pegar2(id);
     if (!w) throw new Error("Mundo n\xE3o encontrado.");
     if (!souOrigem(id)) throw new Error("S\xF3 a fam\xEDlia que criou o mundo pode apagar.");
     if (listarLocal().filter((m) => m.eSeu).length <= 1) throw new Error("Este \xE9 o \xFAnico mundo da fam\xEDlia: n\xE3o d\xE1 para apagar.");
@@ -15186,7 +15672,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     try {
       if (!versao || !versao.dados || typeof versao.dados !== "object") return false;
       guardarVersao(id, "antes-restaurar");
-      const w = pegar(id);
+      const w = pegar2(id);
       if (!w) return false;
       const estado = { ...copia2(versao.dados), atualizado: agoraISO4(), formato: 1, geracao: (w.estado && w.estado.geracao || 1) + 1, mobs: w.estado && w.estado.mobs || [] };
       alterar(id, (x) => {
@@ -15212,7 +15698,7 @@ function criarMundos({ nuvem: nuvem2 }) {
   const paraOferta = (e) => copia2({ descoberto: e.descoberto, cavernas: e.cavernas || {}, arvores: e.arvores || {}, geracao: e.geracao || 1, atualizado: e.atualizado || agoraISO4(), formato: 1 });
   async function entregarOferta(id, { forcar = false } = {}) {
     try {
-      const w = pegar(id);
+      const w = pegar2(id);
       if (!online2() || !w || !w.estado || !w.registro.subido || !w.pendente) return false;
       if (!forcar && Date.now() - (ultimaOferta.get(id) || 0) < OFERTA_A_CADA) return false;
       ultimaOferta.set(id, Date.now());
@@ -15232,7 +15718,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     const rEstado = b.fs.doc(b.db, "mundos", id, "estado", "principal");
     const snap = await comTempo3(b.fs.getDoc(rEstado));
     const remoto = snap.exists() ? snap.data() : null;
-    const atual = juntarEstado(pegar(id)?.estado, remoto);
+    const atual = juntarEstado(pegar2(id)?.estado, remoto);
     const junto = juntarEstado(atual, oferta);
     if (mudou(junto, atual)) {
       const ult = doMundo(id)[0];
@@ -15272,7 +15758,7 @@ function criarMundos({ nuvem: nuvem2 }) {
   async function voltouParaRede() {
     for (const id of Object.keys(lerTudo().mundos)) {
       if (!online2()) return;
-      const w = pegar(id);
+      const w = pegar2(id);
       if (!w) continue;
       if (!w.registro.subido) await sincronizar(id, { forcar: true });
       else if (w.pendente) await entregarOferta(id, { forcar: true });
@@ -15281,7 +15767,7 @@ function criarMundos({ nuvem: nuvem2 }) {
   }
   function mundoDoGato(gatoId) {
     const g = Save.pegar(gatoId);
-    const w = g && g.mundoAtual && pegar(g.mundoAtual);
+    const w = g && g.mundoAtual && pegar2(g.mundoAtual);
     return w ? { id: g.mundoAtual, registro: w.registro, estado: w.estado, posicao: g.posicoes && g.posicoes[g.mundoAtual] || null } : null;
   }
   function mundo1(estado) {
@@ -15359,7 +15845,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     const junta = (a, e) => !e ? a : a ? { ...juntarEstado(a, e), mobs: a.mobs } : copia2(e);
     const porMundo = ids.map((id) => cand.get(id).estados.reduce(junta, null));
     const est2 = porMundo.reduce(junta, null);
-    if (!pegar(M1)) {
+    if (!pegar2(M1)) {
       let rem = null;
       try {
         const m = await b.fs.getDoc(b.fs.doc(b.db, "mundos", M1));
@@ -15381,7 +15867,7 @@ function criarMundos({ nuvem: nuvem2 }) {
       x.pendente = true;
     });
     await sincronizar(M1, { forcar: true });
-    if (!pegar(M1)?.registro.subido) return false;
+    if (!pegar2(M1)?.registro.subido) return false;
     const bruto = lerBruto();
     const mudados = [];
     for (const x of bruto.gatos) {
@@ -15435,7 +15921,7 @@ function criarMundos({ nuvem: nuvem2 }) {
     });
     return juntando;
   }
-  const api2 = { criar: criar3, entrarComCodigo, listar, listarLocal, pegar, obter, salvarEstado, sincronizar, guardarVersao, listarVersoes, apagar, apagarVersao, apagarVersoes, restaurar: restaurar2, enviarVersoes, entregarOferta, escutarOfertas, voltouParaRede, mundoDoGato, mundo1, migrarSave07, juntar, juntando: () => juntando, precisaJuntar: () => online2() && !lerJson2(CHAVE_JUNTOU + (nuvem2.publico() || ""), null), ganchos, formatarCodigo, minhaFamilia: () => nuvem2.codigo(), convidadas, tirarConvidada, sairDoMundo, verificar, esquecer, reiniciar: () => {
+  const api2 = { criar: criar3, entrarComCodigo, listar, listarLocal, pegar: pegar2, obter, salvarEstado, sincronizar, guardarVersao, listarVersoes, apagar, apagarVersao, apagarVersoes, restaurar: restaurar2, enviarVersoes, entregarOferta, escutarOfertas, voltouParaRede, mundoDoGato, mundo1, migrarSave07, juntar, juntando: () => juntando, precisaJuntar: () => online2() && !lerJson2(CHAVE_JUNTOU + (nuvem2.publico() || ""), null), ganchos, formatarCodigo, minhaFamilia: () => nuvem2.codigo(), convidadas, tirarConvidada, sairDoMundo, verificar, esquecer, reiniciar: () => {
     ultimaSync.clear();
     andamento.clear();
     usuarioOk = "";
@@ -16648,7 +17134,7 @@ var gravarMarcaLocal = () => {
 var VIVA = 6e3;
 var MORTO = 3e3;
 var HISTERESE = 1.3;
-function calcularNota({ pc, quadroMs, atrasoMs, carregando: carregando3, avocado }) {
+function calcularNota({ pc, quadroMs, atrasoMs, carregando: carregando4, avocado }) {
   let nota = 0;
   nota += pc ? 100 : 40;
   if (typeof quadroMs === "number" && quadroMs > 0) {
@@ -16659,7 +17145,7 @@ function calcularNota({ pc, quadroMs, atrasoMs, carregando: carregando3, avocado
   if (typeof atrasoMs === "number" && atrasoMs >= 0) {
     nota -= Math.min(30, atrasoMs / 10);
   }
-  if (carregando3) {
+  if (carregando4) {
     nota += 20;
   }
   if (avocado) {
@@ -16892,7 +17378,7 @@ function comTempo4(p, ms = TEMPO_REDE) {
   return Promise.race([p, limite]).finally(() => clearTimeout(t));
 }
 var ehTipo = (t) => typeof t === "string" && Object.hasOwn(TIPOS_VOTACAO, t);
-function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao: conexao2, aoPapel, tempoVotacao = TEMPO_VOTACAO * 1e3, esperaRecusa = RECUSA_ESPERA }) {
+function criarAoVivo({ nuvem: nuvem2, THREE: THREE14, loadCat: loadCat2, conexao: conexao2, aoPapel, tempoVotacao = TEMPO_VOTACAO * 1e3, esperaRecusa = RECUSA_ESPERA }) {
   let S = null;
   let sessao = 0;
   let offset = 0;
@@ -17108,6 +17594,21 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
     if (st.mapa.animais) st.mapa.animais.aoBote = (i) => pedir(st, { tipo: "bote", alvo: i });
     st.mapa.brincadeira = { atual: () => jogoDe(st), iniciar: (v, quem) => iniciarJogo(st, v, quem) };
     st.mapa.aoPedirOvo = (id) => pedir(st, { tipo: "ovo", valor: id });
+    st.mapa.aoPedirCarga = (tipo, valor) => pedir(st, valor === "" ? { tipo } : { tipo, valor });
+    st.mapa.charsPresentes = () => jogadoresVivos(st).map((p) => p.char).filter(Boolean);
+    st.mapa.gatosPorChar = () => {
+      const o = [];
+      for (const r of st.remotos.values()) {
+        const p = st.presencas.get(r.uid);
+        if (r.cat && p && p.char) o.push([p.char, r.cat]);
+      }
+      return o;
+    };
+    st.mapa.centroGrupo = () => {
+      const l = listarObservadores(st);
+      if (!l.length) return null;
+      return { x: l.reduce((s, o) => s + o.x, 0) / l.length, z: l.reduce((s, o) => s + o.z, 0) / l.length };
+    };
     st.pronto = true;
   }
   function eleicao(st) {
@@ -17160,7 +17661,10 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
     if (ehTipo(v.tipo)) {
       if (!precisaVotar(jogadoresVivos(st)) && validarPedido(v.tipo, v.valor, { mapa: st.mapa })) TIPOS_VOTACAO[v.tipo].aplicar(v.valor, { mapa: st.mapa });
     } else if (typeof v.tipo === "string" && v.tipo.startsWith("votacao:")) abrirVotacao(st, uid, v.tipo.slice(8), v.valor);
-    else if (v.tipo === "olhar" && typeof v.alvo === "number") olharHost(st, uid, v.alvo);
+    else if ((v.tipo === "pegar" || v.tipo === "entregar" || v.tipo === "soltar") && st.mapa.carregar) {
+      const p = st.presencas.get(uid), o = observadorDe(st, uid);
+      if (p && p.char && o && st.mapa.carregar.remoto(v.tipo, p.char, v.valor, o)) publicarBichos(st);
+    } else if (v.tipo === "olhar" && typeof v.alvo === "number") olharHost(st, uid, v.alvo);
     else if (v.tipo === "ovo" && typeof v.valor === "string") {
       if (st.mapa.pegarOvoRemoto && st.mapa.pegarOvoRemoto(v.valor)) {
         contarMissao(st, uid, "ovo");
@@ -17444,7 +17948,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
     if (!v || typeof v !== "object" || typeof v.x !== "number" || typeof v.z !== "number") return;
     let r = st.remotos.get(uid);
     if (!r) {
-      r = { uid, cat: null, grupo: new THREE13.Group(), nome: null, buf: [], nAplicado: null, atraso: null };
+      r = { uid, cat: null, grupo: new THREE14.Group(), nome: null, buf: [], nAplicado: null, atraso: null };
       r.grupo.visible = false;
       st.mapa.scene.add(r.grupo);
       st.remotos.set(uid, r);
@@ -17468,7 +17972,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
     if (!look || typeof look !== "object") return;
     r.nomeTexto = String(look.nome || "Gatinho");
     r.cor = Object.hasOwn(CORES_GATO, look.cor) ? CORES_GATO[look.cor] : 0;
-    loadCat2(THREE13, look).then((cat) => {
+    loadCat2(THREE14, look).then((cat) => {
       if (S !== st || st.remotos.get(r.uid) !== r) {
         cat.dispose();
         return;
@@ -17476,7 +17980,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
       r.cat = cat;
       r.grupo.add(cat.object);
       r.grupo.updateMatrixWorld(true);
-      const alto = new THREE13.Box3().setFromObject(cat.object).max.y;
+      const alto = new THREE14.Box3().setFromObject(cat.object).max.y;
       r.nome = criarNome(look.nome || "Gatinho");
       r.nome.position.y = (Number.isFinite(alto) ? alto : 0.6) + 0.18;
       r.grupo.add(r.nome);
@@ -17495,9 +17999,9 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
     x.strokeText(String(texto).slice(0, 16), 128, 34);
     x.fillStyle = "#fff";
     x.fillText(String(texto).slice(0, 16), 128, 34);
-    const tex = new THREE13.CanvasTexture(c);
-    tex.colorSpace = THREE13.SRGBColorSpace;
-    const sp = new THREE13.Sprite(new THREE13.SpriteMaterial({ map: tex, depthTest: false, transparent: true, fog: false, toneMapped: false }));
+    const tex = new THREE14.CanvasTexture(c);
+    tex.colorSpace = THREE14.SRGBColorSpace;
+    const sp = new THREE14.Sprite(new THREE14.SpriteMaterial({ map: tex, depthTest: false, transparent: true, fog: false, toneMapped: false }));
     sp.scale.set(0.8, 0.2, 1);
     sp.renderOrder = 10;
     return sp;
@@ -17726,6 +18230,10 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
       if (st.mapa) {
         st.mapa.aoPedirOvo = null;
         st.mapa.brincadeira = null;
+        st.mapa.aoPedirCarga = null;
+        st.mapa.charsPresentes = null;
+        st.mapa.gatosPorChar = null;
+        st.mapa.centroGrupo = null;
       }
       if (a) {
         try {
@@ -18627,7 +19135,7 @@ function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir, brincadeiras =
   const caixa2 = document.createElement("div");
   caixa2.className = "dialogo-missoes-caixa";
   const titulo = document.createElement("h2");
-  titulo.textContent = "\u{1F3AF} Miss\xF5es e brincadeiras";
+  titulo.textContent = "\u{1F3AF} Atividades";
   caixa2.appendChild(titulo);
   if (ativa) {
     const ativaP = document.createElement("p");
@@ -18647,6 +19155,10 @@ function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir, brincadeiras =
     });
     caixa2.appendChild(btnDesistir);
   }
+  const subM = document.createElement("h3");
+  subM.className = "missoes-subtitulo";
+  subM.textContent = "Miss\xF5es (todo mundo junto!)";
+  caixa2.appendChild(subM);
   const lista = document.createElement("ul");
   lista.className = "missoes-lista";
   (itens || []).forEach((item) => {
@@ -18658,9 +19170,7 @@ function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir, brincadeiras =
     li.appendChild(nome);
     const vezes = document.createElement("span");
     vezes.className = "missoes-vezes";
-    if (item.vezes > 0) {
-      vezes.textContent = `J\xE1 fiz ${item.vezes}x`;
-    }
+    vezes.textContent = [item.dica, item.vezes > 0 ? `J\xE1 fiz ${item.vezes}x` : ""].filter(Boolean).join(" \xB7 ");
     li.appendChild(vezes);
     const btn = document.createElement("button");
     btn.className = "botao";
@@ -18684,7 +19194,7 @@ function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir, brincadeiras =
   if (brincadeiras.length) {
     const sub = document.createElement("h3");
     sub.className = "missoes-subtitulo";
-    sub.textContent = "Brincadeiras";
+    sub.textContent = "Brincadeiras (sem ganhar nem perder)";
     caixa2.appendChild(sub);
     const listaB = document.createElement("ul");
     listaB.className = "missoes-lista";
@@ -18792,6 +19302,7 @@ function temJogo(e) {
   if (num4(e.pulos) > 0) return true;
   if (num4(e.botes) > 0) return true;
   if (num4(e.missoes) > 0) return true;
+  if (num4(e.brinquedos) > 0) return true;
   if (num4(e.arvores) > 0) return true;
   if (num4(e.cavernas) > 0) return true;
   const c = e.cacas || {};
@@ -18840,6 +19351,7 @@ function montarCartoes(e, aba) {
   const corrida = num4(e.corrida);
   const pulos = num4(e.pulos);
   const missoes = num4(e.missoes);
+  const brinquedos = num4(e.brinquedos);
   const arvores = num4(e.arvores);
   const cavernas = num4(e.cavernas);
   const cacas = e.cacas || {};
@@ -18875,6 +19387,7 @@ function montarCartoes(e, aba) {
   grade.appendChild(criarCartao("\u{1F43E}", "Caminhou", formatarDistancia(distancia), detalheCaminhada));
   grade.appendChild(criarCartao("\u{1F356}", "Ca\xE7as", somaCacas, detalheCacas));
   grade.appendChild(criarCartao("\u{1F3AF}", "Miss\xF5es cumpridas", missoes));
+  grade.appendChild(criarCartao("\u{1F9F8}", "Brinquedos entregues", brinquedos));
   grade.appendChild(criarCartao("\u{1F648}", "Pique-esconde", detalheEsconde));
   grade.appendChild(criarCartao("\u{1F9DF}", "Pique-pega", detalhePega));
   grade.appendChild(criarCartao("\u{1F333}", "\xC1rvores", arvores));
@@ -19334,29 +19847,29 @@ function criarTelaPega() {
 document.title = "Avel\xE3, o gatinho sobrevivente \u2014 v" + VERSION;
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {
 });
-var CEU = new THREE12.Color(12575743);
+var CEU = new THREE13.Color(12575743);
 var renderer;
 var scene;
 var camera;
 try {
-  renderer = new THREE12.WebGLRenderer({ antialias: true, alpha: true });
+  renderer = new THREE13.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0, 0);
-  renderer.outputColorSpace = THREE12.SRGBColorSpace;
-  renderer.toneMapping = THREE12.ACESFilmicToneMapping;
+  renderer.outputColorSpace = THREE13.SRGBColorSpace;
+  renderer.toneMapping = THREE13.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE12.PCFShadowMap;
+  renderer.shadowMap.type = THREE13.PCFShadowMap;
   const view = document.getElementById("view");
   if (view) view.appendChild(renderer.domElement);
 } catch (e) {
   renderer = null;
 }
-scene = new THREE12.Scene();
+scene = new THREE13.Scene();
 scene.background = CEU;
-var hemiEstudio = new THREE12.HemisphereLight(16773600, 13215114, 1.1);
+var hemiEstudio = new THREE13.HemisphereLight(16773600, 13215114, 1.1);
 scene.add(hemiEstudio);
-var luzChave = new THREE12.DirectionalLight(16773341, 2.4);
+var luzChave = new THREE13.DirectionalLight(16773341, 2.4);
 luzChave.position.set(2.2, 3.5, 2.6);
 luzChave.castShadow = true;
 luzChave.shadow.mapSize.set(2048, 2048);
@@ -19370,17 +19883,17 @@ luzChave.shadow.camera.bottom = -1.5;
 luzChave.shadow.camera.near = 0.5;
 luzChave.shadow.camera.far = 12;
 scene.add(luzChave);
-var luzContorno = new THREE12.DirectionalLight(14674175, 1.6);
+var luzContorno = new THREE13.DirectionalLight(14674175, 1.6);
 luzContorno.position.set(-2, 2.2, -3);
 scene.add(luzContorno);
-var luzPreenchimento = new THREE12.DirectionalLight(16769743, 0.5);
+var luzPreenchimento = new THREE13.DirectionalLight(16769743, 0.5);
 luzPreenchimento.position.set(-3, 1, 2);
 scene.add(luzPreenchimento);
 function luzesDoMapa(noMapa) {
   hemiEstudio.visible = luzChave.visible = luzPreenchimento.visible = !noMapa;
   luzContorno.intensity = noMapa ? 0.7 : 1.6;
 }
-camera = new THREE12.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+camera = new THREE13.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(0, 0.6, 6.8);
 camera.lookAt(0, -1.15, 0);
 window.addEventListener("resize", () => {
@@ -19413,6 +19926,7 @@ var tVotacao = 0;
 var painelMissao = null;
 var tMissao = 0;
 var festejada = 0;
+var brinqVisto = { inicio: 0, n: 0 };
 var telaPega = null;
 var tPega = 0;
 var tCerca = 0;
@@ -19505,7 +20019,7 @@ function montarSalvoMundo(idMundo) {
   const w = mundos.pegar(idMundo);
   return w ? { ...w.estado || {}, v: 1, seed: w.registro.seed } : null;
 }
-var estatVazio = () => ({ tempo: 0, distancia: 0, nado: 0, corrida: 0, pulos: 0, botes: 0, cacas: {}, missoes: 0, brincadeiras: {}, arvores: 0, cavernas: 0 });
+var estatVazio = () => ({ tempo: 0, distancia: 0, nado: 0, corrida: 0, pulos: 0, botes: 0, cacas: {}, missoes: 0, brinquedos: 0, brincadeiras: {}, arvores: 0, cavernas: 0 });
 var estat = estatVazio();
 var estatT = 0;
 var estatUlt = 0;
@@ -19520,7 +20034,7 @@ function descarregarEstat() {
   estat = estatVazio();
   estatT = 0;
   if (!estatJoga()) return;
-  if (d.tempo > 0 || d.distancia > 0 || d.pulos || d.botes || d.missoes || d.arvores || d.cavernas || Object.keys(d.cacas).length || Object.keys(d.brincadeiras).length) Save.somarEstat(idGatoMapa, idMundoMapa, d);
+  if (d.tempo > 0 || d.distancia > 0 || d.pulos || d.botes || d.missoes || d.brinquedos || d.arvores || d.cavernas || Object.keys(d.cacas).length || Object.keys(d.brincadeiras).length) Save.somarEstat(idGatoMapa, idMundoMapa, d);
 }
 function estatQuadro(ds, alvo2) {
   if (document.visibilityState !== "visible") {
@@ -19611,7 +20125,7 @@ function trocarSub(fn, texto = "Um instante\u2026") {
   }
   veu.classList.add("escuro");
   const lenta = (msTroca[texto] ?? msMapa) > 150;
-  const c = carregando2(texto, { atraso: lenta ? 0 : void 0 });
+  const c = carregando3(texto, { atraso: lenta ? 0 : void 0 });
   setTimeout(async () => {
     if (!mapaAtual) {
       c.fim();
@@ -19977,6 +20491,7 @@ function irPara(nome, opcoes) {
         avisar2(mapaNovo.congelado ? "Conte at\xE9 10 sem se mexer! \u{1F648}" : "Fique quietinho! \u{1F92B}", 1300);
       }
     };
+    mapaNovo.meuChar = !servidor && !espectando ? idGatoMapa : null;
     mapaNovo.aoComer = (tipo) => {
       if (idGatoMapa && mapaNovo.missao) mapaNovo.missao.comeu(idGatoMapa, tipo);
       estatCaca(tipo);
@@ -20070,8 +20585,8 @@ function irPara(nome, opcoes) {
     botaoMissoes.type = "button";
     botaoMissoes.className = "botao-missoes";
     botaoMissoes.textContent = "\u{1F3AF}";
-    botaoMissoes.title = "Miss\xF5es e brincadeiras";
-    botaoMissoes.setAttribute("aria-label", "Miss\xF5es e brincadeiras");
+    botaoMissoes.title = "Atividades";
+    botaoMissoes.setAttribute("aria-label", "Atividades");
     botaoMissoes.addEventListener("click", () => abrirMissoes());
     hud.appendChild(botaoMissoes);
     painelMissao = criarPainelMissao();
@@ -20144,7 +20659,7 @@ async function jogar(id, mundoId, { usarAtual = false } = {}) {
   const g = id != null ? Save.pegar(id) : null;
   if (entrando) return;
   entrando = true;
-  let c = carregando2("Entrando no mundo\u2026", { botao: { rotulo: "Continuar sem internet" } }), entregue = false;
+  let c = carregando3("Entrando no mundo\u2026", { botao: { rotulo: "Continuar sem internet" } }), entregue = false;
   const esp = (ms) => Promise.race([espera(ms), c.pular]);
   try {
     if (!g) {
@@ -20191,7 +20706,7 @@ async function jogar(id, mundoId, { usarAtual = false } = {}) {
           return;
         }
         if (r !== "aqui") return;
-        c = carregando2("Entrando no " + (w.registro.nome || "mundo") + "\u2026", { botao: { rotulo: "Continuar sem internet" } });
+        c = carregando3("Entrando no " + (w.registro.nome || "mundo") + "\u2026", { botao: { rotulo: "Continuar sem internet" } });
         if (o.mundo === mundoId) {
           const p = await online.posicaoAoVivo(mundoId, o.uid);
           if (p && !p.sub) Save.salvarPosicao(g.id, mundoId, { ...g.posicoes && g.posicoes[mundoId] || {}, x: p.x, z: p.z, rot: p.r, agachado: false, sub: null });
@@ -20353,7 +20868,7 @@ async function prepararMundoSemChar(mundoId, verbo, pular = new Promise(() => {
   return true;
 }
 async function abrirMapaComCarga(preparar, opcoesMapa) {
-  const c = carregando2("Entrando no mundo\u2026", { botao: { rotulo: "Continuar sem internet" } });
+  const c = carregando3("Entrando no mundo\u2026", { botao: { rotulo: "Continuar sem internet" } });
   let entregue = false;
   try {
     if (!await preparar(c.pular)) return;
@@ -20454,7 +20969,7 @@ function abrirMissoes() {
   if (!mapaAtual || !mapaAtual.missao) return;
   const m = mapaAtual.missao.atual(), D = m && !m.fim && MISSOES[m.id];
   abrirListaMissoes({
-    itens: Object.entries(MISSOES).map(([id, d]) => ({ id, nome: d.nome, icone: d.icone, alvo: d.alvo, vezes: idGatoMapa ? Save.vezesMissao(idGatoMapa, id) : 0 })),
+    itens: Object.entries(MISSOES).map(([id, d]) => ({ id, nome: d.nome, icone: d.icone, dica: d.dica, alvo: d.alvo, vezes: idGatoMapa ? Save.vezesMissao(idGatoMapa, id) : 0 })),
     ativa: D ? { nome: D.nome, icone: D.icone } : null,
     aoComecar: (id) => {
       if (!pedirVotavel("missao", id, () => {
@@ -20490,6 +21005,7 @@ function atualizarMissao(ms) {
   if (!painelMissao || !mapaAtual || !mapaAtual.missao || ms - tMissao < 250) return;
   tMissao = ms;
   mapaAtual.missao.tick();
+  mapaAtual.meuChar = idGatoMapa && !semSalvarChar && !servidorMundo && !espectando ? idGatoMapa : null;
   const m = mapaAtual.missao.atual(), D = m && MISSOES[m.id];
   if (!D) {
     painelMissao.atualizar(null);
@@ -20499,6 +21015,16 @@ function atualizarMissao(ms) {
   const meuNome = idGatoMapa && Save.pegar(idGatoMapa)?.look?.nome || "Eu";
   const por = Object.entries(m.por || {}).map(([c, n]) => ({ nome: c === idGatoMapa ? meuNome : nomes.get(c) || "Algu\xE9m", n })).sort((a, b) => b.n - a.n);
   painelMissao.atualizar({ icone: D.icone, nome: D.nome, feitas: m.feitas, alvo: m.alvo, fim: !!m.fim, por });
+  if (m.brinq && idGatoMapa) {
+    const n = m.por && m.por[idGatoMapa] || 0;
+    if (brinqVisto.inicio !== m.inicio) {
+      brinqVisto.inicio = m.inicio;
+      brinqVisto.n = n;
+    } else if (n > brinqVisto.n) {
+      estatMais("brinquedos", n - brinqVisto.n);
+      brinqVisto.n = n;
+    }
+  }
   if (m.fim && festejada !== m.inicio) {
     festejada = m.inicio;
     mostrarFesta();
@@ -20759,10 +21285,10 @@ function configurarRenderCriador() {
     camAlvo.lerp(dados.alvo, 0.15);
     camAltura += (dados.altura - camAltura) * 0.15;
   }
-  const fovRad = THREE12.MathUtils.degToRad(camera.fov);
-  const dist2 = camAltura / (2 * Math.tan(fovRad / 2));
-  const direcao = new THREE12.Vector3(0, 0.35, 1).normalize();
-  camera.position.copy(camAlvo).addScaledVector(direcao, dist2);
+  const fovRad = THREE13.MathUtils.degToRad(camera.fov);
+  const dist3 = camAltura / (2 * Math.tan(fovRad / 2));
+  const direcao = new THREE13.Vector3(0, 0.35, 1).normalize();
+  camera.position.copy(camAlvo).addScaledVector(direcao, dist3);
   camera.lookAt(camAlvo);
 }
 function restaurarRenderNormal() {
@@ -20956,7 +21482,7 @@ mundos.ganchos.aoJuntar = () => {
   if (cl && (cl.contains("tela-menu") || cl.contains("tela-gatos"))) irPara(telaAtual, opcoesTela);
   setTimeout(() => nuvem.sincronizar({ forcar: true }), 500);
 };
-aovivo = criarAoVivo({ nuvem, THREE: THREE12, loadCat, conexao, aoPapel: papelMudou });
+aovivo = criarAoVivo({ nuvem, THREE: THREE13, loadCat, conexao, aoPapel: papelMudou });
 conexao.on((t) => {
   if (t === "sem-internet") avisar2("Sem internet \u2014 a brincadeira continua aqui!", 3e3);
   else if (t === "modo") modoMudou().catch(() => {
