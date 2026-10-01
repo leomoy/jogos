@@ -845,72 +845,6 @@ canvas,
   cursor: pointer;
 }
 
-.hud-zoom {
-  position: absolute;
-  top: 84px;
-  right: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  pointer-events: none;
-}
-
-.botao-zoom {
-  width: 52px;
-  height: 52px;
-  padding: 0;
-  font-family: inherit;
-  font-size: 1.7rem;
-  font-weight: 700;
-  line-height: 1;
-  color: #3a3a55;
-  background: rgba(255, 255, 255, 0.85);
-  border: 3px solid #cdd6f0;
-  border-radius: 50%;
-  cursor: pointer;
-  pointer-events: auto;
-  touch-action: manipulation;
-}
-
-.botao-zoom:active {
-  background: #e3ebff;
-}
-
-.mapa-completo {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 12px;
-  box-sizing: border-box;
-  background: rgba(40, 60, 80, 0.86);
-  pointer-events: auto;
-}
-
-.mapa-completo-titulo {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #ffffff;
-}
-
-.mapa-completo-canvas {
-  border: 4px solid #ffffff;
-  border-radius: 16px;
-  background: #cfe8c9;
-}
-
-.mapa-completo-fechar {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  min-width: 56px;
-  padding: 8px 16px;
-  font-size: 1.4rem;
-}
 
 /* ===== 14. BOTÕES DE AÇÃO DO MAPA (0.5.4) — coluna à direita: Correr/Andar, Pular, Esgueirar, Ação ===== */
 .acoes {
@@ -962,40 +896,7 @@ canvas,
   }
 }
 
-/* 15. HUD — seletor do ciclo do dia (sol/lua) */
-.hud-ciclo {
-  position: absolute;
-  top: 130px;
-  left: 14px;
-  display: flex;
-  gap: 6px;
-  pointer-events: none;
-}
-
-.botao-ciclo {
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  font-size: 1.25rem;
-  line-height: 1;
-  background: rgba(255, 255, 255, 0.85);
-  border: 3px solid #cdd6f0;
-  border-radius: 50%;
-  cursor: pointer;
-  pointer-events: auto;
-  touch-action: manipulation;
-}
-
-.botao-ciclo.ativo {
-  background: #fff1b8;
-  border-color: #f2c94c;
-}
-
-@media (max-width: 480px) {
-  .hud-ciclo {
-    top: 108px;
-  }
-}
+/* 15. HUD — seletor do ciclo do dia: ver "0.10.2" no fim deste arquivo */
 
 /* 16. Mapinhas (caverna...) — dentro deles a luz é sempre a mesma (sem botões do ciclo) e a troca de mapa escurece e clareia */
 .em-sub .hud-ciclo {
@@ -1723,7 +1624,7 @@ canvas,
 .gato-comida { font-size: 0.78rem; font-weight: 700; color: #6a5a4a; }
 
 /* 0.9.6 — missões: botão 🎯 ao lado dos botões do horário, painel pequeno embaixo deles, lista (diálogo) e festa de "Missão cumprida!" */
-.botao-missoes { position: absolute; top: 130px; left: 148px; width: 38px; height: 38px; padding: 0; font-size: 1.25rem; line-height: 1; background: rgba(255, 255, 255, 0.85); border: 3px solid #cdd6f0; border-radius: 50%; cursor: pointer; pointer-events: auto; touch-action: manipulation; }
+.botao-missoes { position: absolute; top: 130px; left: 66px; width: 38px; height: 38px; padding: 0; font-size: 1.25rem; line-height: 1; background: rgba(255, 255, 255, 0.85); border: 3px solid #cdd6f0; border-radius: 50%; cursor: pointer; pointer-events: auto; touch-action: manipulation; }
 .em-servidor .botao-missoes, .em-espectador .botao-missoes { display: none; }
 .painel-missao { position: absolute; top: 176px; left: 14px; max-width: min(74vw, 320px); box-sizing: border-box; padding: 4px 10px; background: rgba(255, 255, 255, 0.85); border: 3px solid #cdd6f0; border-radius: 14px; color: #3a3a55; pointer-events: none; }
 .painel-missao[hidden], .painel-missao-quem[hidden] { display: none; }
@@ -1872,6 +1773,45 @@ canvas,
   .tela-familia { overflow-y: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
   .tela-familia .familia-painel, .tela-familia .familia-voltar { flex: 0 0 auto; }
 }
+
+/* ===== 0.10.2 — controles: sem botões +/−; Ação e Pular em ênfase; Postura e Gestos menores; horário num botão só (carrossel); bússola; mapa em tela cheia ===== */
+.acoes { align-items: flex-end; }
+.acoes .botao-acao[data-acao="acao"], .acoes .botao-acao[data-acao="pular"] { width: 70px; height: 70px; border-radius: 24px; }   /* (+6 de borda = 76) */
+.acoes .botao-acao[data-acao="acao"] .ico, .acoes .botao-acao[data-acao="pular"] .ico { font-size: 2.1rem; }
+.acoes .botao-acao[data-acao="acao"] .rot, .acoes .botao-acao[data-acao="pular"] .rot { font-size: 0.78rem; }
+.acoes .botao-acao[data-acao="postura"], .acoes .botao-acao[data-acao="gestos"] { width: 46px; height: 46px; border-radius: 18px; }   /* (+6 = 52) */
+.acoes .botao-acao[data-acao="postura"] .ico, .acoes .botao-acao[data-acao="gestos"] .ico { font-size: 1.3rem; }
+.acoes .botao-acao[data-acao="postura"] .rot, .acoes .botao-acao[data-acao="gestos"] .rot { font-size: 0.58rem; }
+@media (max-height: 520px) {   /* deitado: 2 colunas, os pequenos à esquerda e os grandes à direita */
+  .acoes { align-items: center; }
+  .acoes .botao-acao[data-acao="acao"], .acoes .botao-acao[data-acao="pular"] { width: 70px; height: 70px; }
+  .acoes .botao-acao[data-acao="postura"], .acoes .botao-acao[data-acao="gestos"] { width: 46px; height: 46px; }
+  .acoes .botao-acao[data-acao="postura"] .ico, .acoes .botao-acao[data-acao="gestos"] .ico { font-size: 1.3rem; }
+}
+
+.hud-ciclo { position: absolute; top: 146px; left: 14px; pointer-events: none; }   /* (abaixo do minimapa: antes encostava nele) */
+.botao-missoes { top: 146px; }
+.painel-missao { top: 196px; }
+.botao-horario { width: 38px; height: 38px; padding: 0; font-size: 1.5rem; line-height: 1; background: rgba(255, 255, 255, 0.85); border: 3px solid #f2c94c; border-radius: 50%; cursor: pointer; pointer-events: auto; touch-action: manipulation; }
+.carrossel-horario { position: absolute; top: 0; left: 52px; display: flex; gap: 8px; width: min(calc(100vw - 90px), 262px); box-sizing: border-box; padding: 6px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; background: rgba(255, 255, 255, 0.95); border: 3px solid #cdd6f0; border-radius: 18px; box-shadow: 0 4px 0 #cdd6f0; pointer-events: auto; z-index: 3; }
+.carrossel-horario::-webkit-scrollbar { display: none; }
+.carrossel-horario[hidden] { display: none; }
+.botao-ciclo { flex: 0 0 76px; height: 56px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: inherit; color: #3a3a55; background: #f4f7ff; border: 3px solid #cdd6f0; border-radius: 16px; scroll-snap-align: center; cursor: pointer; touch-action: manipulation; }
+.botao-ciclo .ico { font-size: 1.6rem; line-height: 1; }
+.botao-ciclo .rot { font-size: 0.62rem; font-weight: 700; line-height: 1.1; }
+.botao-ciclo.ativo { background: #fff1b8; border-color: #f2c94c; transform: scale(1.06); }
+@media (max-width: 480px) { .hud-ciclo, .botao-missoes { top: 116px; } .painel-missao { top: 166px; } }
+.em-sub .hud-ciclo { display: none; }
+
+.bussola { position: absolute; top: 18px; left: 94px; width: 36px; height: 36px; padding: 0; background: rgba(255, 255, 255, 0.92); border: 3px solid #cdd6f0; border-radius: 50%; cursor: pointer; pointer-events: auto; touch-action: manipulation; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
+.bussola[hidden] { display: none; }
+.bussola-seta { display: block; width: 100%; height: 100%; }
+@media (max-width: 480px) { .bussola { left: 64px; } }
+
+.mapa-completo { position: fixed; inset: 0; z-index: 30; display: block; padding: 0; box-sizing: border-box; pointer-events: auto; background: #26384a; touch-action: none; overflow: hidden; }
+.mapa-completo-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border: 0; border-radius: 0; background: none; touch-action: none; }
+.mapa-completo-titulo { position: absolute; top: 14px; left: 14px; margin: 0; padding: 6px 16px; font-size: 1.2rem; color: #3a3a55; background: rgba(255, 255, 255, 0.85); border: 3px solid #cdd6f0; border-radius: 16px; pointer-events: none; }
+.mapa-completo-fechar { position: absolute; top: 14px; right: 14px; min-width: 56px; min-height: 56px; padding: 8px 16px; font-size: 1.4rem; }
 </style>
 <script type="importmap">{
   "imports": {
@@ -2055,17 +1995,12 @@ ${(e.stack || "").split("\n").slice(1, 4).join("\n")}`);
     assert(depois && Number.isFinite(depois.x), "posicao() inv\xE1lida ap\xF3s mover: " + JSON.stringify(depois));
     assert(depois.x > antes.x, "gato n\xE3o se moveu para a direita: " + antes.x + " -> " + depois.x);
   });
-  await step("mapa: zoom in/out respeita os limites e os bot\xF5es +/\u2212", async () => {
+  await step("mapa: zoom in/out respeita os limites (0.10.2: sem bot\xF5es +/\u2212)", async () => {
     assert(G.zoom(3) === 3 && G.zoom(1) === 3, "zoom perto n\xE3o limita em 3: " + G.zoom());
     assert(G.zoom(99) === 16, "zoom longe n\xE3o limita em 16: " + G.zoom());
     G.zoom(10);
-    const [mais, menos] = $$(".botao-zoom");
-    assert(mais && menos, "bot\xF5es +/\u2212 ausentes");
-    click(mais);
-    assert(G.zoom() < 10, "bot\xE3o + n\xE3o aproximou");
-    click(menos);
-    click(menos);
-    assert(G.zoom() > 10, "bot\xE3o \u2212 n\xE3o afastou");
+    assert(!$(".botao-zoom") && !$(".hud-zoom"), "os bot\xF5es +/\u2212 deviam ter sa\xEDdo (0.10.2: zoom s\xF3 por pin\xE7a e roda)");
+    assert(G.yaw() === 0, "a c\xE2mera devia come\xE7ar no norte (yaw 0)");
     const i = G.info;
     assert(i && i.calls > 0, "renderer.info vazio");
     R.steps.push("      draw calls=" + i.calls + " tri\xE2ngulos=" + i.tris);
@@ -2372,7 +2307,7 @@ if (typeof window !== "undefined") {
 import * as THREE12 from "three";
 
 // js/data.js
-var VERSION = "0.10.1";
+var VERSION = "0.10.2";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -11789,7 +11724,96 @@ function atualizarMapa(mapa, dt, input, tempoSegundos) {
   }
 }
 
+// js/camera.js
+function normalizarAngulo(a) {
+  if (typeof a !== "number" || !isFinite(a)) return 0;
+  let r = a % (2 * Math.PI);
+  if (r <= -Math.PI) r += 2 * Math.PI;
+  if (r > Math.PI) r -= 2 * Math.PI;
+  return r;
+}
+function anguloEntre(p, q) {
+  return Math.atan2(q.y - p.y, q.x - p.x);
+}
+function deltaAngulo(antes, agora2) {
+  return normalizarAngulo(agora2 - antes);
+}
+var LIMIAR_GIRO = 0.14;
+function passoGiro(est2, delta) {
+  const acum = (est2 && isFinite(est2.acum) ? est2.acum : 0) + delta;
+  const girando = est2 && est2.girando === true || Math.abs(acum) > LIMIAR_GIRO;
+  const aplicar = girando ? delta : 0;
+  return { est: { acum, girando }, aplicar };
+}
+function joystickRelativo(dx, dy, yaw) {
+  const c = Math.cos(yaw);
+  const s = Math.sin(yaw);
+  return {
+    dx: dx * c + dy * s,
+    dy: -dx * s + dy * c
+  };
+}
+function deslocamentoCamera(yaw) {
+  return { x: Math.sin(yaw), z: Math.cos(yaw) };
+}
+function rumoBussola(yaw) {
+  const x_tela = 0 * Math.cos(yaw) + -1 * -Math.sin(yaw);
+  const cima_tela = 0 * -Math.sin(yaw) + -1 * -Math.cos(yaw);
+  return Math.atan2(x_tela, cima_tela);
+}
+function bussolaVisivel(yaw) {
+  return Math.abs(normalizarAngulo(yaw)) > 0.02;
+}
+function yawVoltando(ini, t, dur) {
+  if (dur <= 0) return 0;
+  const p = Math.min(1, Math.max(0, t / dur));
+  const e = 1 - Math.pow(1 - p, 3);
+  return normalizarAngulo(ini) * (1 - e);
+}
+var ESCALA_MIN = 1;
+var ESCALA_MAX = 4;
+function limitarVista(v, S, vw, vh) {
+  const escala = Math.min(ESCALA_MAX, Math.max(ESCALA_MIN, v.escala));
+  const m = Math.min(vw, vh) * escala / S;
+  const hx = vw / (2 * m);
+  const hy = vh / (2 * m);
+  let cx, cy;
+  if (2 * hx >= S) cx = S / 2;
+  else cx = Math.min(S - hx, Math.max(hx, v.cx));
+  if (2 * hy >= S) cy = S / 2;
+  else cy = Math.min(S - hy, Math.max(hy, v.cy));
+  return { escala, cx, cy };
+}
+function zoomNoPonto(v, fator, sx, sy, S, vw, vh) {
+  const m = Math.min(vw, vh) * v.escala / S;
+  const px = v.cx + (sx - vw / 2) / m;
+  const py = v.cy + (sy - vh / 2) / m;
+  const novaEscala = v.escala * fator;
+  const limitada = limitarVista({ escala: novaEscala, cx: v.cx, cy: v.cy }, S, vw, vh);
+  const m_novo = Math.min(vw, vh) * limitada.escala / S;
+  const cx = px - (sx - vw / 2) / m_novo;
+  const cy = py - (sy - vh / 2) / m_novo;
+  return limitarVista({ escala: limitada.escala, cx, cy }, S, vw, vh);
+}
+function arrastarVista(v, dxTela, dyTela, S, vw, vh) {
+  const m = Math.min(vw, vh) * v.escala / S;
+  const cx = v.cx - dxTela / m;
+  const cy = v.cy - dyTela / m;
+  return limitarVista({ escala: v.escala, cx, cy }, S, vw, vh);
+}
+function imagemParaTela(v, S, vw, vh, ix, iy) {
+  const m = Math.min(vw, vh) * v.escala / S;
+  return {
+    x: (ix - v.cx) * m + vw / 2,
+    y: (iy - v.cy) * m + vh / 2
+  };
+}
+
 // js/zoom.js
+var VOLTA_NORTE_S = 0.4;
+var GIRO_TECLA = 1.6;
+var GIRO_MOUSE = 6e-3;
+var EXCLUI = ".joystick, .acoes, button, #minimapa, .tela, .mapa-completo";
 function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
   let dist2 = limitar(inicial);
   function limitar(v) {
@@ -11801,6 +11825,12 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
   const ponteiros = /* @__PURE__ */ new Map();
   let distIni = 0;
   let zoomIni = 0;
+  let yaw = 0;
+  let volta = null;
+  let angPrev = 0;
+  let giroEst = { acum: 0, girando: false };
+  let mouseX = null;
+  const teclasGiro = /* @__PURE__ */ new Set();
   function distEntre(a, b) {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
@@ -11810,8 +11840,12 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
     return Array.from(ponteiros.values());
   }
   function aoPointerDown(e) {
-    if (e.pointerType === "mouse") return;
-    if (e.target && e.target.closest && e.target.closest(".joystick, .acoes, button, #minimapa, .tela, .mapa-completo")) {
+    if (e.target && e.target.closest && e.target.closest(EXCLUI)) return;
+    if (e.pointerType === "mouse") {
+      if (e.button === 2) {
+        mouseX = e.clientX;
+        volta = null;
+      }
       return;
     }
     ponteiros.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -11819,9 +11853,19 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
     if (ativos.length === 2) {
       distIni = distEntre(ativos[0], ativos[1]);
       zoomIni = dist2;
+      angPrev = anguloEntre(ativos[0], ativos[1]);
+      giroEst = { acum: 0, girando: false };
+      volta = null;
     }
   }
   function aoPointerMove(e) {
+    if (mouseX !== null && e.pointerType === "mouse") {
+      if (e.buttons & 2) {
+        yaw += (e.clientX - mouseX) * GIRO_MOUSE;
+        mouseX = e.clientX;
+      } else mouseX = null;
+      return;
+    }
     if (!ponteiros.has(e.pointerId)) return;
     ponteiros.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const ativos = ponteirosAtivos();
@@ -11830,9 +11874,15 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
       if (distAtual > 0) {
         dist2 = limitar(zoomIni * distIni / distAtual);
       }
+      const ang = anguloEntre(ativos[0], ativos[1]);
+      const r = passoGiro(giroEst, deltaAngulo(angPrev, ang));
+      giroEst = r.est;
+      angPrev = ang;
+      yaw += r.aplicar;
     }
   }
   function aoPointerUp(e) {
+    if (e.pointerType === "mouse") mouseX = null;
     ponteiros.delete(e.pointerId);
     if (ponteiros.size < 2) {
       distIni = 0;
@@ -11853,12 +11903,28 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
     e.preventDefault();
     dist2 = limitar(dist2 * Math.exp(e.deltaY * 12e-4));
   }
+  const campo = (e) => /^(INPUT|TEXTAREA|SELECT)$/.test(e.target && e.target.tagName || "");
+  function aoTecla(e) {
+    const k = (e.key || "").toLowerCase();
+    if (k !== "q" && k !== "r" || e.ctrlKey || e.metaKey || e.altKey || campo(e)) return;
+    if (e.type === "keydown") {
+      teclasGiro.add(k);
+      volta = null;
+    } else teclasGiro.delete(k);
+  }
+  const aoMenu = (e) => e.preventDefault();
+  window.addEventListener("keydown", aoTecla);
+  window.addEventListener("keyup", aoTecla);
+  window.addEventListener("contextmenu", aoMenu);
   window.addEventListener("wheel", aoRoda, { passive: false });
   window.addEventListener("pointerdown", aoPointerDown);
   window.addEventListener("pointermove", aoPointerMove);
   window.addEventListener("pointerup", aoPointerUp);
   window.addEventListener("pointercancel", aoPointercancel);
   function destruir() {
+    window.removeEventListener("keydown", aoTecla);
+    window.removeEventListener("keyup", aoTecla);
+    window.removeEventListener("contextmenu", aoMenu);
     window.removeEventListener("wheel", aoRoda);
     window.removeEventListener("pointerdown", aoPointerDown);
     window.removeEventListener("pointermove", aoPointerMove);
@@ -11883,6 +11949,28 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
     menos() {
       dist2 = limitar(dist2 * 1.25);
       return dist2;
+    },
+    yaw() {
+      return yaw;
+    },
+    setYaw(v) {
+      yaw = typeof v === "number" && isFinite(v) ? v : 0;
+      volta = null;
+      return yaw;
+    },
+    voltarAoNorte() {
+      volta = { ini: yaw, t: 0 };
+    },
+    // chamado a cada quadro: Q/R e a animação da volta ao norte
+    atualizar(dt) {
+      const k = (teclasGiro.has("r") ? 1 : 0) - (teclasGiro.has("q") ? 1 : 0);
+      if (k) yaw += k * GIRO_TECLA * dt;
+      if (volta) {
+        volta.t += dt;
+        yaw = yawVoltando(volta.ini, volta.t, VOLTA_NORTE_S);
+        if (volta.t >= VOLTA_NORTE_S) volta = null;
+      }
+      yaw = normalizarAngulo(yaw);
     },
     destruir
   };
@@ -12140,7 +12228,7 @@ function criarCapaEstatica(mapa, W) {
   }
   return canvas;
 }
-function desenharGato(ctx2, mapa, W) {
+function desenharGato(ctx2, mapa, W, k = 1) {
   const LIMITE = mapa.mundo.LIMITE;
   const e = W / (2 * LIMITE);
   const g = mapa.gatoGroup;
@@ -12149,7 +12237,7 @@ function desenharGato(ctx2, mapa, W) {
   const a = g.rotation.y;
   const cx = (x + LIMITE) * e;
   const cy = (z + LIMITE) * e;
-  const L = Math.max(6, W * 0.035);
+  const L = Math.max(6, W * 0.035) * k;
   const ponta = { x: cx + Math.sin(a) * L, y: cy + Math.cos(a) * L };
   const p1 = { x: cx + Math.sin(a + 2.5) * 0.7 * L, y: cy + Math.cos(a + 2.5) * 0.7 * L };
   const p2 = { x: cx + Math.sin(a - 2.5) * 0.7 * L, y: cy + Math.cos(a - 2.5) * 0.7 * L };
@@ -12160,12 +12248,12 @@ function desenharGato(ctx2, mapa, W) {
   ctx2.closePath();
   ctx2.fillStyle = "#e05a2b";
   ctx2.fill();
-  ctx2.lineWidth = 1.5;
+  ctx2.lineWidth = 1.5 * k;
   ctx2.strokeStyle = "#ffffff";
   ctx2.stroke();
 }
-function desenharJogadores(ctx2, mapa, W, lista) {
-  const L = Math.max(6, W * 0.035);
+function desenharJogadores(ctx2, mapa, W, lista, k = 1, yaw = 0) {
+  const L = Math.max(6, W * 0.035) * k;
   ctx2.font = "bold " + Math.round(L * 1.1) + "px sans-serif";
   ctx2.textAlign = "center";
   ctx2.textBaseline = "bottom";
@@ -12178,32 +12266,33 @@ function desenharJogadores(ctx2, mapa, W, lista) {
     ctx2.closePath();
     ctx2.fillStyle = "#" + (j.cor || 8947848).toString(16).padStart(6, "0");
     ctx2.fill();
-    ctx2.lineWidth = Math.max(1.5, L * 0.22);
+    ctx2.lineWidth = Math.max(1.5 * k, L * 0.22);
     ctx2.strokeStyle = "#2b6fff";
     ctx2.stroke();
     const ini = String(j.nome || "?").trim().charAt(0).toUpperCase() || "?";
-    ctx2.lineWidth = Math.max(2, L * 0.25);
+    ctx2.save();
+    ctx2.translate(p.x, p.y);
+    ctx2.rotate(-yaw);
+    ctx2.lineWidth = Math.max(2 * k, L * 0.25);
     ctx2.strokeStyle = "#ffffff";
-    ctx2.strokeText(ini, p.x, p.y - L * 0.8);
+    ctx2.strokeText(ini, 0, -L * 0.8);
     ctx2.fillStyle = "#2b6fff";
-    ctx2.fillText(ini, p.x, p.y - L * 0.8);
+    ctx2.fillText(ini, 0, -L * 0.8);
+    ctx2.restore();
   }
 }
+var S_MAPA = 2048;
+var ESCALA_ABRE = 2;
 function criarMapaCompleto({ container, mapa, aoFechar, jogadores }) {
   const elemento = document.createElement("div");
   elemento.className = "mapa-completo";
+  const canvas = document.createElement("canvas");
+  canvas.className = "mapa-completo-canvas";
+  elemento.appendChild(canvas);
   const titulo = document.createElement("h2");
   titulo.className = "mapa-completo-titulo";
   titulo.textContent = "Mapa";
   elemento.appendChild(titulo);
-  const lado = Math.max(200, Math.floor(Math.min(window.innerWidth - 24, window.innerHeight - 150)));
-  const canvas = document.createElement("canvas");
-  canvas.className = "mapa-completo-canvas";
-  canvas.width = lado * 2;
-  canvas.height = lado * 2;
-  canvas.style.width = lado + "px";
-  canvas.style.height = lado + "px";
-  elemento.appendChild(canvas);
   const botao = document.createElement("button");
   botao.type = "button";
   botao.className = "botao mapa-completo-fechar";
@@ -12215,20 +12304,98 @@ function criarMapaCompleto({ container, mapa, aoFechar, jogadores }) {
   elemento.appendChild(botao);
   container.appendChild(elemento);
   const ctx2 = canvas.getContext("2d");
-  const capa = criarCapaEstatica(mapa, lado * 2);
-  function atualizar() {
-    ctx2.drawImage(capa, 0, 0);
-    desenharNevoa(ctx2, mapa, lado * 2);
-    desenharGato(ctx2, mapa, lado * 2);
-    if (jogadores) desenharJogadores(ctx2, mapa, lado * 2, jogadores());
+  const capa = criarCapaEstatica(mapa, S_MAPA);
+  let dpr = 1, vw = 1, vh = 1;
+  let vista = { escala: ESCALA_ABRE, cx: S_MAPA / 2, cy: S_MAPA / 2 };
+  function medir() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(1, Math.round(elemento.clientWidth * dpr)), h = Math.max(1, Math.round(elemento.clientHeight * dpr));
+    if (w === canvas.width && h === canvas.height) return;
+    canvas.width = w;
+    canvas.height = h;
+    vw = w;
+    vh = h;
+    vista = limitarVista(vista, S_MAPA, vw, vh);
   }
+  medir();
+  {
+    const LIM3 = mapa.mundo.LIMITE, g = mapa.gatoGroup.position;
+    vista = limitarVista({ escala: ESCALA_ABRE, cx: (g.x + LIM3) / (2 * LIM3) * S_MAPA, cy: (g.z + LIM3) / (2 * LIM3) * S_MAPA }, S_MAPA, vw, vh);
+  }
+  function atualizar() {
+    medir();
+    const m = Math.min(vw, vh) * vista.escala / S_MAPA;
+    const o = imagemParaTela(vista, S_MAPA, vw, vh, 0, 0);
+    ctx2.setTransform(1, 0, 0, 1, 0, 0);
+    ctx2.fillStyle = "#26384a";
+    ctx2.fillRect(0, 0, vw, vh);
+    ctx2.setTransform(m, 0, 0, m, o.x, o.y);
+    ctx2.imageSmoothingEnabled = true;
+    ctx2.imageSmoothingQuality = "high";
+    ctx2.drawImage(capa, 0, 0);
+    desenharNevoa(ctx2, mapa, S_MAPA);
+    const k = 1 / vista.escala;
+    if (jogadores) desenharJogadores(ctx2, mapa, S_MAPA, jogadores(), k);
+    desenharGato(ctx2, mapa, S_MAPA, k);
+    ctx2.setTransform(1, 0, 0, 1, 0, 0);
+  }
+  const ponteiros = /* @__PURE__ */ new Map();
+  let pinca = null;
+  const ponto = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * dpr, y: (e.clientY - r.top) * dpr };
+  };
+  const dois = () => {
+    const [a, b] = [...ponteiros.values()];
+    return { d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+  };
+  function aoDown(e) {
+    if (e.target === botao) return;
+    ponteiros.set(e.pointerId, ponto(e));
+    try {
+      elemento.setPointerCapture(e.pointerId);
+    } catch (err) {
+    }
+    pinca = ponteiros.size === 2 ? dois() : null;
+    if (e.cancelable) e.preventDefault();
+  }
+  function aoMove(e) {
+    const ant = ponteiros.get(e.pointerId);
+    if (!ant) return;
+    const p = ponto(e);
+    ponteiros.set(e.pointerId, p);
+    if (ponteiros.size === 1) {
+      vista = arrastarVista(vista, p.x - ant.x, p.y - ant.y, S_MAPA, vw, vh);
+    } else if (ponteiros.size === 2 && pinca) {
+      const n = dois();
+      vista = arrastarVista(vista, n.mx - pinca.mx, n.my - pinca.my, S_MAPA, vw, vh);
+      if (pinca.d >= 1) vista = zoomNoPonto(vista, n.d / pinca.d, n.mx, n.my, S_MAPA, vw, vh);
+      pinca = n;
+    }
+  }
+  function aoUp(e) {
+    ponteiros.delete(e.pointerId);
+    pinca = ponteiros.size === 2 ? dois() : null;
+  }
+  function aoRoda(e) {
+    e.preventDefault();
+    const p = ponto(e);
+    vista = zoomNoPonto(vista, Math.exp(-e.deltaY * 15e-4), p.x, p.y, S_MAPA, vw, vh);
+  }
+  elemento.addEventListener("pointerdown", aoDown);
+  elemento.addEventListener("pointermove", aoMove);
+  elemento.addEventListener("pointerup", aoUp);
+  elemento.addEventListener("pointercancel", aoUp);
+  elemento.addEventListener("wheel", aoRoda, { passive: false });
   atualizar();
   function destruir() {
     if (elemento.parentNode) {
       elemento.parentNode.removeChild(elemento);
     }
   }
-  return { elemento, atualizar, destruir };
+  return { elemento, atualizar, destruir, vista: () => ({ ...vista }), definirVista(v) {
+    vista = limitarVista({ ...vista, ...v }, S_MAPA, vw, vh);
+  } };
 }
 
 // js/submapa.js
@@ -19093,6 +19260,8 @@ function aoMudarSub() {
   capaMini = null;
   estatPos = null;
   fecharMapaCompleto();
+  const car = document.querySelector(".carrossel-horario");
+  if (car) car.hidden = true;
   const dentro2 = !!(mapaAtual && mapaAtual.sub);
   const fechado = dentro2 && !mapaAtual.sub.inst.aoArLivre;
   document.body.classList.toggle("em-sub", fechado);
@@ -19397,6 +19566,9 @@ function irPara(nome, opcoes) {
     });
     telaAtual = "criador";
   } else if (nome === "mapa") {
+    let foraDoCarrossel = function(e) {
+      if (!cicloBox.contains(e.target)) fecharCarrossel();
+    };
     const gato = opcoes.gato || gatoPadrao();
     opcoesMapaAtual = { gato };
     const servidor = opcoes.servidor || opcoes.espectador || null;
@@ -19497,39 +19669,58 @@ function irPara(nome, opcoes) {
     botaoPausa.textContent = "\u23F8";
     botaoPausa.addEventListener("click", () => abrirPausa());
     hud.appendChild(botaoPausa);
-    const zoomBox = document.createElement("div");
-    zoomBox.className = "hud-zoom";
-    for (const [txt, rotulo, fn] of [["+", "Aproximar", () => zoomAtual && zoomAtual.mais()], ["\u2212", "Afastar", () => zoomAtual && zoomAtual.menos()]]) {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "botao-zoom";
-      b.textContent = txt;
-      b.setAttribute("aria-label", rotulo);
-      b.addEventListener("click", fn);
-      zoomBox.appendChild(b);
-    }
-    hud.appendChild(zoomBox);
+    const bussola = document.createElement("button");
+    bussola.type = "button";
+    bussola.className = "bussola";
+    bussola.hidden = true;
+    bussola.title = "Voltar para o norte";
+    bussola.setAttribute("aria-label", "B\xFAssola: voltar o norte para cima");
+    bussola.innerHTML = '<svg class="bussola-seta" viewBox="-20 -20 40 40" aria-hidden="true"><path d="M0 -16 L7 3 L0 0 L-7 3 Z" fill="#e53935"/><path d="M0 16 L7 3 L0 0 L-7 3 Z" fill="#b8bfd4"/><circle r="2" fill="#fff"/></svg>';
+    bussola.addEventListener("click", () => zoomAtual && zoomAtual.voltarAoNorte());
+    hud.appendChild(bussola);
     const cicloBox = document.createElement("div");
     cicloBox.className = "hud-ciclo";
-    for (const [id, icone, rotulo] of [["dia", "\u2600\uFE0F", "Dia"], ["anoitecer", "\u{1F307}", "Anoitecendo"], ["noite", "\u{1F319}", "Noite"]]) {
+    const botaoHorario = document.createElement("button");
+    botaoHorario.type = "button";
+    botaoHorario.className = "botao-horario";
+    botaoHorario.setAttribute("aria-label", "Hor\xE1rio do dia");
+    const carrossel = document.createElement("div");
+    carrossel.className = "carrossel-horario";
+    carrossel.hidden = true;
+    const fecharCarrossel = () => {
+      carrossel.hidden = true;
+      window.removeEventListener("pointerdown", foraDoCarrossel, true);
+    };
+    botaoHorario.addEventListener("click", () => {
+      if (!carrossel.hidden) {
+        fecharCarrossel();
+        return;
+      }
+      carrossel.hidden = false;
+      window.addEventListener("pointerdown", foraDoCarrossel, true);
+      const atual = carrossel.querySelector(".botao-ciclo.ativo");
+      if (atual) carrossel.scrollLeft = atual.offsetLeft - (carrossel.clientWidth - atual.offsetWidth) / 2;
+    });
+    for (const [id, icone, rotulo] of HORARIOS) {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "botao-ciclo" + (mapaAtual.ciclo === id ? " ativo" : "");
-      b.textContent = icone;
-      b.title = rotulo;
-      b.setAttribute("aria-label", rotulo);
       b.dataset.ciclo = id;
+      b.setAttribute("aria-label", rotulo);
+      b.innerHTML = '<span class="ico">' + icone + '</span><span class="rot">' + rotulo + "</span>";
       b.addEventListener("click", () => {
+        fecharCarrossel();
         if (pedirHorario(id)) return;
         mapaAtual.setCiclo(id);
         salvarMundoAgora();
-        for (const btn of cicloBox.querySelectorAll(".botao-ciclo")) {
-          btn.classList.toggle("ativo", btn.dataset.ciclo === id);
-        }
+        atualizarBotaoHorario();
       });
-      cicloBox.appendChild(b);
+      carrossel.appendChild(b);
     }
+    cicloBox.appendChild(botaoHorario);
+    cicloBox.appendChild(carrossel);
     hud.appendChild(cicloBox);
+    atualizarBotaoHorario();
     avisoVotacao = criarAvisoVotacao({ aoVotar: (v) => aovivo.votar(v) });
     hud.appendChild(avisoVotacao.elemento);
     const botaoMissoes = document.createElement("button");
@@ -19862,6 +20053,16 @@ function pedirVotavel(tipo, id, aplicar) {
   if (AVISOS_PEDIDO[r]) avisar2(AVISOS_PEDIDO[r]);
   return r !== "local";
 }
+var HORARIOS = [["dia", "\u2600\uFE0F", "Dia"], ["anoitecer", "\u{1F307}", "Anoitecendo"], ["noite", "\u{1F319}", "Noite"]];
+function atualizarBotaoHorario() {
+  if (!mapaAtual) return;
+  for (const btn of document.querySelectorAll(".botao-ciclo")) btn.classList.toggle("ativo", btn.dataset.ciclo === mapaAtual.ciclo);
+  const bh = document.querySelector(".botao-horario"), h = HORARIOS.find((x) => x[0] === mapaAtual.ciclo);
+  if (bh && h && bh.textContent !== h[1]) {
+    bh.textContent = h[1];
+    bh.title = h[2];
+  }
+}
 var pedirHorario = (id) => pedirVotavel("ciclo", id, () => {
   mapaAtual.setCiclo(id);
   salvarMundoAgora();
@@ -20047,7 +20248,7 @@ function atualizarHudAoVivo(ms) {
   tHudAoVivo = ms;
   const el = document.getElementById("hud-aovivo");
   if (!el) return;
-  if (mapaAtual) for (const btn of document.querySelectorAll(".botao-ciclo")) btn.classList.toggle("ativo", btn.dataset.ciclo === mapaAtual.ciclo);
+  atualizarBotaoHorario();
   if (!aovivo.ativo()) {
     el.hidden = true;
     return;
@@ -20195,17 +20396,41 @@ function jogadoresParaMapa() {
   if (!mapaAtual || servidorMundo || !aovivo.ativo() || !mostrarJogadoresNoMapa(aovivo.jogo())) return [];
   return jogadoresNoMapa(aovivo.jogadoresMapa(), mapaAtual.sub ? mapaAtual.sub.tipo + ":" + mapaAtual.sub.id : "");
 }
-function desenharMinimapa() {
+var bussolaEl = null;
+var bussolaSeta = null;
+var bussolaVis = null;
+function atualizarBussola(yaw) {
+  if (!bussolaEl || !bussolaEl.isConnected) {
+    bussolaEl = document.querySelector(".bussola");
+    bussolaSeta = bussolaEl && bussolaEl.firstElementChild;
+    bussolaVis = null;
+  }
+  if (!bussolaEl) return;
+  const vis = bussolaVisivel(yaw);
+  if (vis !== bussolaVis) {
+    bussolaVis = vis;
+    bussolaEl.hidden = !vis;
+  }
+  if (vis) bussolaSeta.style.transform = "rotate(" + rumoBussola(yaw) + "rad)";
+}
+function desenharMinimapa(yaw = 0) {
   const alvo2 = alvoAtivo();
   if (!alvo2) return;
   const canvas = document.getElementById("minimapa");
   const ctx2 = canvas && canvas.getContext("2d");
   if (!ctx2) return;
   if (!capaMini) capaMini = criarCapaEstatica(alvo2, canvas.width);
+  const W = canvas.width;
+  ctx2.clearRect(0, 0, W, W);
+  ctx2.save();
+  ctx2.translate(W / 2, W / 2);
+  ctx2.rotate(yaw);
+  ctx2.translate(-W / 2, -W / 2);
   ctx2.drawImage(capaMini, 0, 0);
-  desenharNevoa(ctx2, alvo2, canvas.width);
-  desenharJogadores(ctx2, alvo2, canvas.width, jogadoresParaMapa());
-  desenharGato(ctx2, alvo2, canvas.width);
+  desenharNevoa(ctx2, alvo2, W);
+  desenharJogadores(ctx2, alvo2, W, jogadoresParaMapa(), 1, yaw);
+  desenharGato(ctx2, alvo2, W);
+  ctx2.restore();
 }
 function atualizarCameraEspectador(dt, estado) {
   const f = mapaAtual.focoMundo;
@@ -20264,7 +20489,10 @@ if (renderer) {
     }
     if (telaAtual === "mapa" && !pausado && mapaAtual) {
       const alvo2 = alvoAtivo();
-      const estado = inputAtual && !trocando ? inputAtual.estado() : { dx: 0, dy: 0, correndo: false };
+      if (zoomAtual) zoomAtual.atualizar(dt);
+      const yawCam = zoomAtual ? zoomAtual.yaw() : 0;
+      const estadoTela = inputAtual && !trocando ? inputAtual.estado() : { dx: 0, dy: 0, correndo: false };
+      const estado = { ...estadoTela, ...joystickRelativo(estadoTela.dx, estadoTela.dy, yawCam) };
       const estadoMapa = espectando ? { dx: 0, dy: 0, correndo: false } : estado;
       try {
         if (!trocando) {
@@ -20279,7 +20507,8 @@ if (renderer) {
         if (zoomAtual) distCam += (zoomAtual.get() - distCam) * Math.min(1, dt * 10);
         alvo2.ajustarZoom(distCam);
         const cy = espectando ? camYEsp : servidorMundo ? 0 : alvo2.camY;
-        camera.position.set(g.x, cy + 0.3 + 0.8 * distCam, g.z + 0.6 * distCam);
+        const dc = deslocamentoCamera(yawCam);
+        camera.position.set(g.x + 0.6 * distCam * dc.x, cy + 0.3 + 0.8 * distCam, g.z + 0.6 * distCam * dc.z);
         camera.lookAt(g.x, cy + 0.3, g.z);
       }
       if (inputAtual && !trocando) inputAtual.definirAcao(alvo2.acaoContextual());
@@ -20291,7 +20520,8 @@ if (renderer) {
           else mundos.entregarOferta(idMundoMapa);
         }
       }
-      if (!servidorMundo) desenharMinimapa();
+      if (!servidorMundo) desenharMinimapa(yawCam);
+      atualizarBussola(yawCam);
       if (estatJoga()) {
         estatQuadro(estatUlt ? Math.min((tempoMs - estatUlt) / 1e3, 1) : 0, alvo2);
         estatUlt = tempoMs;
@@ -20469,6 +20699,15 @@ window.GATINHO = {
     if (!zoomAtual) return null;
     if (v != null) zoomAtual.set(v);
     return zoomAtual.get();
+  },
+  yaw(v) {
+    if (!zoomAtual) return null;
+    if (v != null) zoomAtual.setYaw(v);
+    return zoomAtual.yaw();
+  },
+  // 0.10.2 (testes): giro da câmera
+  get mapaCompleto() {
+    return mapaCompleto;
   },
   abrirMapaCompleto,
   fecharMapaCompleto,
