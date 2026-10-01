@@ -1752,6 +1752,23 @@ canvas,
 @keyframes festa-missao-pula { 0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; } 70% { transform: translate(-50%, -50%) scale(1.12); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); } }
 @media (max-width: 480px) { .botao-missoes { top: 108px; } .painel-missao { top: 154px; } }
 @media (max-height: 520px) { .dialogo-missoes-caixa { padding: 10px; gap: 6px; } .missoes-item .botao { min-height: 40px; } .festa-missao { top: 45%; padding: 8px 20px; } .festa-missao p { font-size: 1.4rem; } }
+
+/* 0.9.7 — pique-esconde: faixa no topo, dica, contagem ofuscada (só o pegador) e placar. A faixa fica no alto; o nome do gato e o resto do HUD descem um pouquinho. */
+.brinc[hidden], .brinc [hidden] { display: none; }
+.brinc-faixa { position: fixed; left: 0; right: 0; top: 0; z-index: 18; margin: 0; padding: 5px 10px; box-sizing: border-box; font-size: clamp(0.7rem, 3.1vw, 0.95rem); font-weight: 800; line-height: 1.2; text-align: center; color: #3a3a55; background: #fff1b8; border-bottom: 3px solid #f2c94c; pointer-events: none; }
+.brincando #hud { top: 30px; }
+.brinc-dica { position: fixed; left: 14px; top: 64%; z-index: 18; width: max-content; max-width: min(calc(100vw - 130px), 360px); box-sizing: border-box; margin: 0; padding: 6px 14px; font-size: 1rem; font-weight: 700; line-height: 1.25; text-align: center; color: #3a3a55; background: rgba(255, 255, 255, 0.88); border: 3px solid #cdd6f0; border-radius: 16px; pointer-events: none; }
+.brinc-contagem { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: rgba(30, 30, 60, 0.6); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); pointer-events: none; }
+.brinc-contagem-num { margin: 0; font-size: min(38vw, 38vh, 12rem); font-weight: 900; line-height: 1; color: #fff; text-shadow: 0 6px 0 rgba(0, 0, 0, 0.35); animation: brinc-pulso 1s ease-out infinite; }
+.brinc-contagem-texto { margin: 0; max-width: calc(100vw - 150px); font-size: 1.2rem; font-weight: 800; text-align: center; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4); }
+@keyframes brinc-pulso { 0% { transform: scale(1.25); } 100% { transform: scale(1); } }
+.brinc-placar { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 60; width: min(88vw, 500px); max-height: 80vh; overflow: hidden; box-sizing: border-box; padding: 12px 18px; background: #fff; border: 4px solid #f2c94c; border-radius: 22px; box-shadow: 0 6px 0 #f2c94c; color: #3a3a55; text-align: center; pointer-events: none; }
+.brinc-placar-titulo { margin: 0 0 6px; font-size: 1.45rem; }
+.brinc-placar-lista { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 1.05rem; font-weight: 700; }
+.brinc-placar-lista li { padding: 4px 8px; background: #f4f7ff; border-radius: 10px; }
+.brinc-placar-lista li.brinc-placar-1 { background: #fff1b8; }
+.missoes-subtitulo { margin: 4px 0 0; font-size: 1.15rem; align-self: flex-start; }
+@media (max-height: 520px) { .brinc-faixa { font-size: 0.85rem; padding: 3px 8px; } .brincando #hud { top: 24px; } .brinc-dica { top: 56%; padding: 3px 10px; font-size: 0.9rem; } .brinc-contagem-num { font-size: min(38vw, 34vh, 8rem); } .brinc-contagem-texto { font-size: 1rem; } .brinc-placar { top: 48%; padding: 6px 12px; } .brinc-placar-titulo { font-size: 1.15rem; margin-bottom: 3px; } .brinc-placar-lista { font-size: 0.9rem; gap: 2px; } .brinc-placar-lista li { padding: 2px 6px; } }
 </style>
 <script type="importmap">{
   "imports": {
@@ -2254,7 +2271,7 @@ if (typeof window !== "undefined") {
 import * as THREE10 from "three";
 
 // js/data.js
-var VERSION = "0.9.6";
+var VERSION = "0.9.7";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -7013,6 +7030,32 @@ function arbustoProximo(mapa, x, z, raio = RAIO_ACAO) {
   }
   return melhor;
 }
+function esconderijos(mapa) {
+  if (!mapa._esconderijos) {
+    const arb = mapa.mundo && mapa.mundo.inst && mapa.mundo.inst.arbusto || [];
+    mapa._esconderijos = [
+      ...arb.map((a) => ({ tipo: "arbusto", x: a.x, z: a.z, raio: RAIO_ACAO, alvo: a })),
+      ...(mapa.entradas || []).map((e) => ({ tipo: e.tipo, x: e.x, z: e.z, raio: e.raio, alvo: e }))
+    ].map((e, idx) => ({ ...e, idx }));
+  }
+  return mapa._esconderijos;
+}
+function esconderijoProximo(mapa, x, z) {
+  let melhor = null;
+  let menor = 1;
+  for (const e of esconderijos(mapa)) {
+    const r = Math.hypot(e.x - x, e.z - z) / e.raio;
+    if (r < menor) {
+      menor = r;
+      melhor = e;
+    }
+  }
+  return melhor;
+}
+function pertoDoEsconderijo(mapa, idx, x, z) {
+  const e = esconderijos(mapa)[idx];
+  return !!e && Math.hypot(e.x - x, e.z - z) < e.raio * 1.3 + 0.3;
+}
 function entradaProxima(mapa, x, z) {
   if (!mapa || !mapa.entradas || !mapa.entradas.length) return null;
   let melhor = null;
@@ -7031,6 +7074,12 @@ function acaoContextual(mapa) {
   const e = est(mapa);
   if (e.modo !== "livre") return null;
   const gp = mapa.gatoGroup.position;
+  if (mapa.brincando === "nada") return null;
+  if (mapa.brincando) {
+    const h = esconderijoProximo(mapa, gp.x, gp.z);
+    if (!h) return null;
+    return mapa.brincando === "procura" ? { id: "olhar", icone: "\u{1F440}", rotulo: "Olhar", alvo: h } : { id: "esconder", icone: "\u{1F33F}", rotulo: "Esconder", alvo: h.alvo };
+  }
   const presas = presasProximas(mapa, gp, RAIO_ACAO);
   if (presas && presas.length) {
     return { id: "bote", icone: "\u{1F43E}", rotulo: "Bote", alvo: presas[0] };
@@ -7059,6 +7108,9 @@ function usarAcao(mapa) {
   } else if (a.id === "esconder") {
     e.arbusto = a.alvo;
     e.modo = "indo";
+  } else if (a.id === "olhar") {
+    mapa.gatoGroup.rotation.y = Math.atan2(a.alvo.x - gp.x, a.alvo.z - gp.z);
+    if (mapa.aoOlhar) mapa.aoOlhar(a.alvo.idx);
   } else if (a.id === "entrar") {
     if (mapa.aoEntrar) mapa.aoEntrar(a.alvo);
   }
@@ -7095,7 +7147,14 @@ function esconderAgora(mapa) {
   const e = est(mapa);
   if (!e.arbusto || !mapa.arbInst) return;
   const ref = mapa.arbInst.get(e.arbusto);
-  if (!ref) return;
+  if (!ref) {
+    e.matriz = null;
+    e.fantasma = null;
+    e.modo = "escondido";
+    e.t = 0;
+    if (mapa.cat) mapa.cat.play("esconder");
+    return;
+  }
   const { im, i } = ref;
   e.matriz = new THREE5.Matrix4();
   im.getMatrixAt(i, e.matriz);
@@ -7129,6 +7188,11 @@ function atualizarAcao(mapa, dt, dx, dy) {
   const e = est(mapa);
   const len = Math.hypot(dx, dy);
   const gp = mapa.gatoGroup.position;
+  if (mapa.congelado) {
+    if (e.modo !== "livre") sairDoEsconderijo(mapa);
+    if (len > 0.05 && mapa.aoQuieto) mapa.aoQuieto();
+    return { dx: 0, dy: 0, conduzido: false };
+  }
   if (e.modo === "livre") {
     return { dx, dy, conduzido: false };
   }
@@ -7142,6 +7206,10 @@ function atualizarAcao(mapa, dt, dx, dy) {
       sairDoEsconderijo(mapa);
       return { dx, dy, conduzido: false };
     }
+    if (!mapa.arbInst || !mapa.arbInst.get(arb)) {
+      esconderAgora(mapa);
+      return { dx: 0, dy: 0, conduzido: false };
+    }
     const vx = arb.x - gp.x;
     const vz = arb.z - gp.z;
     const d = Math.hypot(vx, vz);
@@ -7153,6 +7221,10 @@ function atualizarAcao(mapa, dt, dx, dy) {
   }
   if (e.modo === "escondido") {
     if (len > 0.05) {
+      if (mapa.travado) {
+        if (mapa.aoQuieto) mapa.aoQuieto();
+        return { dx: 0, dy: 0, conduzido: false };
+      }
       sairDoEsconderijo(mapa);
       return { dx, dy, conduzido: false };
     }
@@ -10090,11 +10162,19 @@ function criarMapa(scene2, gato, salvo) {
     acao(id) {
       if (id === "pular") {
         if (mapa.nadando) return;
+        if (mapa.travado && mapa.acaoEst && mapa.acaoEst.modo === "escondido") {
+          if (mapa.aoQuieto) mapa.aoQuieto();
+          return;
+        }
         sairDoEsconderijo(mapa);
         if (!mapa.fis.pular()) return;
       }
       if (mapa.cat) mapa.cat.play(id);
     },
+    // 0.9.7: pique-esconde (js/acoes-mapa.js, js/aovivo.js, js/main.js): esconderijo perto de (x, z) / o gato está perto do esconderijo idx / sair do esconderijo à força (achado)
+    esconderijoDe: (x, z) => esconderijoProximo(mapa, x, z),
+    pertoDoEsconderijo: (idx, x, z) => pertoDoEsconderijo(mapa, idx, x, z),
+    sairDoEsconderijo: () => sairDoEsconderijo(mapa),
     acaoContextual: () => acaoContextual(mapa),
     usarAcao: () => usarAcao(mapa),
     // presas do Bote (ratos e peixes, ver animais.js)
@@ -14115,12 +14195,352 @@ function eleger(presencas, gestor, agora2) {
   return gestorVivo.uid;
 }
 
+// js/brincadeiras.js
+var BRINCADEIRAS = {
+  esconde: {
+    nome: "Pique-esconde",
+    icone: "\u{1F648}",
+    contagem: 10,
+    procura: 90,
+    pausa: 6,
+    fimTela: 10
+  }
+};
+function ehTexto(v) {
+  return typeof v === "string";
+}
+function ehInteiro(v) {
+  return typeof v === "number" && Number.isInteger(v);
+}
+function ehNumeroFinito2(v) {
+  return typeof v === "number" && Number.isFinite(v);
+}
+function ehObjeto3(v) {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+function uidValido(u) {
+  return ehTexto(u) && u.length >= 1 && u.length <= 40 && /^[A-Za-z0-9_-]+$/.test(u) && u !== "__proto__";
+}
+function listaUnica(arr) {
+  const s = /* @__PURE__ */ new Set();
+  for (const x of arr) {
+    if (s.has(x)) return false;
+    s.add(x);
+  }
+  return true;
+}
+function emLista(lista, v) {
+  return Array.isArray(lista) && lista.includes(v);
+}
+function filaInicial(uids, rnd = Math.random) {
+  if (!Array.isArray(uids)) return null;
+  const arr = uids.filter((u) => ehTexto(u));
+  if (!listaUnica(arr)) return null;
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    const t = a[i];
+    a[i] = a[j];
+    a[j] = t;
+  }
+  return a;
+}
+function novoJogo(tipo, uids, agora2, rnd) {
+  if (!Object.hasOwn(BRINCADEIRAS, tipo)) return null;
+  const cfg = BRINCADEIRAS[tipo];
+  if (!ehNumeroFinito2(agora2)) return null;
+  const fila = filaInicial(uids, rnd);
+  if (!fila || fila.length < 2) return null;
+  const placar = {};
+  for (const u of fila) placar[u] = [0, 0];
+  return {
+    tipo,
+    fila,
+    rodada: 1,
+    peg: fila[0],
+    fase: "contando",
+    fimFase: agora2 + cfg.contagem * 1e3,
+    esc: {},
+    ach: [],
+    perd: [],
+    placar
+  };
+}
+function registrarEscondidos(jogo, esc) {
+  if (!ehObjeto3(jogo) || jogo.fase !== "contando" || !ehObjeto3(esc)) return false;
+  const filaSet = new Set(jogo.fila);
+  let mudou2 = false;
+  for (const uid in esc) {
+    if (!Object.hasOwn(esc, uid)) continue;
+    const idx = esc[uid];
+    if (!ehTexto(uid) || !filaSet.has(uid) || uid === jogo.peg) continue;
+    if (Object.hasOwn(jogo.esc, uid)) continue;
+    if (!ehInteiro(idx) || idx < 0) continue;
+    jogo.esc[uid] = idx;
+    mudou2 = true;
+  }
+  return mudou2;
+}
+function olhar(jogo, uid, idx) {
+  if (!ehObjeto3(jogo) || jogo.fase !== "procurando" || uid !== jogo.peg) return [];
+  if (!ehInteiro(idx) || idx < 0) return [];
+  const achados = [];
+  for (const u in jogo.esc) {
+    if (!Object.hasOwn(jogo.esc, u)) continue;
+    if (jogo.esc[u] === idx && !emLista(jogo.ach, u)) {
+      jogo.ach.push(u);
+      achados.push(u);
+      if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[uid]) && ehInteiro(jogo.placar[uid][0])) {
+        jogo.placar[uid][0] += 1;
+      }
+    }
+  }
+  return achados;
+}
+function avancar(jogo, agora2, vivos) {
+  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || !Array.isArray(vivos)) return "";
+  const cfg = Object.hasOwn(BRINCADEIRAS, jogo.tipo) ? BRINCADEIRAS[jogo.tipo] : null;
+  if (!cfg) return "";
+  const vivosSet = new Set(vivos);
+  const filaSet = new Set(jogo.fila);
+  const vivoDaFila = (u) => filaSet.has(u) && vivosSet.has(u);
+  if (jogo.fase === "fim") {
+    if (agora2 >= jogo.fimFase) return "acabou";
+    return "";
+  }
+  let vivosFila = 0;
+  for (const u of jogo.fila) if (vivosSet.has(u)) vivosFila++;
+  if (vivosFila < 2) {
+    jogo.fase = "fim";
+    jogo.fimFase = agora2 + cfg.fimTela * 1e3;
+    return "mudou";
+  }
+  if (jogo.fase === "contando") {
+    if (!vivosSet.has(jogo.peg)) {
+      jogo.fase = "rodada";
+      jogo.fimFase = agora2 + cfg.pausa * 1e3;
+      return "mudou";
+    }
+    if (agora2 >= jogo.fimFase) {
+      for (const u of jogo.fila) {
+        if (u === jogo.peg) continue;
+        if (!vivosSet.has(u)) continue;
+        if (Object.hasOwn(jogo.esc, u)) continue;
+        if (emLista(jogo.ach, u)) continue;
+        jogo.ach.push(u);
+        jogo.perd.push(u);
+      }
+      jogo.fase = "procurando";
+      jogo.fimFase = agora2 + cfg.procura * 1e3;
+      return "mudou";
+    }
+    return "";
+  }
+  if (jogo.fase === "procurando") {
+    const pegVivo = vivosSet.has(jogo.peg);
+    let todosAchados = true;
+    for (const u of jogo.fila) {
+      if (u === jogo.peg) continue;
+      if (!vivosSet.has(u)) continue;
+      if (!emLista(jogo.ach, u)) {
+        todosAchados = false;
+        break;
+      }
+    }
+    if (!pegVivo || agora2 >= jogo.fimFase || todosAchados) {
+      if (pegVivo) {
+        for (const u of jogo.fila) {
+          if (u === jogo.peg) continue;
+          if (!vivosSet.has(u)) continue;
+          if (!Object.hasOwn(jogo.esc, u)) continue;
+          if (emLista(jogo.ach, u)) continue;
+          if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[u]) && ehInteiro(jogo.placar[u][1])) {
+            jogo.placar[u][1] += 1;
+          }
+        }
+      }
+      jogo.fase = "rodada";
+      jogo.fimFase = agora2 + cfg.pausa * 1e3;
+      return "mudou";
+    }
+    return "";
+  }
+  if (jogo.fase === "rodada") {
+    if (agora2 >= jogo.fimFase) {
+      let r = jogo.rodada + 1;
+      while (r <= jogo.fila.length && !vivosSet.has(jogo.fila[r - 1])) r++;
+      if (r > jogo.fila.length) {
+        jogo.fase = "fim";
+        jogo.fimFase = agora2 + cfg.fimTela * 1e3;
+      } else {
+        jogo.rodada = r;
+        jogo.peg = jogo.fila[r - 1];
+        jogo.esc = {};
+        jogo.ach = [];
+        jogo.perd = [];
+        jogo.fase = "contando";
+        jogo.fimFase = agora2 + cfg.contagem * 1e3;
+      }
+      return "mudou";
+    }
+    return "";
+  }
+  return "";
+}
+function restante(jogo, agora2) {
+  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || !ehNumeroFinito2(jogo.fimFase)) return 0;
+  const s = Math.ceil((jogo.fimFase - agora2) / 1e3);
+  return s < 0 ? 0 : s;
+}
+function tempoTexto(seg) {
+  if (!ehNumeroFinito2(seg) || seg < 0) return "0:00";
+  const s = Math.floor(seg);
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return m + ":" + (r < 10 ? "0" + r : "" + r);
+}
+function faixaTexto(jogo, agora2, nomeDe) {
+  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || typeof nomeDe !== "function") return "";
+  const cfg = Object.hasOwn(BRINCADEIRAS, jogo.tipo) ? BRINCADEIRAS[jogo.tipo] : null;
+  if (!cfg) return "";
+  const icone = cfg.icone;
+  const nome = cfg.nome;
+  const R = ehInteiro(jogo.rodada) ? jogo.rodada : 1;
+  const N2 = Array.isArray(jogo.fila) ? jogo.fila.length : 0;
+  const nomePeg = nomeDe(jogo.peg);
+  if (jogo.fase === "contando") {
+    return icone + " " + nome + " \u2014 rodada " + R + "/" + N2 + " \u2014 " + nomePeg + " est\xE1 contando: " + restante(jogo, agora2);
+  }
+  if (jogo.fase === "procurando") {
+    return icone + " " + nome + " \u2014 rodada " + R + "/" + N2 + " \u2014 quem procura: " + nomePeg + " \u2014 " + tempoTexto(restante(jogo, agora2));
+  }
+  if (jogo.fase === "rodada") {
+    return icone + " " + nome + " \u2014 fim da rodada " + R + "/" + N2;
+  }
+  if (jogo.fase === "fim") {
+    return icone + " " + nome + " \u2014 acabou!";
+  }
+  return "";
+}
+function resumoRodada(jogo) {
+  if (!ehObjeto3(jogo)) return { achados: [], escondidos: [], perderam: [] };
+  const perdSet = new Set(Array.isArray(jogo.perd) ? jogo.perd : []);
+  const achSet = new Set(Array.isArray(jogo.ach) ? jogo.ach : []);
+  const achados = [];
+  for (const u of jogo.ach) if (!perdSet.has(u)) achados.push(u);
+  const escondidos = [];
+  if (ehObjeto3(jogo.esc)) {
+    for (const u in jogo.esc) {
+      if (!Object.hasOwn(jogo.esc, u)) continue;
+      if (!achSet.has(u)) escondidos.push(u);
+    }
+  }
+  const perderam = Array.isArray(jogo.perd) ? jogo.perd.slice() : [];
+  return { achados, escondidos, perderam };
+}
+function placarFinal(jogo) {
+  if (!ehObjeto3(jogo) || !Array.isArray(jogo.fila)) return [];
+  const arr = [];
+  for (let i = 0; i < jogo.fila.length; i++) {
+    const u = jogo.fila[i];
+    let achou = 0;
+    let escondeu = 0;
+    if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[u])) {
+      if (ehInteiro(jogo.placar[u][0])) achou = jogo.placar[u][0];
+      if (ehInteiro(jogo.placar[u][1])) escondeu = jogo.placar[u][1];
+    }
+    arr.push({ uid: u, achou, escondeu, total: achou + escondeu, _i: i });
+  }
+  arr.sort((a, b) => {
+    if (b.total !== a.total) return b.total - a.total;
+    return a._i - b._i;
+  });
+  return arr.map((x) => ({ uid: x.uid, achou: x.achou, escondeu: x.escondeu, total: x.total }));
+}
+function serializarJogo(jogo) {
+  if (!ehObjeto3(jogo)) return "";
+  let s;
+  try {
+    s = JSON.stringify(jogo);
+  } catch (e) {
+    return "";
+  }
+  if (typeof s !== "string" || s.length > 3e3) return "";
+  return s;
+}
+function lerJogo(texto) {
+  if (typeof texto !== "string" || texto.length > 3e3) return null;
+  let obj;
+  try {
+    obj = JSON.parse(texto);
+  } catch (e) {
+    return null;
+  }
+  if (!ehObjeto3(obj)) return null;
+  if (!Object.hasOwn(BRINCADEIRAS, obj.tipo)) return null;
+  if (!Array.isArray(obj.fila) || obj.fila.length < 2 || obj.fila.length > 12) return null;
+  for (const u of obj.fila) {
+    if (!uidValido(u)) return null;
+  }
+  if (!listaUnica(obj.fila)) return null;
+  const filaSet = new Set(obj.fila);
+  if (!ehInteiro(obj.rodada) || obj.rodada < 1 || obj.rodada > obj.fila.length) return null;
+  if (obj.peg !== obj.fila[obj.rodada - 1]) return null;
+  const fases = ["contando", "procurando", "rodada", "fim"];
+  if (!fases.includes(obj.fase)) return null;
+  if (!ehNumeroFinito2(obj.fimFase)) return null;
+  const esc = {};
+  if (ehObjeto3(obj.esc)) {
+    for (const u in obj.esc) {
+      if (!Object.hasOwn(obj.esc, u)) continue;
+      if (!filaSet.has(u)) continue;
+      const v = obj.esc[u];
+      if (ehInteiro(v) && v >= 0 && v <= 9999) esc[u] = v;
+    }
+  }
+  const ach = [];
+  if (Array.isArray(obj.ach)) {
+    for (const u of obj.ach) {
+      if (ehTexto(u) && filaSet.has(u) && !ach.includes(u)) ach.push(u);
+    }
+  }
+  const perd = [];
+  if (Array.isArray(obj.perd)) {
+    for (const u of obj.perd) {
+      if (ehTexto(u) && filaSet.has(u) && !perd.includes(u)) perd.push(u);
+    }
+  }
+  const placar = {};
+  for (const u of obj.fila) {
+    let a = 0;
+    let e = 0;
+    if (ehObjeto3(obj.placar) && Array.isArray(obj.placar[u])) {
+      if (ehInteiro(obj.placar[u][0]) && obj.placar[u][0] >= 0 && obj.placar[u][0] <= 99) a = obj.placar[u][0];
+      if (ehInteiro(obj.placar[u][1]) && obj.placar[u][1] >= 0 && obj.placar[u][1] <= 99) e = obj.placar[u][1];
+    }
+    placar[u] = [a, e];
+  }
+  return {
+    tipo: obj.tipo,
+    fila: obj.fila.slice(),
+    rodada: obj.rodada,
+    peg: obj.peg,
+    fase: obj.fase,
+    fimFase: obj.fimFase,
+    esc,
+    ach,
+    perd,
+    placar
+  };
+}
+
 // js/votacao.js
 var TEXTOS_HORARIO = {
   dia: { fique: "de dia", ficou: "Ficou de dia!", continuou: "Continuou de dia." },
   anoitecer: { fique: "anoitecendo", ficou: "Est\xE1 anoitecendo!", continuou: "Continuou anoitecendo." },
   noite: { fique: "de noite", ficou: "Ficou de noite!", continuou: "Continuou de noite." }
 };
+var nomeBrinc = (valor) => Object.hasOwn(BRINCADEIRAS, valor) ? BRINCADEIRAS[valor].nome : "nova";
 var nomeMissao = (valor) => Object.hasOwn(MISSOES, valor) ? MISSOES[valor].nome : "nova";
 function textoHorario(valor) {
   return TEXTOS_HORARIO[valor] || TEXTOS_HORARIO.dia;
@@ -14184,6 +14604,30 @@ var TIPOS_VOTACAO = {
       if (valor === "cancelar") M.cancelar();
       else M.iniciar(valor);
     }
+  },
+  // 0.9.7: brincadeiras. valor = id do catálogo (js/brincadeiras.js, hoje 'esconde'). O host aplica (mapa.brincadeira, criado em js/aovivo.js); só com 2+ jogadores.
+  brincadeira: {
+    nome: "brincadeira",
+    valido(valor, ctx2) {
+      const B = ctx2 && ctx2.mapa && ctx2.mapa.brincadeira;
+      return Object.hasOwn(BRINCADEIRAS, valor) && !(B && B.atual());
+    },
+    convite(valor) {
+      return "Voc\xEA quer brincar de " + nomeBrinc(valor) + "! Como tem mais gente, temos que abrir uma vota\xE7\xE3o! Vamos l\xE1?";
+    },
+    pedido(valor) {
+      return "Voc\xEA chamou para o " + nomeBrinc(valor) + "! Esperando os outros votarem\u2026";
+    },
+    pergunta(nome, valor) {
+      return nome + " quer brincar de " + nomeBrinc(valor) + ". Voc\xEA quer?";
+    },
+    resultado(aprovada, valor) {
+      return aprovada ? "Vamos brincar de " + nomeBrinc(valor) + "! " + (BRINCADEIRAS[valor] || { icone: "" }).icone : "Ficou sem brincadeira.";
+    },
+    aplicar(valor, ctx2) {
+      const B = ctx2 && ctx2.mapa && ctx2.mapa.brincadeira;
+      if (B && this.valido(valor, ctx2)) B.iniciar(valor);
+    }
   }
 };
 function contarVotos({ votos, quem } = {}) {
@@ -14238,6 +14682,7 @@ var PEDIDO_VALE = 1e4;
 var CICLOS2 = ["dia", "anoitecer", "noite"];
 var RESULTADO_MS = 2e3;
 var RECUSA_ESPERA = 6e4;
+var JOGO_VELHO = 2e4;
 var VOTACAO_VELHA = 8e3;
 var arred = (v, k = 1e3) => Math.round(v * k) / k;
 var menorArco = (a, b) => {
@@ -14336,6 +14781,12 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
         cicloGravado: null,
         ultBichos: 0,
         pronto: false,
+        jogoH: null,
+        jogoFim: false,
+        ultJogo: 0,
+        jogoTexto: "",
+        jogoLido: null,
+        // 0.9.7 brincadeiras: jogoH = cópia de trabalho do host
         votos: /* @__PURE__ */ new Map(),
         recusadoAte: /* @__PURE__ */ new Map(),
         votou: 0,
@@ -14424,6 +14875,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
         const v = snap.val();
         st.dinamico = v && typeof v === "object" ? v : null;
         const vt = st.dinamico && st.dinamico.votacao;
+        if (!(st.dinamico && st.dinamico.jogo)) st.jogoFim = false;
         if (vt && vt.resultado === "recusada" && typeof vt.fim === "number") st.recusadoAte.set(vt.quem + "|" + vt.tipo, vt.fim + esperaRecusa);
         seguirCiclo(st);
       }, nada2),
@@ -14458,6 +14910,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
       if (S === st) eleicao(st);
     }, ELEICAO));
     if (st.mapa.animais) st.mapa.animais.aoBote = (i) => pedir(st, { tipo: "bote", alvo: i });
+    st.mapa.brincadeira = { atual: () => jogoDe(st), iniciar: (v) => iniciarJogo(st, v) };
     st.mapa.aoPedirOvo = (id) => pedir(st, { tipo: "ovo", valor: id });
     st.pronto = true;
   }
@@ -14511,6 +14964,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     if (ehTipo(v.tipo)) {
       if (!precisaVotar(jogadoresVivos(st)) && validarPedido(v.tipo, v.valor, { mapa: st.mapa })) TIPOS_VOTACAO[v.tipo].aplicar(v.valor, { mapa: st.mapa });
     } else if (typeof v.tipo === "string" && v.tipo.startsWith("votacao:")) abrirVotacao(st, uid, v.tipo.slice(8), v.valor);
+    else if (v.tipo === "olhar" && typeof v.alvo === "number") olharHost(st, uid, v.alvo);
     else if (v.tipo === "ovo" && typeof v.valor === "string") {
       if (st.mapa.pegarOvoRemoto && st.mapa.pegarOvoRemoto(v.valor)) {
         contarMissao(st, uid, "ovo");
@@ -14575,6 +15029,77 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     const { aprovada } = concluirVotacao({ tipo: vt.tipo, valor: vt.valor, quem: vt.quem, votos }, { mapa: st.mapa });
     st.ultVot = performance.now();
     st.D.update(ref(st, "dinamico/votacao"), { resultado: aprovada ? "aprovada" : "recusada" }).catch(nada2);
+  }
+  function jogoDe(st) {
+    if (st.jogoFim) return null;
+    let j = st.jogoH;
+    if (!j) {
+      const t = st.dinamico && st.dinamico.jogo;
+      if (typeof t !== "string") return null;
+      if (t !== st.jogoTexto) {
+        st.jogoTexto = t;
+        st.jogoLido = lerJogo(t);
+      }
+      j = st.jogoLido;
+    }
+    return j && agoraServ() <= j.fimFase + JOGO_VELHO ? j : null;
+  }
+  function gravarJogo(st) {
+    st.D.update(ref(st, "dinamico"), { jogo: serializarJogo(st.jogoH) || null }).catch(nada2);
+  }
+  function iniciarJogo(st, valor) {
+    if (!souGestorGravado(st) || jogoDe(st)) return false;
+    const j = novoJogo(valor, jogadoresVivos(st).map((p) => p.uid), Math.round(agoraServ()), Math.random);
+    if (!j) return false;
+    st.jogoH = j;
+    st.jogoFim = false;
+    gravarJogo(st);
+    return true;
+  }
+  function escondidosAgora(st) {
+    const o = {}, M = st.mapa;
+    if (!M.esconderijoDe) return o;
+    for (const p of jogadoresVivos(st)) {
+      const meu = p.uid === st.con.uid, pos = meu ? !st.semGato && !M.sub && M.gatoGroup && M.gatoGroup.position : observadorDe(st, p.uid);
+      const es = meu ? !!(M.acaoEst && M.acaoEst.modo === "escondido") : pos && pos.escondido;
+      const e = pos && es ? M.esconderijoDe(pos.x, pos.z) : null;
+      if (e) o[p.uid] = e.idx;
+    }
+    return o;
+  }
+  function tocarBrincadeira(st) {
+    if (performance.now() - st.ultJogo < 200 || st.jogoFim) return;
+    st.ultJogo = performance.now();
+    if (!st.jogoH) {
+      const j2 = jogoDe(st);
+      if (!j2) return;
+      st.jogoH = JSON.parse(JSON.stringify(j2));
+    }
+    const j = st.jogoH, vivos = jogadoresVivos(st).map((p) => p.uid);
+    const achou = j.fase === "contando" && registrarEscondidos(j, escondidosAgora(st));
+    const r = avancar(j, Math.round(agoraServ()), vivos);
+    if (r === "acabou") {
+      st.jogoH = null;
+      st.jogoFim = true;
+      st.D.update(ref(st, "dinamico"), { jogo: null }).catch(nada2);
+      return;
+    }
+    if (achou || r === "mudou") gravarJogo(st);
+  }
+  function olharHost(st, uid, idx) {
+    const j = st.jogoH, M = st.mapa;
+    if (!j || j.fase !== "procurando" || uid !== j.peg || !M.pertoDoEsconderijo) return [];
+    const pos = uid === st.con.uid ? !M.sub && M.gatoGroup && M.gatoGroup.position : observadorDe(st, uid);
+    if (!pos || !M.pertoDoEsconderijo(idx, pos.x, pos.z)) return [];
+    const achados = olhar(j, uid, idx);
+    if (achados.length) gravarJogo(st);
+    return achados;
+  }
+  function olharMeu(idx) {
+    const st = S;
+    if (!st || typeof idx !== "number") return;
+    if (souGestorGravado(st) && papelDe(st) === "gestor") olharHost(st, st.con.uid, idx);
+    else pedir(st, { tipo: "olhar", alvo: idx });
   }
   function seguirCiclo(st) {
     const c = st.dinamico && st.dinamico.ciclo;
@@ -14802,8 +15327,9 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
           st.D.update(ref(st, "dinamico"), { ciclo: String(mapa.ciclo || "dia").slice(0, 12) }).catch(nada2);
         }
         tocarVotacao(st);
+        tocarBrincadeira(st);
         if (agora2 - st.ultBichos >= BICHOS && outrosVivos(st) > 0) publicarBichos(st);
-      }
+      } else st.jogoH = null;
       enviar(st, agora2);
       const meuSub = mapa.sub ? mapa.sub.tipo + ":" + mapa.sub.id : "";
       for (const r of st.remotos.values()) animarRemoto(r, dt, agora2, meuSub);
@@ -14869,18 +15395,18 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
   function votacao() {
     const st = S, vt = st && st.dinamico && st.dinamico.votacao;
     if (!vt || typeof vt.fim !== "number" || typeof vt.valor !== "string" || !ehTipo(vt.tipo)) return null;
-    const p = st.presencas.get(vt.quem), restante = Math.max(0, Math.ceil((vt.fim - agoraServ()) / 1e3)), souQuem = vt.quem === st.con.uid;
+    const p = st.presencas.get(vt.quem), restante2 = Math.max(0, Math.ceil((vt.fim - agoraServ()) / 1e3)), souQuem = vt.quem === st.con.uid;
     return {
       tipo: vt.tipo,
       valor: vt.valor,
       quem: vt.quem,
       nome: p ? p.nome : "Algu\xE9m",
       fim: vt.fim,
-      restante,
+      restante: restante2,
       resultado: String(vt.resultado || ""),
       souQuem,
       jogador: st.papelMeu === "jogador",
-      podeVotar: st.papelMeu === "jogador" && !souQuem && !vt.resultado && restante > 0 && st.votou !== vt.fim
+      podeVotar: st.papelMeu === "jogador" && !souQuem && !vt.resultado && restante2 > 0 && st.votou !== vt.fim
     };
   }
   function votar(voto) {
@@ -14912,7 +15438,10 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
       for (const r of st.remotos.values()) descartarRemoto(st, r);
       st.remotos.clear();
       const a = st.mapa && st.mapa.animais;
-      if (st.mapa) st.mapa.aoPedirOvo = null;
+      if (st.mapa) {
+        st.mapa.aoPedirOvo = null;
+        st.mapa.brincadeira = null;
+      }
       if (a) {
         try {
           a.aoBote = null;
@@ -14943,6 +15472,14 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     votar,
     jogadores,
     posicaoChar,
+    olhar: olharMeu,
+    // 0.9.7
+    agora: () => agoraServ(),
+    // hora do servidor (ms)
+    jogo: () => S ? jogoDe(S) : null,
+    // o jogo de agora (js/brincadeiras.js) ou null (também some se ficou velho)
+    podeBrincar: () => !!S && precisaVotar(jogadoresVivos(S)),
+    // 2+ jogadores
     ativo: () => !!S && S.pronto,
     papel: () => S ? papelDe(S) : "gestor",
     nota: () => S ? Math.round(((S.notaBase || 0) + (S.avocado ? 1e3 : 0)) * 10) / 10 : null,
@@ -15675,12 +16212,12 @@ function criarAvisoVotacao({ aoVotar }) {
     if (destruido) return;
     elemento.hidden = true;
   }
-  function mostrar({ texto: textoNovo, restante, podeVotar }) {
+  function mostrar({ texto: textoNovo, restante: restante2, podeVotar }) {
     if (mostrandoResultado) return;
     if (destruido) return;
     texto.textContent = textoNovo || "";
-    if (typeof restante === "number" && isFinite(restante)) {
-      tempo.textContent = restante + " s";
+    if (typeof restante2 === "number" && isFinite(restante2)) {
+      tempo.textContent = restante2 + " s";
     } else {
       tempo.textContent = "";
     }
@@ -15793,7 +16330,7 @@ function criarPainelMissao() {
   }
   return { elemento, atualizar, destruir };
 }
-function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir }) {
+function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir, brincadeiras = [], jogando = false, aoBrincar }) {
   if (dialogoAberto3) {
     return { fechar: dialogoAberto3.fechar };
   }
@@ -15804,7 +16341,7 @@ function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir }) {
   const caixa2 = document.createElement("div");
   caixa2.className = "dialogo-missoes-caixa";
   const titulo = document.createElement("h2");
-  titulo.textContent = "\u{1F3AF} Miss\xF5es";
+  titulo.textContent = "\u{1F3AF} Miss\xF5es e brincadeiras";
   caixa2.appendChild(titulo);
   if (ativa) {
     const ativaP = document.createElement("p");
@@ -15858,6 +16395,42 @@ function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir }) {
     lista.appendChild(li);
   });
   caixa2.appendChild(lista);
+  if (brincadeiras.length) {
+    const sub = document.createElement("h3");
+    sub.className = "missoes-subtitulo";
+    sub.textContent = "Brincadeiras";
+    caixa2.appendChild(sub);
+    const listaB = document.createElement("ul");
+    listaB.className = "missoes-lista";
+    brincadeiras.forEach((b) => {
+      const li = document.createElement("li");
+      li.className = "missoes-item brinc-item";
+      const nome = document.createElement("span");
+      nome.className = "missoes-nome";
+      nome.textContent = `${b.icone} ${b.nome}`;
+      li.appendChild(nome);
+      const dica = document.createElement("span");
+      dica.className = "missoes-vezes";
+      dica.textContent = jogando ? "J\xE1 est\xE3o brincando!" : b.dica || "";
+      li.appendChild(dica);
+      const btn = document.createElement("button");
+      btn.className = "botao";
+      btn.type = "button";
+      btn.textContent = "Brincar";
+      btn.setAttribute("data-brincadeira", String(b.id));
+      btn.disabled = !!jogando;
+      btn.addEventListener("click", () => {
+        fechar();
+        try {
+          if (typeof aoBrincar === "function") aoBrincar(b.id);
+        } catch (e) {
+        }
+      });
+      li.appendChild(btn);
+      listaB.appendChild(li);
+    });
+    caixa2.appendChild(listaB);
+  }
   const btnFechar = document.createElement("button");
   btnFechar.className = "botao-grande";
   btnFechar.type = "button";
@@ -15906,6 +16479,204 @@ function mostrarFesta(texto = "Miss\xE3o cumprida! \u{1F389}", ms = 3e3) {
     remover();
   }
   return removerAgora;
+}
+
+// js/brincadeiras-ui.js
+function criarTelaBrincadeira() {
+  const elemento = document.createElement("div");
+  elemento.className = "brinc";
+  elemento.hidden = true;
+  const faixa = document.createElement("p");
+  faixa.className = "brinc-faixa";
+  const dica = document.createElement("p");
+  dica.className = "brinc-dica";
+  dica.hidden = true;
+  const contagem = document.createElement("div");
+  contagem.className = "brinc-contagem";
+  contagem.hidden = true;
+  const contagemNum = document.createElement("p");
+  contagemNum.className = "brinc-contagem-num";
+  const contagemTexto = document.createElement("p");
+  contagemTexto.className = "brinc-contagem-texto";
+  contagemTexto.textContent = "Feche os olhos e conte! Os amigos est\xE3o se escondendo\u2026";
+  contagem.appendChild(contagemNum);
+  contagem.appendChild(contagemTexto);
+  const placar = document.createElement("div");
+  placar.className = "brinc-placar";
+  placar.hidden = true;
+  const placarTitulo = document.createElement("h2");
+  placarTitulo.className = "brinc-placar-titulo";
+  const placarLista = document.createElement("ol");
+  placarLista.className = "brinc-placar-lista";
+  placar.appendChild(placarTitulo);
+  placar.appendChild(placarLista);
+  elemento.appendChild(faixa);
+  elemento.appendChild(dica);
+  elemento.appendChild(contagem);
+  elemento.appendChild(placar);
+  let ultimoFaixa = "";
+  let ultimoDica = "";
+  let ultimoContagemNum = "";
+  let ultimoPlacarChave = "";
+  let ultimoPlacarTitulo = "";
+  let nomeDe = null;
+  function nomeDeSeguro(uid) {
+    if (!nomeDe) return "Algu\xE9m";
+    const n = nomeDe(uid);
+    return n && String(n).trim() ? String(n).trim() : "Algu\xE9m";
+  }
+  function nomesLista(uids) {
+    return uids.map(nomeDeSeguro).join(", ");
+  }
+  function atualizarFaixa(jogo, agora2) {
+    const texto = faixaTexto(jogo, agora2, nomeDeSeguro);
+    if (texto !== ultimoFaixa) {
+      faixa.textContent = texto;
+      ultimoFaixa = texto;
+    }
+  }
+  function atualizarDica(jogo, eu) {
+    let texto = "";
+    let mostrar = false;
+    if (jogo.fase === "contando" || jogo.fase === "procurando") {
+      const naFila = jogo.fila.includes(eu);
+      const ehPeg = eu === jogo.peg;
+      const emEsc = jogo.esc && jogo.esc[eu] !== void 0;
+      const emAch = jogo.ach && jogo.ach.includes(eu);
+      const emPerd = jogo.perd && jogo.perd.includes(eu);
+      if (ehPeg && jogo.fase === "procurando") {
+        texto = "Olhe nos arbustos, nas \xE1rvores e nas cavernas! \u{1F440}";
+        mostrar = true;
+      } else if (naFila && !ehPeg && jogo.fase === "contando" && !emEsc) {
+        texto = "Corra e se esconda! Perto de um arbusto, de uma \xE1rvore ou de uma caverna, toque em Esconder.";
+        mostrar = true;
+      } else if (emEsc && !emAch) {
+        texto = "Fique quietinho! \u{1F92B}";
+        mostrar = true;
+      } else if (emPerd) {
+        texto = "Voc\xEA n\xE3o se escondeu e perdeu esta rodada. Agora \xE9 s\xF3 olhar!";
+        mostrar = true;
+      } else if (emAch) {
+        texto = "Voc\xEA foi achado! Agora \xE9 s\xF3 olhar.";
+        mostrar = true;
+      } else if (!naFila) {
+        texto = "Voc\xEA est\xE1 assistindo a brincadeira.";
+        mostrar = true;
+      }
+    }
+    if (mostrar) {
+      if (texto !== ultimoDica) {
+        dica.textContent = texto;
+        ultimoDica = texto;
+      }
+      dica.hidden = false;
+    } else {
+      dica.hidden = true;
+      ultimoDica = "";
+    }
+  }
+  function atualizarContagem(jogo, agora2, eu) {
+    const mostrar = jogo.fase === "contando" && eu === jogo.peg;
+    if (mostrar) {
+      let n = restante(jogo, agora2);
+      if (n <= 0) n = 1;
+      const texto = String(n);
+      if (texto !== ultimoContagemNum) {
+        contagemNum.textContent = texto;
+        ultimoContagemNum = texto;
+      }
+      contagem.hidden = false;
+    } else {
+      contagem.hidden = true;
+      ultimoContagemNum = "";
+    }
+  }
+  function atualizarPlacar(jogo) {
+    if (jogo.fase === "rodada") {
+      const R = jogo.rodada;
+      const N2 = jogo.fila.length;
+      const titulo = `Fim da rodada ${R}/${N2}!`;
+      const resumo = resumoRodada(jogo);
+      const linhas = [];
+      if (resumo.achados.length > 0) {
+        linhas.push(`\u{1F440} ${nomeDeSeguro(jogo.peg)} achou: ${nomesLista(resumo.achados)}`);
+      } else {
+        linhas.push(`\u{1F440} ${nomeDeSeguro(jogo.peg)} n\xE3o achou ningu\xE9m`);
+      }
+      if (resumo.escondidos.length > 0) {
+        linhas.push(`\u{1F33F} Ficaram escondidos: ${nomesLista(resumo.escondidos)}`);
+      }
+      if (resumo.perderam.length > 0) {
+        linhas.push(`\u{1F648} N\xE3o se esconderam: ${nomesLista(resumo.perderam)}`);
+      }
+      linhas.push("J\xE1 vem a pr\xF3xima rodada!");
+      const chave = titulo + "|" + linhas.join("|");
+      if (chave !== ultimoPlacarChave) {
+        placarTitulo.textContent = titulo;
+        ultimoPlacarTitulo = titulo;
+        placarLista.replaceChildren();
+        linhas.forEach((linha) => {
+          const li = document.createElement("li");
+          li.textContent = linha;
+          placarLista.appendChild(li);
+        });
+        ultimoPlacarChave = chave;
+      }
+      placar.hidden = false;
+    } else if (jogo.fase === "fim") {
+      const titulo = "\u{1F3C6} Acabou o pique-esconde!";
+      const final = placarFinal(jogo);
+      const linhas = [];
+      const posicoes = [];
+      let posicao = 1;
+      let totalAnterior = null;
+      final.forEach((jogador, i) => {
+        if (totalAnterior !== null && jogador.total === totalAnterior) {
+        } else {
+          posicao = i + 1;
+        }
+        totalAnterior = jogador.total;
+        posicoes.push(posicao);
+        const pontos = jogador.total === 1 ? "ponto" : "pontos";
+        linhas.push(`${posicao}\xBA ${nomeDeSeguro(jogador.uid)} \u2014 achou ${jogador.achou} \xB7 ficou escondido ${jogador.escondeu} \xB7 ${jogador.total} ${pontos}`);
+      });
+      const chave = titulo + "|" + linhas.join("|");
+      if (chave !== ultimoPlacarChave) {
+        placarTitulo.textContent = titulo;
+        ultimoPlacarTitulo = titulo;
+        placarLista.replaceChildren();
+        linhas.forEach((linha, i) => {
+          const li = document.createElement("li");
+          li.textContent = linha;
+          if (posicoes[i] === 1) li.className = "brinc-placar-1";
+          placarLista.appendChild(li);
+        });
+        ultimoPlacarChave = chave;
+      }
+      placar.hidden = false;
+    } else {
+      placar.hidden = true;
+      ultimoPlacarChave = "";
+    }
+  }
+  function atualizar({ jogo, agora: agora2, eu, nomeDe: nomes }) {
+    nomeDe = nomes;
+    if (!jogo) {
+      elemento.hidden = true;
+      return;
+    }
+    elemento.hidden = false;
+    atualizarFaixa(jogo, agora2);
+    atualizarDica(jogo, eu);
+    atualizarContagem(jogo, agora2, eu);
+    atualizarPlacar(jogo);
+  }
+  function destruir() {
+    if (elemento.parentNode) {
+      elemento.parentNode.removeChild(elemento);
+    }
+  }
+  return { elemento, atualizar, destruir };
 }
 
 // js/main.js
@@ -15991,6 +16762,12 @@ var tVotacao = 0;
 var painelMissao = null;
 var tMissao = 0;
 var festejada = 0;
+var telaBrinc = null;
+var tBrinc = 0;
+var tQuieto = 0;
+var brincChave = "";
+var brincAch = /* @__PURE__ */ new Set();
+var olhando = null;
 var pararOfertas = null;
 var timerOfertas = null;
 var semSalvarChar = false;
@@ -16146,6 +16923,13 @@ function desmontarMapa() {
   if (painelMissao) {
     painelMissao.destruir();
     painelMissao = null;
+  }
+  if (telaBrinc) {
+    telaBrinc.destruir();
+    telaBrinc = null;
+    document.body.classList.remove("brincando");
+    brincChave = "";
+    olhando = null;
   }
   festejada = 0;
   if (fecharPergunta) {
@@ -16368,6 +17152,17 @@ function irPara(nome, opcoes) {
     mapaNovo.aoEntrar = (entrada) => trocarSub(() => entrar(mapaNovo, entrada));
     mapaNovo.aoSair = () => trocarSub(() => sair(mapaNovo));
     mapaNovo.aoTrocar = (fn) => trocarSub(fn);
+    mapaNovo.aoOlhar = (idx) => {
+      olhando = { t: performance.now(), n: (aovivo.jogo() || { ach: [] }).ach.length };
+      aovivo.olhar(idx);
+    };
+    mapaNovo.aoQuieto = () => {
+      const t = performance.now();
+      if (t - tQuieto > 1500) {
+        tQuieto = t;
+        avisar2(mapaNovo.congelado ? "Conte at\xE9 10 sem se mexer! \u{1F648}" : "Fique quietinho! \u{1F92B}", 1300);
+      }
+    };
     mapaNovo.aoComer = (tipo) => {
       if (idGatoMapa && mapaNovo.missao) mapaNovo.missao.comeu(idGatoMapa, tipo);
       if (!idGatoMapa || semSalvarChar) return;
@@ -16441,12 +17236,14 @@ function irPara(nome, opcoes) {
     botaoMissoes.type = "button";
     botaoMissoes.className = "botao-missoes";
     botaoMissoes.textContent = "\u{1F3AF}";
-    botaoMissoes.title = "Miss\xF5es";
-    botaoMissoes.setAttribute("aria-label", "Miss\xF5es");
+    botaoMissoes.title = "Miss\xF5es e brincadeiras";
+    botaoMissoes.setAttribute("aria-label", "Miss\xF5es e brincadeiras");
     botaoMissoes.addEventListener("click", () => abrirMissoes());
     hud.appendChild(botaoMissoes);
     painelMissao = criarPainelMissao();
     hud.appendChild(painelMissao.elemento);
+    telaBrinc = criarTelaBrincadeira();
+    hud.appendChild(telaBrinc.elemento);
     const aoVivoEl = document.createElement("div");
     aoVivoEl.id = "hud-aovivo";
     aoVivoEl.className = "hud-aovivo";
@@ -16786,6 +17583,16 @@ function abrirMissoes() {
         salvarMundoAgora();
       }
     },
+    brincadeiras: Object.entries(BRINCADEIRAS).map(([id, d]) => ({ id, nome: d.nome, icone: d.icone, dica: "Um conta at\xE9 10 e os outros se escondem!" })),
+    jogando: !!aovivo.jogo(),
+    aoBrincar: (id) => {
+      if (!aovivo.podeBrincar()) {
+        avisar2("Chame algu\xE9m para brincar!");
+        return;
+      }
+      pedirVotavel("brincadeira", id, () => {
+      });
+    },
     aoDesistir: () => {
       if (!pedirVotavel("missao", "cancelar", () => {
         mapaAtual.missao.cancelar();
@@ -16814,6 +17621,43 @@ function atualizarMissao(ms) {
     festejada = m.inicio;
     mostrarFesta();
     if (idGatoMapa && !semSalvarChar && !servidorMundo) Save.missaoCumprida(idGatoMapa, m.id);
+  }
+}
+function atualizarBrincadeira(ms) {
+  const M = mapaAtual;
+  if (!telaBrinc || !M) return;
+  const eu = aovivo.meuUid(), j = aovivo.ativo() ? aovivo.jogo() : null;
+  const ativo = !!j && !!eu && j.fila.includes(eu) && (j.fase === "contando" || j.fase === "procurando");
+  const achado = ativo && j.ach.includes(eu), peg = ativo && j.peg === eu, sou = !!j && j.peg === eu;
+  M.congelado = peg && j.fase === "contando";
+  M.travado = ativo && !peg && !achado;
+  M.brincando = !ativo || achado ? null : peg ? j.fase === "procurando" ? "procura" : "nada" : "esconde";
+  if (achado && M.acaoEst && M.acaoEst.modo === "escondido") M.sairDoEsconderijo();
+  if (ms - tBrinc < 100) return;
+  tBrinc = ms;
+  document.body.classList.toggle("brincando", !!j);
+  const nomes = new Map(aovivo.presentes().map((p) => [p.uid, p.nome]));
+  const nomeDe = (u) => nomes.get(u) || "Algu\xE9m";
+  telaBrinc.atualizar({ jogo: j, agora: aovivo.agora(), eu, nomeDe });
+  if (!j) {
+    brincChave = "";
+    olhando = null;
+    return;
+  }
+  const chave = j.rodada + ":" + j.peg;
+  if (chave !== brincChave) {
+    brincChave = chave;
+    brincAch = new Set(j.ach);
+    olhando = null;
+  }
+  for (const u of j.ach) {
+    if (brincAch.has(u)) continue;
+    brincAch.add(u);
+    avisar2(j.perd.includes(u) ? nomeDe(u) + " n\xE3o se escondeu e perdeu! \u{1F648}" : sou ? "Achei a " + nomeDe(u) + "! \u{1F440}" : nomeDe(j.peg) + " achou a " + nomeDe(u) + "! \u{1F440}", 2500);
+  }
+  if (olhando && ms - olhando.t > 1500) {
+    if (sou && j.ach.length === olhando.n) avisar2("Aqui n\xE3o tem ningu\xE9m\u2026 \u{1F914}", 1500);
+    olhando = null;
   }
 }
 function atualizarVotacao(ms) {
@@ -17070,6 +17914,7 @@ if (renderer) {
       atualizarHudAoVivo(tempoMs);
       atualizarVotacao(tempoMs);
       atualizarMissao(tempoMs);
+      atualizarBrincadeira(tempoMs);
     }
     if (telaAtual === "mapa" && !pausado && mapaAtual) {
       const alvo2 = alvoAtivo();
