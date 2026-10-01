@@ -2373,7 +2373,7 @@ if (typeof window !== "undefined") {
 import * as THREE14 from "three";
 
 // js/data.js
-var VERSION = "0.11.3";
+var VERSION = "0.11.4";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -18817,11 +18817,12 @@ function criarDireto({ eu, sinal, aoMensagem, ice = ICE_PADRAO, esperaIce = 1500
     } catch (_) {
     }
   }
-  function mandar(obj) {
+  function mandar(obj, exceto) {
     let n = 0;
     try {
       const texto = JSON.stringify(obj);
-      for (const par of mapa.values()) {
+      for (const [uid, par] of mapa) {
+        if (uid === exceto) continue;
         try {
           if (par.dc && par.dc.readyState === "open" && par.dc.bufferedAmount < 65536) {
             par.dc.send(texto);
@@ -19037,6 +19038,10 @@ function concluirVotacao({ tipo, valor, quem, votos }, ctx2) {
 var ENVIO = 100;
 var PARADO = 1e3;
 var ATRASO_DESENHO = 150;
+var ENVIO_DIRETO = 50;
+var NUVEM_LENTA = 1e3;
+var ATRASO_DIRETO = 90;
+var AVISO_NUVEM = 3e3;
 var TEMPO_REDE = 5e3;
 var PRESENCA = 2e3;
 var ELEICAO = 1e3;
@@ -19062,7 +19067,7 @@ function comTempo4(p, ms = TEMPO_REDE) {
   return Promise.race([p, limite]).finally(() => clearTimeout(t));
 }
 var ehTipo = (t) => typeof t === "string" && Object.hasOwn(TIPOS_VOTACAO, t);
-function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao: conexao2, aoPapel, tempoVotacao = TEMPO_VOTACAO * 1e3, esperaRecusa = RECUSA_ESPERA }) {
+function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao: conexao2, aoPapel, tempoVotacao = TEMPO_VOTACAO * 1e3, esperaRecusa = RECUSA_ESPERA, direto: comDireto = true }) {
   let S = null;
   let sessao = 0;
   let offset = 0;
@@ -19275,7 +19280,10 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
     st.timers.push(setInterval(() => {
       if (S === st) {
         eleicao(st);
-        st.direto.pares(outrosUids(st));
+        if (st.direto) {
+          st.direto.pares(quemLigar(st));
+          if (souHost(st)) st.direto.mandar({ k: "h", nuvem: !nuvemLenta(st) });
+        }
       }
     }, ELEICAO));
     if (st.mapa.animais) st.mapa.animais.aoBote = (i) => pedir(st, { tipo: "bote", alvo: i });
@@ -19300,12 +19308,12 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       if (!l.length) return null;
       return { x: l.reduce((s, o) => s + o.x, 0) / l.length, z: l.reduce((s, o) => s + o.z, 0) / l.length };
     };
-    st.direto = criarDireto({ eu, sinal: sinalNuvem(st), aoMensagem: (de, m2) => {
+    st.direto = comDireto ? criarDireto({ eu, sinal: sinalNuvem(st), aoMensagem: (de, m2) => {
       try {
         receberDireto(st, de, m2);
       } catch {
       }
-    } });
+    } }) : null;
     st.pronto = true;
   }
   function eleicao(st) {
@@ -19360,9 +19368,17 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
   function receberDireto(st, de, m2) {
     if (S !== st || !m2 || typeof m2 !== "object") return;
     const snap = { key: de, val: () => m2 };
+    if (m2.k === "h") {
+      if (de === hostVivo(st)) st.avisoHost = { nuvem: m2.nuvem !== false, em: performance.now() };
+      return;
+    }
     if (m2.k === "g") {
-      if (st.remotos.has(de)) receberGato(st, snap);
-    } else if (m2.k === "p") receberPedido(st, snap);
+      const uid = typeof m2.u === "string" && de === hostVivo(st) ? m2.u : de;
+      if (uid !== st.con.uid && st.remotos.has(uid)) receberGato(st, { key: uid, val: () => m2 }, true);
+      if (!m2.u && souHost(st) && st.direto) st.direto.mandar({ ...m2, u: de }, de);
+      return;
+    }
+    if (m2.k === "p") receberPedido(st, snap);
     else if (m2.k === "b" && typeof m2.v === "string" && typeof m2.tc === "number" && st.gestor && st.gestor.uid === de && m2.tc >= (st.bichosTc || 0)) {
       st.bichosTc = m2.tc;
       st.bichosDireto = performance.now();
@@ -19620,15 +19636,31 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
     const c = st.dinamico && st.dinamico.ciclo;
     if (S === st && papelDe(st) === "jogador" && CICLOS2.includes(c) && c !== st.mapa.ciclo && st.mapa.setCiclo) st.mapa.setCiclo(c);
   }
-  function publicarBichos(st) {
+  function publicarBichos(st, nuvem3 = true) {
     try {
       if (!souGestorGravado(st) || !st.mapa.animais) return;
       st.ultBichos = performance.now();
       const texto = st.mapa.animais.serializar();
-      st.D.set(ref(st, "bichos"), texto).catch(nada2);
+      if (nuvem3) {
+        st.ultBichosNuvem = st.ultBichos;
+        st.D.set(ref(st, "bichos"), texto).catch(nada2);
+      }
       if (st.direto) st.direto.mandar({ k: "b", v: texto, tc: Math.round(agoraServ()) });
     } catch {
     }
+  }
+  const hostVivo = (st) => st.gestor && agoraServ() - st.gestor.t <= MORTO ? st.gestor.uid : null;
+  const souHost = (st) => hostVivo(st) === st.con.uid;
+  const canais = (st) => st.direto ? st.direto.estado() : {};
+  function quemLigar(st) {
+    const h = hostVivo(st);
+    return !h ? [] : h === st.con.uid ? outrosUids(st) : [h];
+  }
+  function nuvemLenta(st) {
+    const h = hostVivo(st), e = canais(st), ok = (u) => !!(e[u] && e[u].aberto);
+    if (!h) return false;
+    if (h === st.con.uid) return outrosUids(st).every(ok);
+    return ok(h) && !!st.avisoHost && st.avisoHost.nuvem === false && performance.now() - st.avisoHost.em < AVISO_NUVEM;
   }
   const outrosUids = (st) => {
     const a = agoraServ();
@@ -19657,7 +19689,8 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
     };
     const u = st.ult;
     const mudou2 = !u || Math.hypot(e.x - u.x, e.z - u.z) > 0.02 || Math.abs(e.y - u.y) > 0.02 || Math.abs(menorArco(u.r, e.r)) > 0.02 || e.m !== u.m || e.ag !== u.ag || e.es !== u.es || e.n !== u.n || e.sub !== u.sub;
-    if (agora2 - st.ultEnvio < (mudou2 ? ENVIO : PARADO)) return;
+    const comCanal = Object.values(canais(st)).some((x) => x.aberto);
+    if (agora2 - st.ultEnvio < (mudou2 ? comCanal ? ENVIO_DIRETO : ENVIO : PARADO)) return;
     st.ult = e;
     st.ultEnvio = agora2;
     const doc = { look: st.lookJson, x: e.x, y: e.y, z: e.z, r: e.r, m: e.m, tc: Date.now() + offset };
@@ -19668,8 +19701,11 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       doc.n = st.n;
     }
     if (sub) doc.sub = sub;
-    st.D.set(ref(st, "gatos/" + st.con.uid), doc).catch(nada2);
-    if (st.direto) {
+    if (agora2 - (st.ultNuvem || 0) >= (nuvemLenta(st) ? NUVEM_LENTA : mudou2 ? ENVIO : PARADO)) {
+      st.ultNuvem = agora2;
+      st.D.set(ref(st, "gatos/" + st.con.uid), doc).catch(nada2);
+    }
+    if (comCanal) {
       const { look, ...leve } = doc;
       st.direto.mandar({ k: "g", ...leve });
     }
@@ -19689,7 +19725,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       return setMove(v);
     };
   }
-  function receberGato(st, snap) {
+  function receberGato(st, snap, direto = false) {
     if (S !== st) return;
     const uid = snap.key;
     if (uid === st.con.uid) return;
@@ -19707,6 +19743,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       if (r.tc != null && v.tc <= r.tc) return;
       r.tc = v.tc;
     }
+    if (direto) r.ultDireto = performance.now();
     r.buf.push({ t: performance.now(), x: v.x, y: v.y || 0, z: v.z, r: v.r || 0, m: v.m || 0, ag: !!v.ag, es: !!v.es, a: v.a || "", n: v.n || 0, sub: v.sub || "" });
     if (r.buf.length > 60) r.buf.splice(0, r.buf.length - 60);
     const d = agoraServ() - v.tc;
@@ -19772,7 +19809,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
   function animarRemoto(r, dt, agora2, meuSub) {
     const b = r.buf;
     if (!r.cat || !b.length) return;
-    const rt = agora2 - ATRASO_DESENHO;
+    const rt = agora2 - (agora2 - (r.ultDireto || -1e9) < 1e3 ? ATRASO_DIRETO : ATRASO_DESENHO);
     while (b.length > 2 && b[1].t <= rt) b.shift();
     const a = b[0], c = b[1];
     let x = a.x, y = a.y, z = a.z, rot = a.r, s = a;
@@ -19857,7 +19894,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
         }
         tocarVotacao(st);
         tocarBrincadeira(st);
-        if (agora2 - st.ultBichos >= BICHOS && outrosVivos(st) > 0) publicarBichos(st);
+        if (agora2 - st.ultBichos >= BICHOS && outrosVivos(st) > 0) publicarBichos(st, !nuvemLenta(st) || agora2 - (st.ultBichosNuvem || 0) >= NUVEM_LENTA);
       } else st.jogoH = null;
       enviar(st, agora2);
       tocarAuras(st, t);
@@ -19866,32 +19903,31 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
     } catch {
     }
   }
-  function atrasoDe(st, r) {
-    const e = st.direto && st.direto.estado()[r.uid];
-    const v = e && e.aberto && e.rtt != null ? e.rtt / 2 : r.atraso;
-    return v != null ? Math.max(0, Math.round(v)) : null;
+  function atrasoPara(st, uid, e) {
+    const x = e[uid];
+    if (x && x.aberto && x.rtt != null) return Math.max(0, Math.round(x.rtt / 2));
+    const r = st.remotos.get(uid);
+    return r && r.atraso != null ? Math.max(0, Math.round(r.atraso)) : null;
   }
   function info() {
     const st = S;
     let atrasoMs = null, direto = 0;
     if (st) {
-      for (const r of st.remotos.values()) {
-        const a = atrasoDe(st, r);
+      const e = canais(st);
+      for (const u of quemLigar(st)) {
+        const a = atrasoPara(st, u, e);
         if (a != null && (atrasoMs == null || a > atrasoMs)) atrasoMs = a;
       }
-      if (st.direto) {
-        for (const e of Object.values(st.direto.estado())) if (e.aberto) direto++;
-      }
+      for (const x of Object.values(e)) if (x.aberto) direto++;
     }
     return { gatos: st ? st.remotos.size : 0, atrasoMs, direto, papel: st ? papelDe(st) : "gestor" };
   }
   function presentes() {
     const st = S;
     if (!st) return [];
-    const agora2 = agoraServ();
+    const agora2 = agoraServ(), e = canais(st);
     return [...st.presencas.values()].filter((p) => agora2 - p.t < VIVA).map((p) => {
-      const r = st.remotos.get(p.uid);
-      return { uid: p.uid, nome: p.nome, gato: p.gato, nota: p.nota, avocado: p.avocado, papel: p.papel, char: p.char, gestor: !!(st.gestor && st.gestor.uid === p.uid), eu: p.uid === st.con.uid, atrasoMs: r ? atrasoDe(st, r) : null, direto: !!(st.direto && (st.direto.estado()[p.uid] || {}).aberto) };
+      return { uid: p.uid, nome: p.nome, gato: p.gato, nota: p.nota, avocado: p.avocado, papel: p.papel, char: p.char, gestor: !!(st.gestor && st.gestor.uid === p.uid), eu: p.uid === st.con.uid, atrasoMs: atrasoPara(st, p.uid, e), direto: !!(e[p.uid] && e[p.uid].aberto) };
     }).sort((a, b) => a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : a.uid < b.uid ? -1 : 1);
   }
   function jogadores() {
