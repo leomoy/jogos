@@ -2372,7 +2372,7 @@ if (typeof window !== "undefined") {
 import * as THREE12 from "three";
 
 // js/data.js
-var VERSION = "0.10.0";
+var VERSION = "0.10.1";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -7592,10 +7592,15 @@ function esconderijos(mapa) {
   }
   return mapa._esconderijos;
 }
+var dentroDaArea = (mapa, e) => !mapa.areaEsconde || Math.hypot(e.x - mapa.areaEsconde.x, e.z - mapa.areaEsconde.z) <= mapa.areaEsconde.r;
+function contarEsconderijos(mapa, x, z, r) {
+  return esconderijos(mapa).filter((e) => Math.hypot(e.x - x, e.z - z) <= r).length;
+}
 function esconderijoProximo(mapa, x, z) {
   let melhor = null;
   let menor = 1;
   for (const e of esconderijos(mapa)) {
+    if (!dentroDaArea(mapa, e)) continue;
     const r = Math.hypot(e.x - x, e.z - z) / e.raio;
     if (r < menor) {
       menor = r;
@@ -7606,7 +7611,7 @@ function esconderijoProximo(mapa, x, z) {
 }
 function pertoDoEsconderijo(mapa, idx, x, z) {
   const e = esconderijos(mapa)[idx];
-  return !!e && Math.hypot(e.x - x, e.z - z) < e.raio * 1.3 + 0.3;
+  return !!e && dentroDaArea(mapa, e) && Math.hypot(e.x - x, e.z - z) < e.raio * 1.3 + 0.3;
 }
 function entradaProxima(mapa, x, z) {
   if (!mapa || !mapa.entradas || !mapa.entradas.length) return null;
@@ -10525,7 +10530,7 @@ function filaInicial(uids, rnd = Math.random) {
   }
   return a;
 }
-function novoJogo(tipo, uids, agora2, rnd) {
+function novoJogo(tipo, uids, agora2, rnd, area) {
   if (tipo !== "esconde") return null;
   const cfg = BRINCADEIRAS[tipo];
   if (!ehNumeroFinito2(agora2)) return null;
@@ -10533,7 +10538,7 @@ function novoJogo(tipo, uids, agora2, rnd) {
   if (!fila || fila.length < 2) return null;
   const placar = {};
   for (const u of fila) placar[u] = [0, 0];
-  return {
+  const obj = {
     tipo,
     fila,
     rodada: 1,
@@ -10545,6 +10550,13 @@ function novoJogo(tipo, uids, agora2, rnd) {
     perd: [],
     placar
   };
+  if (area && ehNumeroFinito2(area.cx) && ehNumeroFinito2(area.cz) && ehNumeroFinito2(area.raio)) {
+    obj.cx = area.cx;
+    obj.cz = area.cz;
+    obj.raio = area.raio;
+    obj.ini = agora2;
+  }
+  return obj;
 }
 function registrarEscondidos(jogo, esc) {
   if (!ehObjeto4(jogo) || jogo.fase !== "contando" || !ehObjeto4(esc)) return false;
@@ -10800,6 +10812,7 @@ function lerJogo(texto) {
     }
     placar[u] = [a, e];
   }
+  const temArea = ehNumeroFinito2(obj.cx) && obj.cx >= -200 && obj.cx <= 200 && ehNumeroFinito2(obj.cz) && obj.cz >= -200 && obj.cz <= 200 && ehNumeroFinito2(obj.raio) && obj.raio >= 5 && obj.raio <= 80 && ehNumeroFinito2(obj.ini);
   return {
     tipo: obj.tipo,
     fila: obj.fila.slice(),
@@ -10810,7 +10823,8 @@ function lerJogo(texto) {
     esc,
     ach,
     perd,
-    placar
+    placar,
+    ...temArea ? { cx: obj.cx, cz: obj.cz, raio: obj.raio, ini: obj.ini } : {}
   };
 }
 
@@ -10945,12 +10959,19 @@ function escolherPego(fila, n, vivos) {
   }
   return null;
 }
-function novoPega({ uids, posicoes, agora: agora2, seed, primeiro, limite }) {
+function novoPega({ uids, posicoes, agora: agora2, seed, primeiro, limite, area }) {
   if (!Array.isArray(uids) || uids.length < 2 || uids.length > 12) return null;
   const set = new Set(uids);
   if (set.size !== uids.length) return null;
   const fila = uids.slice();
-  const { cx, cz, raio } = areaPega(posicoes, limite);
+  let cx, cz, raio;
+  if (area && Number.isFinite(area.cx) && Number.isFinite(area.cz) && Number.isFinite(area.raio)) {
+    cx = area.cx;
+    cz = area.cz;
+    raio = area.raio;
+  } else {
+    ({ cx, cz, raio } = areaPega(posicoes, limite));
+  }
   const ini = agora2 + PEGA.graca * 1e3;
   const fimFase = ini + PEGA.duracao * 1e3;
   let p = primeiro;
@@ -11190,7 +11211,7 @@ function montarArea(mapa, grupo, j) {
   g.add(fita, parede);
   const liso = new THREE10.MeshLambertMaterial({ vertexColors: true });
   const geoT = geoTronco(), geoR = geoRocha();
-  for (const o of troncosArea({ x: cx, z: cz }, R, j.seed)) {
+  for (const o of j.tipo === "pega" ? troncosArea({ x: cx, z: cz }, R, j.seed) : []) {
     const { x, z, s, rot } = o, h = mundo.altura(x, z), rio = mundo.distRio(x, z);
     if (rio.d < rio.hw + 2.2) continue;
     if (mundo.colisores.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + 1.4 * s + 0.4)) continue;
@@ -11598,6 +11619,16 @@ function criarMapa(scene2, gato, salvo) {
     esconderijoDe: (x, z) => esconderijoProximo(mapa, x, z),
     pertoDoEsconderijo: (idx, x, z) => pertoDoEsconderijo(mapa, idx, x, z),
     sairDoEsconderijo: () => sairDoEsconderijo(mapa),
+    contarEsconderijos: (x, z, r) => contarEsconderijos(mapa, x, z, r),
+    // 0.10.1: quantos esconderijos num círculo (o raio da área do pique-esconde)
+    // 0.10.1: ponto de chão livre (fora do rio, longe de árvore, rocha, tronco e boca de caverna, dentro do mundo): onde pôr a área de encontro e quem chega
+    pontoLivre: (x, z) => {
+      const m = mapa.mundo;
+      if (!(Math.abs(x) < m.LIMITE - 2 && Math.abs(z) < m.LIMITE - 2)) return false;
+      const rio = m.distRio(x, z);
+      if (rio.d < rio.hw + 1.5) return false;
+      return !m.colisores.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + 1.2) && !m.cavernas.some((c) => Math.hypot(c.x - x, c.z - z) < c.R + 2) && !m.arvores.some((a) => Math.hypot(a.x - x, a.z - z) < 3);
+    },
     acaoContextual: () => acaoContextual(mapa),
     usarAcao: () => usarAcao(mapa),
     // presas do Bote (ratos e peixes, ver animais.js)
@@ -11857,6 +11888,161 @@ function criarZoom({ min = 3, max = 16, inicial = 10 } = {}) {
   };
 }
 
+// js/encontro.js
+function mostrarJogadoresNoMapa(jogo) {
+  if (jogo && typeof jogo === "object" && jogo.tipo === "esconde" && jogo.fase === "procurando") {
+    return false;
+  }
+  return true;
+}
+function jogadoresNoMapa(lista, meuSub) {
+  if (!Array.isArray(lista)) return [];
+  const alvo2 = meuSub || "";
+  const out = [];
+  for (const it of lista) {
+    if (!it || typeof it !== "object") continue;
+    const x = it.x, z = it.z;
+    if (typeof x !== "number" || !Number.isFinite(x)) continue;
+    if (typeof z !== "number" || !Number.isFinite(z)) continue;
+    const sub = it.sub || "";
+    if (sub !== alvo2) continue;
+    out.push(it);
+  }
+  return out;
+}
+function pontoNoMapa(x, z, limite, lado) {
+  const px = (x + limite) * lado / (2 * limite);
+  const pz = (z + limite) * lado / (2 * limite);
+  return { x: px, y: pz };
+}
+function centroEncontro(pedido, raio, limite, livre) {
+  let bx = 0, bz = 0;
+  if (pedido && typeof pedido === "object") {
+    if (typeof pedido.x === "number" && Number.isFinite(pedido.x)) bx = pedido.x;
+    if (typeof pedido.z === "number" && Number.isFinite(pedido.z)) bz = pedido.z;
+  }
+  const margem = limite - raio;
+  const maxC = margem < 0 ? 0 : margem;
+  const minC = -maxC;
+  const clamp4 = (v) => Math.max(minC, Math.min(maxC, v));
+  const arred2 = (v) => Math.round(v * 10) / 10;
+  const cx0 = clamp4(bx);
+  const cz0 = clamp4(bz);
+  const isLivre = (x, z) => {
+    if (typeof livre !== "function") return true;
+    try {
+      return !!livre(x, z);
+    } catch {
+      return false;
+    }
+  };
+  if (isLivre(cx0, cz0)) {
+    return { x: arred2(cx0), z: arred2(cz0) };
+  }
+  for (let r = 2; r <= limite; r += 2) {
+    for (let k = 0; k < 16; k++) {
+      const ang = k * 2 * Math.PI / 16;
+      const px = clamp4(cx0 + Math.cos(ang) * r);
+      const pz = clamp4(cz0 + Math.sin(ang) * r);
+      if (isLivre(px, pz)) {
+        return { x: arred2(px), z: arred2(pz) };
+      }
+    }
+  }
+  return { x: arred2(cx0), z: arred2(cz0) };
+}
+function raioEsconde(contar, jogadores) {
+  const alvo2 = typeof jogadores === "number" && Number.isFinite(jogadores) ? jogadores : 0;
+  const precisa = alvo2 + 2;
+  for (let r = 30; r <= 40; r += 2) {
+    let q = 0;
+    if (typeof contar === "function") {
+      try {
+        q = contar(r);
+      } catch {
+        q = 0;
+      }
+    }
+    if (typeof q === "number" && Number.isFinite(q) && q >= precisa) {
+      return r;
+    }
+  }
+  return 40;
+}
+function posicoesChegada(centro, raio, n, livre) {
+  if (!Number.isInteger(n) || n < 0 || n > 12) return [];
+  if (n === 0) return [];
+  const cx = centro && typeof centro.x === "number" && Number.isFinite(centro.x) ? centro.x : 0;
+  const cz = centro && typeof centro.z === "number" && Number.isFinite(centro.z) ? centro.z : 0;
+  const r = typeof raio === "number" && Number.isFinite(raio) && raio > 0 ? raio : 1;
+  const isLivre = (x, z) => {
+    if (typeof livre !== "function") return true;
+    try {
+      return !!livre(x, z);
+    } catch {
+      return false;
+    }
+  };
+  const arred2 = (v) => Math.round(v * 10) / 10;
+  const dist2 = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+  const escolhidos = [];
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const a0 = i * 2 * Math.PI / n;
+    const d0 = r * 0.35;
+    const dMax = r * 0.8;
+    let achou = false;
+    let ponto = null;
+    for (let t = 0; t < 60; t++) {
+      const ang = a0 + t * 0.7;
+      let d = d0 + t % 5 * 1.5;
+      if (d > dMax) d = dMax;
+      const px = cx + Math.cos(ang) * d;
+      const pz = cz + Math.sin(ang) * d;
+      if (!isLivre(px, pz)) continue;
+      let ok = true;
+      for (const p of escolhidos) {
+        if (dist2({ x: px, z: pz }, p) < 2) {
+          ok = false;
+          break;
+        }
+      }
+      if (!ok) continue;
+      ponto = { x: arred2(px), z: arred2(pz) };
+      escolhidos.push(ponto);
+      out.push(ponto);
+      achou = true;
+      break;
+    }
+    if (!achou) {
+      const ang = a0;
+      let d = d0;
+      if (d > dMax) d = dMax;
+      const px = cx + Math.cos(ang) * d;
+      const pz = cz + Math.sin(ang) * d;
+      const p = { x: arred2(px), z: arred2(pz) };
+      escolhidos.push(p);
+      out.push(p);
+    }
+  }
+  return out;
+}
+function precisaTrazer(pos, area) {
+  if (!area || typeof area !== "object") return false;
+  const cx = area.cx, cz = area.cz, raio = area.raio;
+  if (typeof cx !== "number" || !Number.isFinite(cx)) return false;
+  if (typeof cz !== "number" || !Number.isFinite(cz)) return false;
+  if (typeof raio !== "number" || !Number.isFinite(raio)) return false;
+  if (!pos || typeof pos !== "object") return false;
+  const sub = pos.sub;
+  if (typeof sub === "string" && sub.length > 0) return true;
+  const x = pos.x, z = pos.z;
+  if (typeof x !== "number" || !Number.isFinite(x)) return false;
+  if (typeof z !== "number" || !Number.isFinite(z)) return false;
+  const d = Math.hypot(x - cx, z - cz);
+  return d > raio;
+}
+
 // js/mapa-completo.js
 function criarCapaEstatica(mapa, W) {
   const canvas = document.createElement("canvas");
@@ -11978,7 +12164,32 @@ function desenharGato(ctx2, mapa, W) {
   ctx2.strokeStyle = "#ffffff";
   ctx2.stroke();
 }
-function criarMapaCompleto({ container, mapa, aoFechar }) {
+function desenharJogadores(ctx2, mapa, W, lista) {
+  const L = Math.max(6, W * 0.035);
+  ctx2.font = "bold " + Math.round(L * 1.1) + "px sans-serif";
+  ctx2.textAlign = "center";
+  ctx2.textBaseline = "bottom";
+  for (const j of lista || []) {
+    const p = pontoNoMapa(j.x, j.z, mapa.mundo.LIMITE, W), a = j.r || 0;
+    ctx2.beginPath();
+    ctx2.moveTo(p.x + Math.sin(a) * L, p.y + Math.cos(a) * L);
+    ctx2.lineTo(p.x + Math.sin(a + 2.5) * 0.7 * L, p.y + Math.cos(a + 2.5) * 0.7 * L);
+    ctx2.lineTo(p.x + Math.sin(a - 2.5) * 0.7 * L, p.y + Math.cos(a - 2.5) * 0.7 * L);
+    ctx2.closePath();
+    ctx2.fillStyle = "#" + (j.cor || 8947848).toString(16).padStart(6, "0");
+    ctx2.fill();
+    ctx2.lineWidth = Math.max(1.5, L * 0.22);
+    ctx2.strokeStyle = "#2b6fff";
+    ctx2.stroke();
+    const ini = String(j.nome || "?").trim().charAt(0).toUpperCase() || "?";
+    ctx2.lineWidth = Math.max(2, L * 0.25);
+    ctx2.strokeStyle = "#ffffff";
+    ctx2.strokeText(ini, p.x, p.y - L * 0.8);
+    ctx2.fillStyle = "#2b6fff";
+    ctx2.fillText(ini, p.x, p.y - L * 0.8);
+  }
+}
+function criarMapaCompleto({ container, mapa, aoFechar, jogadores }) {
   const elemento = document.createElement("div");
   elemento.className = "mapa-completo";
   const titulo = document.createElement("h2");
@@ -12009,6 +12220,7 @@ function criarMapaCompleto({ container, mapa, aoFechar }) {
     ctx2.drawImage(capa, 0, 0);
     desenharNevoa(ctx2, mapa, lado * 2);
     desenharGato(ctx2, mapa, lado * 2);
+    if (jogadores) desenharJogadores(ctx2, mapa, lado * 2, jogadores());
   }
   atualizar();
   function destruir() {
@@ -12805,7 +13017,7 @@ function criarCodigoGrande({ codigo, instrucao }) {
 }
 
 // js/familia.js
-function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes2, saida: saida2, aoEntrar, aoSaiu }) {
+function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, saida: saida2, aoEntrar, aoSaiu }) {
   const raiz = document.createElement("div");
   raiz.className = "tela tela-familia";
   const painel = document.createElement("div");
@@ -12835,55 +13047,6 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
     if (estado === "sem-rede") return "Sem internet \u2014 os gatinhos ficam guardados aqui e v\xE3o para a fam\xEDlia depois";
     if (estado === "codigo-invalido") return "Esse c\xF3digo n\xE3o funciona mais.";
     return "";
-  }
-  function adicionarCopias() {
-    if (!versoes2) return;
-    const linhaCopias = document.createElement("p");
-    linhaCopias.className = "familia-situacao";
-    linhaCopias.textContent = "";
-    const btnBaixar = document.createElement("button");
-    btnBaixar.className = "botao";
-    btnBaixar.type = "button";
-    btnBaixar.textContent = "Baixar c\xF3pia de tudo";
-    btnBaixar.addEventListener("click", () => {
-      versoes2.baixarCopia();
-      linhaCopias.textContent = "C\xF3pia baixada.";
-    });
-    const linhaBotoes = document.createElement("div");
-    linhaBotoes.className = "familia-copias";
-    linhaBotoes.appendChild(btnBaixar);
-    painel.appendChild(linhaBotoes);
-    const inputArquivo = document.createElement("input");
-    inputArquivo.type = "file";
-    inputArquivo.accept = ".json,application/json";
-    inputArquivo.style.display = "none";
-    painel.appendChild(inputArquivo);
-    const btnAbrir = document.createElement("button");
-    btnAbrir.className = "botao";
-    btnAbrir.type = "button";
-    btnAbrir.textContent = "Abrir uma c\xF3pia";
-    btnAbrir.addEventListener("click", () => {
-      inputArquivo.click();
-    });
-    linhaBotoes.appendChild(btnAbrir);
-    painel.appendChild(linhaCopias);
-    inputArquivo.addEventListener("change", async (e) => {
-      const arquivo = e.target.files[0];
-      if (!arquivo) return;
-      try {
-        const texto = await arquivo.text();
-        const confirmar = window.confirm("Abrir esta c\xF3pia? Os gatinhos que j\xE1 existem aqui ser\xE3o trocados pelos da c\xF3pia (a vers\xE3o de agora fica guardada).");
-        if (confirmar) {
-          const resultado = versoes2.importarTexto(texto);
-          const n = resultado.gatos;
-          linhaCopias.textContent = "Pronto! " + n + (n === 1 ? " gatinho" : " gatinhos") + " da c\xF3pia.";
-        }
-      } catch (err) {
-        linhaCopias.textContent = err.message;
-      } finally {
-        inputArquivo.value = "";
-      }
-    });
   }
   async function trocar(acao, codigoNovo) {
     const codigoAtual = nuvem2.codigo();
@@ -13001,7 +13164,6 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
       const p = document.createElement("p");
       p.textContent = "A fam\xEDlia funciona no site do jogo: leomoy.github.io/jogos/gatinho";
       painel.appendChild(p);
-      adicionarCopias();
       return;
     }
     const codigo = nuvem2.codigo();
@@ -13020,7 +13182,6 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
         });
         painel.appendChild(b);
       }
-      adicionarCopias();
       return;
     }
     const linhaNome = document.createElement("div");
@@ -13066,14 +13227,6 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
     linhaSit.textContent = textoSituacao();
     painel.appendChild(linhaSit);
     linhaSituacao = linhaSit;
-    const btnSinc = document.createElement("button");
-    btnSinc.className = "botao-grande";
-    btnSinc.type = "button";
-    btnSinc.textContent = "Sincronizar agora";
-    btnSinc.addEventListener("click", () => {
-      nuvem2.sincronizar({ forcar: true });
-    });
-    painel.appendChild(btnSinc);
     const detalhes = document.createElement("details");
     detalhes.className = "familia-trocar";
     const summary = document.createElement("summary");
@@ -13161,7 +13314,6 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
       }
     });
     painel.appendChild(detalhes);
-    adicionarCopias();
   }
   function aoEstado() {
     if (destruida) return;
@@ -13181,6 +13333,119 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, versoes: versoes
     },
     aoEstado
   };
+}
+
+// js/dados.js
+function criarTelaDados({ container, nuvem: nuvem2, versoes: versoes2, aoVoltar }) {
+  const raiz = document.createElement("div");
+  raiz.className = "tela tela-familia tela-dados";
+  const painel = document.createElement("div");
+  painel.className = "painel familia-painel";
+  raiz.appendChild(painel);
+  const titulo = document.createElement("h2");
+  titulo.textContent = "\u{1F4BE} Dados e c\xF3pias";
+  painel.appendChild(titulo);
+  const botao = (texto, classe, aoClicar) => {
+    const b = document.createElement("button");
+    b.className = classe;
+    b.type = "button";
+    b.textContent = texto;
+    b.addEventListener("click", aoClicar);
+    return b;
+  };
+  let linhaSit = null;
+  const situacao = () => {
+    const estado = nuvem2.estado();
+    if (estado === "ok") {
+      const u = nuvem2.ultima();
+      if (u > 0) {
+        const d = new Date(u);
+        return "Guardado \xE0s " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + " \u2713";
+      }
+      return "Guardado \u2713";
+    }
+    if (estado === "sincronizando") return "Sincronizando\u2026";
+    if (estado === "sem-rede") return "Sem internet \u2014 os gatinhos ficam guardados aqui e v\xE3o para a fam\xEDlia depois";
+    if (estado === "codigo-invalido") return "Esse c\xF3digo n\xE3o funciona mais.";
+    return "";
+  };
+  if (nuvem2.estado() !== "so-no-site" && nuvem2.codigo() !== "") {
+    linhaSit = document.createElement("p");
+    linhaSit.className = "familia-situacao dados-situacao";
+    linhaSit.textContent = situacao();
+    painel.appendChild(linhaSit);
+    painel.appendChild(botao("Sincronizar agora", "botao-grande dados-sincronizar", () => nuvem2.sincronizar({ forcar: true })));
+  }
+  const linhaCopias = document.createElement("p");
+  linhaCopias.className = "familia-situacao dados-msg";
+  const linhaBotoes = document.createElement("div");
+  linhaBotoes.className = "familia-copias";
+  linhaBotoes.appendChild(botao("Baixar c\xF3pia de tudo", "botao dados-baixar", () => {
+    versoes2.baixarCopia();
+    linhaCopias.textContent = "C\xF3pia baixada.";
+  }));
+  const arquivo = document.createElement("input");
+  arquivo.type = "file";
+  arquivo.accept = ".json,application/json";
+  arquivo.style.display = "none";
+  linhaBotoes.appendChild(botao("Abrir uma c\xF3pia", "botao dados-abrir", () => arquivo.click()));
+  painel.appendChild(linhaBotoes);
+  painel.appendChild(arquivo);
+  painel.appendChild(linhaCopias);
+  arquivo.addEventListener("change", async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      const texto = await f.text();
+      if (window.confirm("Abrir esta c\xF3pia? Os gatinhos que j\xE1 existem aqui ser\xE3o trocados pelos da c\xF3pia (a vers\xE3o de agora fica guardada).")) {
+        const n = versoes2.importarTexto(texto).gatos;
+        linhaCopias.textContent = "Pronto! " + n + (n === 1 ? " gatinho" : " gatinhos") + " da c\xF3pia.";
+      }
+    } catch (err) {
+      linhaCopias.textContent = err.message;
+    } finally {
+      arquivo.value = "";
+    }
+  });
+  const voltar = botao("Voltar", "botao-grande familia-voltar", () => aoVoltar());
+  raiz.appendChild(voltar);
+  container.appendChild(raiz);
+  return {
+    elemento: raiz,
+    atualizar() {
+    },
+    destruir() {
+      raiz.parentNode?.removeChild(raiz);
+    },
+    aoEstado() {
+      if (linhaSit) linhaSit.textContent = situacao();
+    }
+  };
+}
+function criarTelaOpcoes({ container, botaoSom, aoDados, aoVoltar }) {
+  const raiz = document.createElement("div");
+  raiz.className = "tela tela-opcoes";
+  const h2 = document.createElement("h2");
+  h2.textContent = "Op\xE7\xF5es";
+  raiz.appendChild(h2);
+  if (botaoSom) raiz.appendChild(botaoSom);
+  const dados = document.createElement("button");
+  dados.className = "botao opcoes-dados";
+  dados.type = "button";
+  dados.textContent = "\u{1F4BE} Dados e c\xF3pias";
+  dados.addEventListener("click", () => aoDados());
+  raiz.appendChild(dados);
+  const voltar = document.createElement("button");
+  voltar.className = "botao-grande";
+  voltar.type = "button";
+  voltar.textContent = "Voltar";
+  voltar.addEventListener("click", () => aoVoltar());
+  raiz.appendChild(voltar);
+  container.appendChild(raiz);
+  return { elemento: raiz, atualizar() {
+  }, destruir() {
+    raiz.parentNode?.removeChild(raiz);
+  } };
 }
 
 // js/versoes.js
@@ -16052,7 +16317,7 @@ var TIPOS_VOTACAO = {
     },
     aplicar(valor, ctx2) {
       const B = ctx2 && ctx2.mapa && ctx2.mapa.brincadeira;
-      if (B && this.valido(valor, ctx2)) B.iniciar(valor);
+      if (B && this.valido(valor, ctx2)) B.iniciar(valor, ctx2.quem);
     }
   }
 };
@@ -16068,6 +16333,12 @@ function contarVotos({ votos, quem } = {}) {
     }
   }
   return { sim, nao, aprovada: sim >= nao };
+}
+function todosVotaram({ votos, quem, jogadores } = {}) {
+  if (!Array.isArray(jogadores) || !votos || typeof votos !== "object") return false;
+  const restantes = jogadores.filter((uid) => uid !== quem);
+  if (restantes.length < 1) return false;
+  return restantes.every((uid) => Object.hasOwn(votos, uid) && (votos[uid] === true || votos[uid] === false));
 }
 function precisaVotar(presentes) {
   if (!Array.isArray(presentes)) return false;
@@ -16339,7 +16610,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
       if (S === st) eleicao(st);
     }, ELEICAO));
     if (st.mapa.animais) st.mapa.animais.aoBote = (i) => pedir(st, { tipo: "bote", alvo: i });
-    st.mapa.brincadeira = { atual: () => jogoDe(st), iniciar: (v) => iniciarJogo(st, v) };
+    st.mapa.brincadeira = { atual: () => jogoDe(st), iniciar: (v, quem) => iniciarJogo(st, v, quem) };
     st.mapa.aoPedirOvo = (id) => pedir(st, { tipo: "ovo", valor: id });
     st.pronto = true;
   }
@@ -16416,7 +16687,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
     return [...st.presencas.values()].filter((p) => p.papel === "jogador" && a - p.t < VIVA);
   };
   function abrirVotacao(st, quem, tipo, valor) {
-    const eu = st.con.uid, ctx2 = { mapa: st.mapa };
+    const eu = st.con.uid, ctx2 = { mapa: st.mapa, quem };
     if (!validarPedido(tipo, valor, ctx2)) return "igual";
     if (st.dinamico && st.dinamico.votacao) return "ocupada";
     if ((quem === eu ? st.papelMeu : (st.presencas.get(quem) || {}).papel) !== "jogador") return "igual";
@@ -16445,19 +16716,20 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
       if (t >= vt.fim + RESULTADO_MS + 500) apagar();
       return;
     }
-    if (t < vt.fim) return;
-    if (t >= vt.fim + VOTACAO_VELHA) {
-      apagar();
-      return;
-    }
     const votos = {}, de = vt.fim - tempoVotacao - 1e3, ate = vt.fim + 1e3;
     for (const [uid, x] of st.votos) {
       const p = st.presencas.get(uid);
       if ((!p || p.papel === "jogador") && x.n >= de && x.n <= ate) votos[uid] = x.voto;
     }
-    const { aprovada } = concluirVotacao({ tipo: vt.tipo, valor: vt.valor, quem: vt.quem, votos }, { mapa: st.mapa });
+    const cedo = t < vt.fim && todosVotaram({ votos, quem: vt.quem, jogadores: jogadoresVivos(st).map((p) => p.uid) });
+    if (t < vt.fim && !cedo) return;
+    if (t >= vt.fim + VOTACAO_VELHA) {
+      apagar();
+      return;
+    }
+    const { aprovada } = concluirVotacao({ tipo: vt.tipo, valor: vt.valor, quem: vt.quem, votos }, { mapa: st.mapa, quem: vt.quem });
     st.ultVot = performance.now();
-    st.D.update(ref(st, "dinamico/votacao"), { resultado: aprovada ? "aprovada" : "recusada" }).catch(nada2);
+    st.D.update(ref(st, "dinamico/votacao"), { resultado: aprovada ? "aprovada" : "recusada", ...cedo ? { fim: Math.round(t) } : {} }).catch(nada2);
   }
   function jogoDe(st) {
     if (st.jogoFim) return null;
@@ -16477,9 +16749,31 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
     const j = st.jogoH;
     st.D.update(ref(st, "dinamico"), { jogo: (j && j.tipo === "pega" ? serializarPega(j) : serializarJogo(j)) || null }).catch(nada2);
   }
-  function iniciarJogo(st, valor) {
+  function ondeEstaQuem(st, quem) {
+    const M = st.mapa, fora = (sub) => {
+      const e = (M.entradas || []).find((q) => q.tipo + ":" + q.id === sub);
+      return e && e.fora ? { x: e.fora.x, z: e.fora.z } : null;
+    };
+    if (quem === st.con.uid) return M.sub ? fora(M.sub.tipo + ":" + M.sub.id) : M.gatoGroup ? { x: M.gatoGroup.position.x, z: M.gatoGroup.position.z } : null;
+    const r = st.remotos.get(quem), s = r && r.buf[r.buf.length - 1];
+    return s ? s.sub ? fora(s.sub) : { x: s.x, z: s.z } : null;
+  }
+  function areaEncontro(st, valor, quem, n) {
+    const M = st.mapa;
+    if (!M.pontoLivre || !M.mundo) return null;
+    const lim = (M.mundo.LIMITE || 60) - 5, ped = ondeEstaQuem(st, quem) || { x: 0, z: 0 };
+    let raio = PEGA.raioMin;
+    if (valor !== "pega") {
+      const c0 = centroEncontro(ped, 30, lim, M.pontoLivre);
+      raio = raioEsconde((r) => M.contarEsconderijos(c0.x, c0.z, r), n);
+    }
+    const c = centroEncontro(ped, raio, lim, M.pontoLivre);
+    return { cx: c.x, cz: c.z, raio };
+  }
+  function iniciarJogo(st, valor, quem) {
     if (!souGestorGravado(st) || jogoDe(st)) return false;
-    const j = valor === "pega" ? novoPegaHost(st) : novoJogo(valor, jogadoresVivos(st).map((p) => p.uid), Math.round(agoraServ()), Math.random);
+    const vivos = jogadoresVivos(st).map((p) => p.uid), area = areaEncontro(st, valor, quem || st.con.uid, vivos.length);
+    const j = valor === "pega" ? novoPegaHost(st, area) : novoJogo(valor, vivos, Math.round(agoraServ()), Math.random, area);
     if (!j) return false;
     st.jogoH = j;
     st.jogoFim = false;
@@ -16494,14 +16788,14 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
     }
     return o;
   }
-  function novoPegaHost(st) {
+  function novoPegaHost(st, area) {
     const vivos = jogadoresVivos(st).map((p) => p.uid);
     if (vivos.some((u) => !st.filaPega.includes(u))) {
       st.filaPega = filaInicial(vivos, Math.random) || vivos;
       st.nPega = 0;
     }
     const pos = posicoesVivas(st, vivos), primeiro = escolherPego(st.filaPega, st.nPega, vivos);
-    const j = novoPega({ uids: vivos, posicoes: Object.values(pos), agora: Math.round(agoraServ()), seed: Math.floor(Math.random() * 1e9), primeiro, limite: 55 });
+    const j = novoPega({ uids: vivos, posicoes: Object.values(pos), agora: Math.round(agoraServ()), seed: Math.floor(Math.random() * 1e9), primeiro, limite: 55, area });
     if (j) {
       st.nPega++;
       st.antPega = {};
@@ -16677,6 +16971,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
     }
     if (!look || typeof look !== "object") return;
     r.nomeTexto = String(look.nome || "Gatinho");
+    r.cor = Object.hasOwn(CORES_GATO, look.cor) ? CORES_GATO[look.cor] : 0;
     loadCat2(THREE13, look).then((cat) => {
       if (S !== st || st.remotos.get(r.uid) !== r) {
         cat.dispose();
@@ -16838,6 +17133,17 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
     const agora2 = agoraServ();
     return [...st.presencas.values()].filter((p) => p.papel === "jogador" && p.char && p.uid !== st.con.uid && agora2 - p.t < VIVA).map((p) => ({ uid: p.uid, char: p.char, nome: p.nome })).sort((a, b) => a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : a.uid < b.uid ? -1 : 1);
   }
+  function jogadoresMapa() {
+    const st = S;
+    if (!st) return [];
+    const agora2 = agoraServ(), lista = [];
+    for (const p of st.presencas.values()) {
+      if (p.papel !== "jogador" || p.uid === st.con.uid || agora2 - p.t >= VIVA) continue;
+      const r = st.remotos.get(p.uid), u = r && r.buf[r.buf.length - 1];
+      if (u) lista.push({ uid: p.uid, nome: p.nome, x: u.x, z: u.z, r: u.r || 0, sub: u.sub || "", cor: r.cor || 0 });
+    }
+    return lista;
+  }
   function posicaoChar(charId) {
     const st = S;
     if (!st || !charId) return null;
@@ -16954,6 +17260,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE13, loadCat: loadCat2, conexao
     votacao,
     votar,
     jogadores,
+    jogadoresMapa,
     posicaoChar,
     olhar: olharMeu,
     // 0.9.7
@@ -18615,6 +18922,7 @@ var tPega = 0;
 var tCerca = 0;
 var pegaMontada = null;
 var pegaVistos = /* @__PURE__ */ new Set();
+var chegadaChave = "";
 var telaBrinc = null;
 var tBrinc = 0;
 var tQuieto = 0;
@@ -18856,6 +19164,7 @@ function desmontarMapa() {
     telaPega = null;
   }
   pegaMontada = null;
+  chegadaChave = "";
   festejada = 0;
   if (fecharPergunta) {
     fecharPergunta();
@@ -18972,7 +19281,7 @@ function irPara(nome, opcoes) {
       } else if (acao === "gatos") {
         irPara("gatos");
       } else if (acao === "opcoes") {
-        mostrarPlaceholder("Op\xE7\xF5es", "Em breve", ["Qualidade", "\xC1udio", "Menu dos pais"]);
+        irPara("opcoes");
       } else if (acao === "sobre") {
         mostrarSobre();
       } else if (acao === "familia") {
@@ -19014,11 +19323,16 @@ function irPara(nome, opcoes) {
     });
     telaAtual = "gatos";
     if (nuvem && Date.now() - tInicio > 1500) nuvem.sincronizar();
+  } else if (nome === "opcoes") {
+    telaObj = criarTelaOpcoes({ container: uiRoot, botaoSom: Som.botao("botao"), aoDados: () => irPara("dados"), aoVoltar: () => irPara("menu") });
+    telaAtual = "opcoes";
+  } else if (nome === "dados") {
+    telaObj = criarTelaDados({ container: uiRoot, nuvem, versoes, aoVoltar: () => irPara("opcoes") });
+    telaAtual = "dados";
   } else if (nome === "familia") {
     telaObj = criarTelaFamilia({
       container: uiRoot,
       nuvem,
-      versoes,
       saida,
       aoVoltar: () => irPara("menu"),
       aoEntrar: (vista) => irPara("boasvindas", { vista, aviso: avisoJunto() }),
@@ -19137,7 +19451,8 @@ function irPara(nome, opcoes) {
       const t = performance.now();
       if (t - tCerca > 1500) {
         tCerca = t;
-        avisar2("Volte para a brincadeira! \u{1F9DF}", 1500);
+        const jg = aovivo.ativo() ? aovivo.jogo() : null;
+        avisar2("Volte para a brincadeira! " + (jg && jg.tipo === "esconde" ? "\u{1F648}" : "\u{1F9DF}"), 1500);
       }
     };
     mapaNovo.aoQuieto = () => {
@@ -19614,7 +19929,9 @@ function atualizarBrincadeira(ms) {
   if (!telaBrinc || !M) return;
   const eu = aovivo.meuUid(), jj = aovivo.ativo() ? aovivo.jogo() : null, jp = jj && jj.tipo === "pega" ? jj : null, j = jp ? null : jj;
   estatBrincar(jj, eu);
-  atualizarPega(ms, jp, eu);
+  const ja = jj && Number.isFinite(jj.cx) && jj.fase !== "fim" ? jj : null;
+  chegarNaArea(ja, eu);
+  atualizarPega(ms, jp, eu, ja);
   const ativo = !!j && !!eu && j.fila.includes(eu) && (j.fase === "contando" || j.fase === "procurando");
   const achado = ativo && j.ach.includes(eu), peg = ativo && j.peg === eu, sou = !!j && j.peg === eu;
   M.congelado = peg && j.fase === "contando";
@@ -19648,25 +19965,46 @@ function atualizarBrincadeira(ms) {
     olhando = null;
   }
 }
-function atualizarPega(ms, j, eu) {
+function chegarNaArea(ja, eu) {
+  const M = mapaAtual;
+  M.areaEsconde = ja && ja.tipo === "esconde" ? { x: ja.cx, z: ja.cz, r: ja.raio } : null;
+  if (!ja || !eu || !ja.fila.includes(eu)) {
+    chegadaChave = "";
+    return;
+  }
+  const chave = ja.tipo + ":" + ja.ini;
+  if (chave === chegadaChave || trocando || !M.gatoGroup) return;
+  chegadaChave = chave;
+  avisar2("Vamos brincar aqui! \u{1F389}", 2500);
+  const gp = M.gatoGroup.position, area = { cx: ja.cx, cz: ja.cz, raio: ja.raio };
+  if (!precisaTrazer({ x: gp.x, z: gp.z, sub: M.sub ? M.sub.tipo + ":" + M.sub.id : "" }, area)) return;
+  const p = posicoesChegada({ x: ja.cx, z: ja.cz }, ja.raio, ja.fila.length, M.pontoLivre)[ja.fila.indexOf(eu)] || { x: ja.cx, z: ja.cz };
+  trocarSub(() => {
+    if (M.sub) sair(M);
+    M.fis.teleportar(p.x, p.z);
+    M.gatoGroup.position.set(M.fis.x, M.fis.y, M.fis.z);
+  });
+}
+function atualizarPega(ms, j, eu, ja) {
   const M = mapaAtual;
   if (!telaPega || !M) return;
-  const jogando = !!j && j.fase === "jogando", naFila = jogando && !!eu && j.fila.includes(eu);
-  const chave = jogando ? [j.cx, j.cz, j.raio, j.seed].join(",") : "";
+  const jogando = !!j && j.fase === "jogando";
+  const naFila = !!ja && !!eu && ja.fila.includes(eu);
+  const chave = ja ? [ja.cx, ja.cz, ja.raio, ja.tipo === "pega" ? ja.seed : ja.ini].join(",") : "";
   if (pegaMontada && (pegaMontada.mapa !== M || pegaMontada.chave !== chave)) {
     if (pegaMontada.mapa === M) pegaMontada.rem.remover();
     pegaMontada = null;
     M.cerca = null;
   }
   if (chave && !pegaMontada && !M.sub && M.montarPega) {
-    pegaMontada = { chave, mapa: M, rem: M.montarPega(j) };
-    pegaVistos = new Set(Object.keys(j.pegos));
+    pegaMontada = { chave, mapa: M, rem: M.montarPega(ja) };
+    pegaVistos = new Set(Object.keys(ja.pegos || {}));
   }
-  M.cerca = naFila && pegaMontada ? pegaMontada.rem.cerca : null;
-  const zumbi = naFila && Object.hasOwn(j.pegos, eu);
+  M.cerca = naFila && pegaMontada && !trocando ? pegaMontada.rem.cerca : null;
+  const zumbi = jogando && naFila && Object.hasOwn(j.pegos, eu);
   M.multVel = zumbi ? multVelocidade((aovivo.agora() - j.pegos[eu]) / 1e3) : 1;
   if (j) {
-    M.brincando = naFila ? "nada" : null;
+    M.brincando = jogando && naFila ? "nada" : null;
     M.congelado = false;
     M.travado = false;
   }
@@ -19744,33 +20082,6 @@ function mostrarTelaSimples(div) {
   };
   telaAtual = "menu";
 }
-function mostrarPlaceholder(titulo, texto, itens) {
-  const div = document.createElement("div");
-  div.className = "tela";
-  const h2 = document.createElement("h2");
-  h2.textContent = titulo;
-  div.appendChild(h2);
-  const p = document.createElement("p");
-  p.textContent = texto;
-  div.appendChild(p);
-  for (const item of itens || []) {
-    if (item === "\xC1udio") {
-      div.appendChild(Som.botao("botao"));
-      continue;
-    }
-    const b = document.createElement("button");
-    b.className = "botao";
-    b.textContent = item;
-    b.disabled = true;
-    div.appendChild(b);
-  }
-  const voltar = document.createElement("button");
-  voltar.className = "botao-grande";
-  voltar.textContent = "Voltar";
-  voltar.addEventListener("click", () => irPara("menu"));
-  div.appendChild(voltar);
-  mostrarTelaSimples(div);
-}
 function mostrarSobre() {
   const div = document.createElement("div");
   div.className = "tela";
@@ -19797,7 +20108,7 @@ function abrirMapaCompleto() {
   pausado = true;
   descarregarEstat();
   salvarMundoAgora();
-  mapaCompleto = criarMapaCompleto({ container: uiRoot, mapa: alvoAtivo(), aoFechar: fecharMapaCompleto });
+  mapaCompleto = criarMapaCompleto({ container: uiRoot, mapa: alvoAtivo(), aoFechar: fecharMapaCompleto, jogadores: jogadoresParaMapa });
 }
 function fecharMapaCompleto() {
   if (!mapaCompleto) return;
@@ -19880,6 +20191,10 @@ function restaurarRenderNormal() {
 var ultimoTempo = 0;
 var tRioSom = -1e9;
 var rioSom = null;
+function jogadoresParaMapa() {
+  if (!mapaAtual || servidorMundo || !aovivo.ativo() || !mostrarJogadoresNoMapa(aovivo.jogo())) return [];
+  return jogadoresNoMapa(aovivo.jogadoresMapa(), mapaAtual.sub ? mapaAtual.sub.tipo + ":" + mapaAtual.sub.id : "");
+}
 function desenharMinimapa() {
   const alvo2 = alvoAtivo();
   if (!alvo2) return;
@@ -19889,6 +20204,7 @@ function desenharMinimapa() {
   if (!capaMini) capaMini = criarCapaEstatica(alvo2, canvas.width);
   ctx2.drawImage(capaMini, 0, 0);
   desenharNevoa(ctx2, alvo2, canvas.width);
+  desenharJogadores(ctx2, alvo2, canvas.width, jogadoresParaMapa());
   desenharGato(ctx2, alvo2, canvas.width);
 }
 function atualizarCameraEspectador(dt, estado) {
@@ -20101,6 +20417,8 @@ window.GATINHO = {
   get aovivo() {
     return aovivo;
   },
+  jogadoresMapa: jogadoresParaMapa,
+  // 0.10.1 (testes): os pontos que o minimapa desenharia agora
   get som() {
     return Som;
   },
