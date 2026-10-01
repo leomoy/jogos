@@ -1817,6 +1817,39 @@ canvas,
 .mapa-completo-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border: 0; border-radius: 0; background: none; touch-action: none; }
 .mapa-completo-titulo { position: absolute; top: 14px; left: 14px; margin: 0; padding: 6px 16px; font-size: 1.2rem; color: #3a3a55; background: rgba(255, 255, 255, 0.85); border: 3px solid #cdd6f0; border-radius: 16px; pointer-events: none; }
 .mapa-completo-fechar { position: absolute; top: 14px; right: 14px; min-width: 56px; min-height: 56px; padding: 8px 16px; font-size: 1.4rem; }
+
+/* 19. Carregando (0.10.3) — tela cheia nas esperas (js/carregando.js); #carga-inicial é a mesma tela, só em CSS, para a abertura do jogo (some quando o main.js termina) */
+.carregando { position: fixed; inset: 0; z-index: 300; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; box-sizing: border-box; text-align: center;
+  background: linear-gradient(180deg, #bfe3ff 0%, #fff3d6 100%); color: #3a3a55; font-family: inherit; pointer-events: auto; }
+.carregando.visivel { display: flex; animation: carregando-entra 0.2s ease-out; }
+.carregando-gato { position: relative; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; }
+.carregando-bicho { font-size: 4.5rem; line-height: 1; animation: carregando-pula 0.9s ease-in-out infinite; }
+.carregando-patas { position: absolute; bottom: -4px; left: 50%; font-size: 1.6rem; opacity: 0.5; transform: translateX(-50%); animation: carregando-pata 1.8s ease-in-out infinite; }
+.carregando-texto { margin: 0; font-size: 1.4rem; font-weight: 700; max-width: 90vw; }
+.carregando-devagar { margin: 0; font-size: 1rem; max-width: 90vw; display: none; opacity: 0.85; }
+.carregando.devagar .carregando-devagar { display: block; }
+.carregando-erro { margin: 0; font-size: 1.05rem; max-width: 90vw; color: #a1304a; font-weight: 700; display: none; }
+.carregando.com-erro .carregando-erro { display: block; }
+.carregando.com-erro .carregando-bicho { animation: none; }
+.carregando-botao { margin-top: 8px; min-height: 52px; padding: 0 24px; border-radius: 26px; border: 3px solid #cdd6f0; background: #ffffff; box-shadow: 0 3px 0 #cdd6f0; font-family: inherit; font-size: 1.1rem; font-weight: 700; color: #3a3a55; cursor: pointer; }
+.carregando-botao[hidden] { display: none; }
+@keyframes carregando-entra { from { opacity: 0; } to { opacity: 1; } }
+@keyframes carregando-pula { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-18px) rotate(4deg); } }
+@keyframes carregando-pata { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.7; } }
+@media (max-height: 520px) {
+  .carregando { gap: 2px; padding: 8px 16px; }
+  .carregando-gato { width: 76px; height: 76px; }
+  .carregando-devagar { font-size: 0.9rem; }
+  .carregando-botao { margin-top: 2px; min-height: 44px; }
+  .carregando-bicho { font-size: 3rem; }
+  .carregando-texto { font-size: 1.15rem; }
+}
+/* abertura do jogo: só CSS (aparece depois de 0,3 s; avisa depois de 6 s; oferece recarregar depois de 20 s) */
+#carga-inicial { display: flex; opacity: 0; animation: carga-ini 0.2s ease-out 0.3s forwards; }
+#carga-inicial .carregando-devagar { display: block; opacity: 0; animation: carga-ini 0.4s ease-out 6s forwards; }
+#carga-inicial .carregando-botao { visibility: hidden; opacity: 0; animation: carga-ini-botao 0.4s ease-out 20s forwards; }
+@keyframes carga-ini { to { opacity: 1; } }
+@keyframes carga-ini-botao { to { opacity: 1; visibility: visible; } }
 </style>
 <script type="importmap">{
   "imports": {
@@ -1835,6 +1868,7 @@ canvas,
 <body>
 <div id="view"></div>
 <div id="ui"></div>
+<div class="carregando" id="carga-inicial" role="status"><div class="carregando-gato" aria-hidden="true"><span class="carregando-patas">🐾</span><span class="carregando-bicho">🐱</span></div><p class="carregando-texto">Abrindo o jogo…</p><p class="carregando-devagar">A internet está devagar… ainda estou tentando 🐾</p><button type="button" class="carregando-botao" onclick="location.reload()">Tentar de novo</button></div>
 <script>if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));</script>
 <script>globalThis.GATINHO_SONS_DIR = 'sons/';</script>
 <script type="module" data-bundle>globalThis.GATINHO_GLB = document.getElementById('dados-glb').textContent.trim(); globalThis.GATINHO_ANIMAIS = JSON.parse(document.getElementById('dados-animais').textContent);
@@ -2314,7 +2348,7 @@ if (typeof window !== "undefined") {
 import * as THREE12 from "three";
 
 // js/data.js
-var VERSION = "0.10.2";
+var VERSION = "0.10.3";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -6668,6 +6702,105 @@ function lerOvosFora(texto) {
   return out;
 }
 
+// js/estrada.js
+var ALCANCE2 = 0.55;
+function clamp01(t) {
+  return t < 0 ? 0 : t > 1 ? 1 : t;
+}
+function smoothstep2(a, b, x) {
+  const t = clamp01((x - a) / (b - a));
+  return t * t * (3 - 2 * t);
+}
+function distPontoSegmento(px, pz, ax, az, bx, bz) {
+  const abx = bx - ax;
+  const abz = bz - az;
+  const apx = px - ax;
+  const apz = pz - az;
+  const len2 = abx * abx + abz * abz;
+  let t = len2 > 0 ? (apx * abx + apz * abz) / len2 : 0;
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  const cx = ax + abx * t;
+  const cz = az + abz * t;
+  const dx = px - cx;
+  const dz = pz - cz;
+  return Math.sqrt(dx * dx + dz * dz);
+}
+function mascaraTrilhas(trilhas, tam, lado) {
+  const m = new Float32Array(tam * tam);
+  m.fill(9);
+  const pxPorMetro = tam / lado;
+  const x0 = -lado / 2;
+  const z0 = -lado / 2;
+  for (const trilha of trilhas) {
+    const pts = trilha.pts;
+    const larg = trilha.larg;
+    const meia = larg / 2;
+    const margem = meia + ALCANCE2;
+    for (let k = 0; k < pts.length - 1; k++) {
+      const ax = pts[k].x, az = pts[k].z;
+      const bx = pts[k + 1].x, bz = pts[k + 1].z;
+      const minX = Math.min(ax, bx) - margem;
+      const maxX = Math.max(ax, bx) + margem;
+      const minZ = Math.min(az, bz) - margem;
+      const maxZ = Math.max(az, bz) + margem;
+      let iMin = Math.floor((minX - x0) * pxPorMetro - 0.5);
+      let iMax = Math.ceil((maxX - x0) * pxPorMetro - 0.5);
+      let jMin = Math.floor((minZ - z0) * pxPorMetro - 0.5);
+      let jMax = Math.ceil((maxZ - z0) * pxPorMetro - 0.5);
+      if (iMin < 0) iMin = 0;
+      if (jMin < 0) jMin = 0;
+      if (iMax > tam - 1) iMax = tam - 1;
+      if (jMax > tam - 1) jMax = tam - 1;
+      if (iMin > iMax || jMin > jMax) continue;
+      for (let j = jMin; j <= jMax; j++) {
+        const pz = z0 + (j + 0.5) / pxPorMetro;
+        for (let i = iMin; i <= iMax; i++) {
+          const px = x0 + (i + 0.5) / pxPorMetro;
+          const d = distPontoSegmento(px, pz, ax, az, bx, bz);
+          const s = d - meia;
+          const idx = j * tam + i;
+          if (s < m[idx]) m[idx] = s;
+        }
+      }
+    }
+  }
+  return m;
+}
+function mistura(c, cor, a) {
+  return Math.round(c * (1 - a) + cor * a);
+}
+function pintarEstrada(ctx2, trilhas, tam, lado) {
+  const img = ctx2.getImageData(0, 0, tam, tam);
+  const m = mascaraTrilhas(trilhas, tam, lado);
+  const data = img.data;
+  for (let j = 0; j < tam; j++) {
+    for (let i = 0; i < tam; i++) {
+      const s = m[j * tam + i];
+      if (s >= ALCANCE2) continue;
+      const idx = (j * tam + i) * 4;
+      let r = data[idx];
+      let g = data[idx + 1];
+      let b = data[idx + 2];
+      const aBorda = 0.35 * (1 - smoothstep2(0, ALCANCE2, s));
+      r = mistura(r, 120, aBorda);
+      g = mistura(g, 88, aBorda);
+      b = mistura(b, 52, aBorda);
+      const aCorpo = 1 - smoothstep2(-0.12, 0.12, s);
+      r = mistura(r, 185, aCorpo);
+      g = mistura(g, 143, aCorpo);
+      b = mistura(b, 90, aCorpo);
+      const aFilete = 0.55 * (1 - smoothstep2(-0.7, -0.3, s));
+      r = mistura(r, 214, aFilete);
+      g = mistura(g, 178, aFilete);
+      b = mistura(b, 120, aFilete);
+      data[idx] = r;
+      data[idx + 1] = g;
+      data[idx + 2] = b;
+    }
+  }
+  ctx2.putImageData(img, 0, 0);
+}
+
 // js/texturas.js
 function criarCanvas(n) {
   const c = document.createElement("canvas");
@@ -6738,40 +6871,7 @@ function criarTexturaTerreno(THREE13, mundo, tam = 1024) {
       ctx2.stroke();
     }
   }
-  const trilhas = mundo.trilhas;
-  if (trilhas) {
-    ctx2.lineJoin = "round";
-    ctx2.lineCap = "round";
-    for (const trilha of trilhas) {
-      const pts = trilha.pts;
-      const larg = trilha.larg;
-      if (!pts || pts.length < 2) continue;
-      ctx2.strokeStyle = "rgba(120,88,52,0.35)";
-      ctx2.lineWidth = larg * 1.5 * k;
-      ctx2.beginPath();
-      ctx2.moveTo((pts[0].x + TERRENO / 2) / TERRENO * tam, (pts[0].z + TERRENO / 2) / TERRENO * tam);
-      for (let i = 1; i < pts.length; i++) {
-        ctx2.lineTo((pts[i].x + TERRENO / 2) / TERRENO * tam, (pts[i].z + TERRENO / 2) / TERRENO * tam);
-      }
-      ctx2.stroke();
-      ctx2.strokeStyle = "#b98f5a";
-      ctx2.lineWidth = larg * k;
-      ctx2.beginPath();
-      ctx2.moveTo((pts[0].x + TERRENO / 2) / TERRENO * tam, (pts[0].z + TERRENO / 2) / TERRENO * tam);
-      for (let i = 1; i < pts.length; i++) {
-        ctx2.lineTo((pts[i].x + TERRENO / 2) / TERRENO * tam, (pts[i].z + TERRENO / 2) / TERRENO * tam);
-      }
-      ctx2.stroke();
-      ctx2.strokeStyle = "rgba(214,178,120,0.55)";
-      ctx2.lineWidth = larg * 0.5 * k;
-      ctx2.beginPath();
-      ctx2.moveTo((pts[0].x + TERRENO / 2) / TERRENO * tam, (pts[0].z + TERRENO / 2) / TERRENO * tam);
-      for (let i = 1; i < pts.length; i++) {
-        ctx2.lineTo((pts[i].x + TERRENO / 2) / TERRENO * tam, (pts[i].z + TERRENO / 2) / TERRENO * tam);
-      }
-      ctx2.stroke();
-    }
-  }
+  if (mundo.trilhas) pintarEstrada(ctx2, mundo.trilhas, tam, TERRENO);
   for (let i = 0; i < 7e3; i++) {
     const x = rnd() * tam;
     const y = rnd() * tam;
@@ -13190,6 +13290,228 @@ function criarCodigoGrande({ codigo, instrucao }) {
   return bloco;
 }
 
+// js/carregando.js
+var ATRASO_MS = 300;
+var DEVAGAR_MS = 6e3;
+var BOTAO_MS = 2e4;
+var ERRO_MS = 4e3;
+function criarCarregando({ agora: agora2 = Date.now, texto: textoInicial = "", botao = null, atraso = ATRASO_MS, aoMudar: aoMudar2 } = {}) {
+  const t0 = agora2();
+  let textoAtual = textoInicial;
+  let erroAtual = null;
+  let tErro = null;
+  let fechado = false;
+  let ultimoEnviado = null;
+  function calcular() {
+    const t = agora2();
+    const visivel = t - t0 >= atraso || erroAtual !== null;
+    const devagar = t - t0 >= DEVAGAR_MS && erroAtual === null;
+    let botaoRotulo = null;
+    if (botao && erroAtual === null && t - t0 >= BOTAO_MS) {
+      botaoRotulo = botao.rotulo;
+    }
+    return {
+      visivel,
+      texto: textoAtual,
+      devagar,
+      botao: botaoRotulo,
+      erro: erroAtual,
+      fechado
+    };
+  }
+  function mesmo(a, b) {
+    if (!a || !b) return false;
+    return a.visivel === b.visivel && a.texto === b.texto && a.devagar === b.devagar && a.botao === b.botao && a.erro === b.erro && a.fechado === b.fechado;
+  }
+  function tick() {
+    if (fechado) return;
+    if (erroAtual !== null) {
+      if (tErro !== null && agora2() - tErro >= ERRO_MS) {
+        fim();
+        return;
+      }
+    }
+    const estado2 = calcular();
+    if (ultimoEnviado === null) {
+      if (estado2.visivel) {
+        ultimoEnviado = estado2;
+        if (typeof aoMudar2 === "function") aoMudar2(estado2);
+      }
+    } else {
+      if (!mesmo(estado2, ultimoEnviado)) {
+        ultimoEnviado = estado2;
+        if (typeof aoMudar2 === "function") aoMudar2(estado2);
+      }
+    }
+  }
+  function texto(t) {
+    textoAtual = t;
+    tick();
+  }
+  function erro(msg) {
+    erroAtual = msg;
+    tErro = agora2();
+    tick();
+  }
+  function fim() {
+    if (fechado) return;
+    fechado = true;
+    const estado2 = calcular();
+    const final = { ...estado2, visivel: false, fechado: true };
+    ultimoEnviado = final;
+    if (typeof aoMudar2 === "function") aoMudar2(final);
+  }
+  function ativo() {
+    return !fechado;
+  }
+  function estado() {
+    return calcular();
+  }
+  return { tick, texto, erro, fim, ativo, estado };
+}
+function montarTela(container = document.body) {
+  let el = null;
+  function garantir() {
+    if (el) return el;
+    el = document.createElement("div");
+    el.className = "carregando";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
+    const gato = document.createElement("div");
+    gato.className = "carregando-gato";
+    gato.setAttribute("aria-hidden", "true");
+    const patas = document.createElement("span");
+    patas.className = "carregando-patas";
+    patas.textContent = "\u{1F43E}";
+    const bicho = document.createElement("span");
+    bicho.className = "carregando-bicho";
+    bicho.textContent = "\u{1F431}";
+    gato.appendChild(patas);
+    gato.appendChild(bicho);
+    const textoEl = document.createElement("p");
+    textoEl.className = "carregando-texto";
+    const devagarEl = document.createElement("p");
+    devagarEl.className = "carregando-devagar";
+    devagarEl.textContent = "A internet est\xE1 devagar\u2026 ainda estou tentando \u{1F43E}";
+    const erroEl = document.createElement("p");
+    erroEl.className = "carregando-erro";
+    const botaoEl = document.createElement("button");
+    botaoEl.type = "button";
+    botaoEl.className = "carregando-botao";
+    el.appendChild(gato);
+    el.appendChild(textoEl);
+    el.appendChild(devagarEl);
+    el.appendChild(erroEl);
+    el.appendChild(botaoEl);
+    botaoEl.addEventListener("click", () => {
+      if (aoMudar2.aoBotao) aoMudar2.aoBotao();
+    });
+    el.addEventListener("click", (ev) => {
+      if (el.classList.contains("com-erro") && aoMudar2.aoErroClique) {
+        aoMudar2.aoErroClique();
+      }
+    });
+    return el;
+  }
+  function aoMudar2(estado) {
+    if (estado.fechado) {
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+      el = null;
+      return;
+    }
+    const e = garantir();
+    if (e.parentNode !== container) {
+      container.appendChild(e);
+    }
+    e.querySelector(".carregando-texto").textContent = estado.texto || "";
+    e.classList.toggle("visivel", !!estado.visivel);
+    e.classList.toggle("devagar", !!estado.devagar);
+    const erroEl = e.querySelector(".carregando-erro");
+    erroEl.textContent = estado.erro || "";
+    e.classList.toggle("com-erro", !!estado.erro);
+    const botaoEl = e.querySelector(".carregando-botao");
+    botaoEl.hidden = !estado.botao;
+    botaoEl.textContent = estado.botao || "";
+  }
+  aoMudar2.aoBotao = null;
+  aoMudar2.aoErroClique = null;
+  return aoMudar2;
+}
+function carregando2(texto, { botao = null, container, atraso } = {}) {
+  const ui = montarTela(container);
+  let c;
+  let pularResolve = null;
+  const pular = new Promise((res) => {
+    pularResolve = res;
+  });
+  let temErro = false;
+  c = criarCarregando({
+    texto,
+    atraso,
+    botao,
+    aoMudar: ui
+  });
+  ui.aoBotao = () => {
+    if (botao && typeof botao.aoClicar === "function") botao.aoClicar();
+    if (pularResolve) {
+      pularResolve(true);
+      pularResolve = null;
+    }
+  };
+  ui.aoErroClique = () => {
+    c.fim();
+  };
+  c.tick();
+  const id = setInterval(() => {
+    c.tick();
+    if (!c.ativo()) clearInterval(id);
+  }, 100);
+  function textoFn(t) {
+    c.texto(t);
+  }
+  function erroFn(msg) {
+    temErro = true;
+    console.error("carregando:", msg);
+    c.erro(msg);
+  }
+  function fimFn() {
+    clearInterval(id);
+    c.fim();
+  }
+  function pintado() {
+    const est2 = c.estado();
+    if (est2.visivel && c.ativo()) {
+      return new Promise((res) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => res());
+        });
+      });
+    }
+    return Promise.resolve();
+  }
+  const handle = {
+    texto: textoFn,
+    erro: erroFn,
+    fim: fimFn,
+    pular,
+    pintado
+  };
+  Object.defineProperty(handle, "temErro", {
+    get: () => temErro,
+    enumerable: true
+  });
+  return handle;
+}
+async function esperando(texto, promessa, { botao = "Voltar", container } = {}) {
+  const c = carregando2(texto, { botao: { rotulo: botao }, container });
+  c.pular.then(() => c.fim());
+  try {
+    return await promessa;
+  } finally {
+    c.fim();
+  }
+}
+
 // js/familia.js
 function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, saida: saida2, aoEntrar, aoSaiu }) {
   const raiz = document.createElement("div");
@@ -13290,7 +13612,7 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, saida: saida2, a
       if (destruida) return;
       linhaMsg.textContent = "Saindo\u2026";
       try {
-        await saida2.sair();
+        await esperando("Saindo da fam\xEDlia\u2026", saida2.sair());
       } catch (err) {
       }
       if (destruida) return;
@@ -13298,7 +13620,7 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, saida: saida2, a
         if (aoSaiu) aoSaiu();
         else desenhar();
       } else if (acao === "entrar") {
-        const ok = await nuvem2.entrarFamilia(codigoNovo);
+        const ok = await esperando("Chamando a fam\xEDlia\u2026", nuvem2.entrarFamilia(codigoNovo));
         if (destruida) return;
         if (!ok) {
           desenhar();
@@ -13310,7 +13632,7 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, saida: saida2, a
           desenhar();
         }
       } else {
-        const c = await nuvem2.criarFamilia();
+        const c = await esperando("Criando a fam\xEDlia\u2026", nuvem2.criarFamilia());
         if (destruida) return;
         if (c === null) {
           desenhar();
@@ -13452,7 +13774,7 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, saida: saida2, a
       }
       btnConfirmarEntrar.disabled = true;
       linhaMsg.textContent = "Conferindo\u2026";
-      const r = await nuvem2.verificarCodigo(campoEntrar.value);
+      const r = await esperando("Chamando a fam\xEDlia\u2026", nuvem2.verificarCodigo(campoEntrar.value));
       if (destruida) return;
       if (r === "invalido") {
         linhaMsg.textContent = "C\xF3digo n\xE3o encontrado.";
@@ -13548,7 +13870,7 @@ function criarTelaDados({ container, nuvem: nuvem2, versoes: versoes2, aoVoltar 
     linhaSit.className = "familia-situacao dados-situacao";
     linhaSit.textContent = situacao();
     painel.appendChild(linhaSit);
-    painel.appendChild(botao("Sincronizar agora", "botao-grande dados-sincronizar", () => nuvem2.sincronizar({ forcar: true })));
+    painel.appendChild(botao("Sincronizar agora", "botao-grande dados-sincronizar", () => esperando("Sincronizando\u2026", nuvem2.sincronizar({ forcar: true }))));
   }
   const linhaCopias = document.createElement("p");
   linhaCopias.className = "familia-situacao dados-msg";
@@ -13570,7 +13892,7 @@ function criarTelaDados({ container, nuvem: nuvem2, versoes: versoes2, aoVoltar 
     const f = e.target.files[0];
     if (!f) return;
     try {
-      const texto = await f.text();
+      const texto = await esperando("Abrindo a c\xF3pia\u2026", f.text());
       if (window.confirm("Abrir esta c\xF3pia? Os gatinhos que j\xE1 existem aqui ser\xE3o trocados pelos da c\xF3pia (a vers\xE3o de agora fica guardada).")) {
         const n = versoes2.importarTexto(texto).gatos;
         linhaCopias.textContent = "Pronto! " + n + (n === 1 ? " gatinho" : " gatinhos") + " da c\xF3pia.";
@@ -16194,7 +16516,7 @@ function criarBoasVindas({ container, nuvem: nuvem2, aoEntrou, aoCriou, aoLocal,
       }
       btnEntrar.disabled = true;
       dizer("Entrando\u2026");
-      const ok = await nuvem2.entrarFamilia(campo.value);
+      const ok = await esperando("Chamando a fam\xEDlia\u2026", nuvem2.entrarFamilia(campo.value));
       if (!vivo) return;
       if (ok) {
         mostrar("bemvindo");
@@ -16251,7 +16573,7 @@ function criarBoasVindas({ container, nuvem: nuvem2, aoEntrou, aoCriou, aoLocal,
       }
       btnCriar.disabled = true;
       dizer("Criando\u2026");
-      const codigo = await nuvem2.criarFamilia(nome);
+      const codigo = await esperando("Criando a fam\xEDlia\u2026", nuvem2.criarFamilia(nome));
       if (!vivo) return;
       if (codigo) {
         codigoCriado = codigo;
@@ -16326,7 +16648,7 @@ var gravarMarcaLocal = () => {
 var VIVA = 6e3;
 var MORTO = 3e3;
 var HISTERESE = 1.3;
-function calcularNota({ pc, quadroMs, atrasoMs, carregando: carregando2, avocado }) {
+function calcularNota({ pc, quadroMs, atrasoMs, carregando: carregando3, avocado }) {
   let nota = 0;
   nota += pc ? 100 : 40;
   if (typeof quadroMs === "number" && quadroMs > 0) {
@@ -16337,7 +16659,7 @@ function calcularNota({ pc, quadroMs, atrasoMs, carregando: carregando2, avocado
   if (typeof atrasoMs === "number" && atrasoMs >= 0) {
     nota -= Math.min(30, atrasoMs / 10);
   }
-  if (carregando2) {
+  if (carregando3) {
     nota += 20;
   }
   if (avocado) {
@@ -19276,7 +19598,9 @@ function aoMudarSub() {
   if (inputAtual && alvoAtivo()) inputAtual.definirAcao(alvoAtivo().acaoContextual());
   salvarMundoAgora();
 }
-function trocarSub(fn) {
+var msMapa = 0;
+var msTroca = {};
+function trocarSub(fn, texto = "Um instante\u2026") {
   if (trocando || telaAtual !== "mapa") return;
   trocando = true;
   let veu = document.getElementById("veu");
@@ -19286,19 +19610,27 @@ function trocarSub(fn) {
     document.body.appendChild(veu);
   }
   veu.classList.add("escuro");
-  setTimeout(() => {
+  const lenta = (msTroca[texto] ?? msMapa) > 150;
+  const c = carregando2(texto, { atraso: lenta ? 0 : void 0 });
+  setTimeout(async () => {
     if (!mapaAtual) {
+      c.fim();
       trocando = false;
       return;
     }
+    if (lenta) await c.pintado();
+    const t0 = performance.now();
     try {
       fn();
       aoMudarSub();
     } catch (e) {
       console.error("trocarSub", e);
+      c.erro("N\xE3o deu para trocar de mapa.");
     }
+    msTroca[texto] = performance.now() - t0;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       veu.classList.remove("escuro");
+      if (!c.temErro) c.fim();
       setTimeout(() => {
         trocando = false;
       }, 200);
@@ -19601,7 +19933,11 @@ function irPara(nome, opcoes) {
       camera.updateProjectionMatrix();
     }
     if (espectando) document.body.classList.add("em-espectador");
-    mapaAtual = criarMapa(scene, gato, salvo);
+    {
+      const t0 = performance.now();
+      mapaAtual = criarMapa(scene, gato, salvo);
+      msMapa = performance.now() - t0;
+    }
     if (servidor) {
       mapaAtual.semGato = true;
       mapaAtual.gatoGroup.visible = false;
@@ -19618,9 +19954,9 @@ function irPara(nome, opcoes) {
     mapaNovo.aoEntrar = (entrada) => trocarSub(() => {
       entrar(mapaNovo, entrada);
       estatMais(entrada.tipo === "arvore" ? "arvores" : "cavernas");
-    });
-    mapaNovo.aoSair = () => trocarSub(() => sair(mapaNovo));
-    mapaNovo.aoTrocar = (fn) => trocarSub(fn);
+    }, entrada.tipo === "arvore" ? "Subindo na \xE1rvore\u2026" : "Entrando na caverna\u2026");
+    mapaNovo.aoSair = () => trocarSub(() => sair(mapaNovo), "Voltando para o mundo\u2026");
+    mapaNovo.aoTrocar = (fn) => trocarSub(fn, "Mudando de andar\u2026");
     mapaNovo.aoStat = (campo) => estatMais(campo);
     mapaNovo.aoOlhar = (idx) => {
       olhando = { t: performance.now(), n: ((aovivo.jogo() || {}).ach || []).length };
@@ -19799,24 +20135,27 @@ function parContinuar() {
   }
   return { char: g.id, charNome: g.look?.nome || "Avel\xE3", mundo: m ? u.mundo : void 0, mundoNome: m ? m.registro.nome : "" };
 }
-async function esperarJuntar() {
-  if (mundos.precisaJuntar()) await Promise.race([nuvem.sincronizar({ forcar: true }).then(() => mundos.juntando()), espera(3e3)]);
-  else if (mundos.juntando()) await Promise.race([mundos.juntando(), espera(6e3)]);
+async function esperarJuntar(pular = new Promise(() => {
+})) {
+  if (mundos.precisaJuntar()) await Promise.race([nuvem.sincronizar({ forcar: true }).then(() => mundos.juntando()), espera(3e3), pular]);
+  else if (mundos.juntando()) await Promise.race([mundos.juntando(), espera(6e3), pular]);
 }
 async function jogar(id, mundoId, { usarAtual = false } = {}) {
   const g = id != null ? Save.pegar(id) : null;
   if (entrando) return;
   entrando = true;
+  let c = carregando2("Entrando no mundo\u2026", { botao: { rotulo: "Continuar sem internet" } }), entregue = false;
+  const esp = (ms) => Promise.race([espera(ms), c.pular]);
   try {
     if (!g) {
       irPara("mapa", { gato: gatoPadrao() });
       return;
     }
-    await esperarJuntar();
+    await esperarJuntar(c.pular);
     const tipo = g.tipo || "gato";
     if (!mundoId && usarAtual && g.mundoAtual && (mundos.pegar(g.mundoAtual) || await mundos.obter(g.mundoAtual))) mundoId = g.mundoAtual;
     if (!mundoId) {
-      const lista = (await Promise.race([mundos.listar(), espera(1500).then(() => mundos.listarLocal())])).filter((m) => mundoAceita(m, tipo));
+      const lista = (await Promise.race([mundos.listar(), esp(1500).then(() => mundos.listarLocal())])).filter((m) => mundoAceita(m, tipo));
       if (!lista.length) mundoId = mundos.mundo1();
       else if (lista.length === 1) mundoId = lista[0].id;
       else {
@@ -19834,7 +20173,8 @@ async function jogar(id, mundoId, { usarAtual = false } = {}) {
       avisar2("Esse mundo n\xE3o aceita esse tipo de gatinho.");
       return;
     }
-    if (await mundos.verificar(mundoId) === "revogado") {
+    c.texto("Entrando no " + (w.registro.nome || "mundo") + "\u2026");
+    if (await Promise.race([mundos.verificar(mundoId), c.pular.then(() => "ok")]) === "revogado") {
       avisar2(AVISO_REVOGADO);
       if (telaAtual === "mundos") irPara("mundos");
       return;
@@ -19844,12 +20184,14 @@ async function jogar(id, mundoId, { usarAtual = false } = {}) {
     if (comNuvem) {
       const o = await online.consultar(g.id);
       if (o) {
+        c.fim();
         const r = await perguntar(nomeChar + " est\xE1 brincando no outro aparelho \u2014 assistir ou jogar por aqui?", [["assistir", "Assistir"], ["aqui", "Jogar por aqui"], ["voltar", "Voltar"]]);
         if (r === "assistir") {
           await entrarEspectador(o.mundo || mundoId, g.id);
           return;
         }
         if (r !== "aqui") return;
+        c = carregando2("Entrando no " + (w.registro.nome || "mundo") + "\u2026", { botao: { rotulo: "Continuar sem internet" } });
         if (o.mundo === mundoId) {
           const p = await online.posicaoAoVivo(mundoId, o.uid);
           if (p && !p.sub) Save.salvarPosicao(g.id, mundoId, { ...g.posicoes && g.posicoes[mundoId] || {}, x: p.x, z: p.z, rot: p.r, agachado: false, sub: null });
@@ -19862,14 +20204,23 @@ async function jogar(id, mundoId, { usarAtual = false } = {}) {
     } catch {
     }
     if (nuvem.codigo() && location.protocol !== "file:") {
-      await Promise.race([mundos.sincronizar(mundoId, { forcar: true }), espera(w.estado || !w.registro.subido ? 1500 : 6e3)]);
+      await Promise.race([mundos.sincronizar(mundoId, { forcar: true }), esp(w.estado || !w.registro.subido ? 1500 : 6e3)]);
     }
     if (comNuvem && w.registro.subido) {
-      await Promise.race([online.jogando(g.id, emJogoOpcoes(g, mundoId)), espera(1500)]);
+      await Promise.race([online.jogando(g.id, emJogoOpcoes(g, mundoId)), esp(1500)]);
     }
+    await c.pintado();
+    cargaEntrada = c;
     irPara("mapa", { gato: g.look, id: g.id, mundo: mundoId });
+    if (cargaEntrada === c) cargaEntrada = null;
+    else entregue = true;
+  } catch (e) {
+    entregue = true;
+    cargaEntrada = null;
+    c.erro("N\xE3o deu para entrar no mundo. " + (e && e.message ? e.message : ""));
   } finally {
     entrando = false;
+    if (!entregue) c.fim();
   }
 }
 function emJogoOpcoes(g, mundoId) {
@@ -19977,21 +20328,22 @@ function observarEmJogo(cb) {
     parar();
   };
 }
-async function prepararMundoSemChar(mundoId, verbo) {
+async function prepararMundoSemChar(mundoId, verbo, pular = new Promise(() => {
+})) {
   if (conexao.modo() === "so-aqui") {
     avisar2("Para " + verbo + ", entre no mundo de todos (\u2601\uFE0F).");
     return false;
   }
-  await esperarJuntar();
+  await esperarJuntar(pular);
   if (mundoId && !mundos.pegar(mundoId)) await mundos.obter(mundoId);
   let w = mundoId && mundos.pegar(mundoId);
-  if (w && await mundos.verificar(mundoId) === "revogado") {
+  if (w && await Promise.race([mundos.verificar(mundoId), pular.then(() => "ok")]) === "revogado") {
     avisar2(AVISO_REVOGADO);
     if (telaAtual === "mundos") irPara("mundos");
     return false;
   }
   if (w && nuvem.codigo() && location.protocol !== "file:") {
-    await Promise.race([mundos.sincronizar(mundoId, { forcar: true }), espera(w.estado || !w.registro.subido ? 1500 : 6e3)]);
+    await Promise.race([mundos.sincronizar(mundoId, { forcar: true }), espera(w.estado || !w.registro.subido ? 1500 : 6e3), pular]);
     w = mundos.pegar(mundoId);
   }
   if (!w || !w.registro.subido || !nuvem.codigo()) {
@@ -20000,9 +20352,26 @@ async function prepararMundoSemChar(mundoId, verbo) {
   }
   return true;
 }
+async function abrirMapaComCarga(preparar, opcoesMapa) {
+  const c = carregando2("Entrando no mundo\u2026", { botao: { rotulo: "Continuar sem internet" } });
+  let entregue = false;
+  try {
+    if (!await preparar(c.pular)) return;
+    await c.pintado();
+    cargaEntrada = c;
+    irPara("mapa", opcoesMapa);
+    if (cargaEntrada === c) cargaEntrada = null;
+    else entregue = true;
+  } catch (e) {
+    entregue = true;
+    cargaEntrada = null;
+    c.erro("N\xE3o deu para entrar no mundo. " + (e && e.message ? e.message : ""));
+  } finally {
+    if (!entregue) c.fim();
+  }
+}
 async function entrarEspectador(mundoId, seguir) {
-  if (!await prepararMundoSemChar(mundoId, "assistir")) return;
-  irPara("mapa", { gato: gatoPadrao(), espectador: mundoId, seguir: seguir || null });
+  await abrirMapaComCarga((pular) => prepararMundoSemChar(mundoId, "assistir", pular), { gato: gatoPadrao(), espectador: mundoId, seguir: seguir || null });
 }
 async function assistir(mundoId, seguir) {
   if (entrando) return;
@@ -20013,22 +20382,29 @@ async function assistir(mundoId, seguir) {
     entrando = false;
   }
 }
+var cargaEntrada = null;
 async function iniciarAoVivo(mapa, gato, servidor, espectador) {
+  const c = cargaEntrada;
+  cargaEntrada = null;
   try {
     const id = idMundoMapa;
     const w = id && mundos.pegar(id);
     if (!nuvem.codigo() || location.protocol === "file:" || !w || !w.registro.subido || conexao.modo() !== "conectado") return;
-    const ok = await aovivo.iniciar({ mapa, gato, mundoId: id, semGato: !!servidor, char: idGatoMapa || "", papel: espectador ? "espectador" : servidor ? "servidor" : "jogador" });
-    if (ok && mapaAtual !== mapa) aovivo.sair();
+    if (c) c.texto("Chamando a fam\xEDlia\u2026");
+    const p = aovivo.iniciar({ mapa, gato, mundoId: id, semGato: !!servidor, char: idGatoMapa || "", papel: espectador ? "espectador" : servidor ? "servidor" : "jogador" }).then((ok) => {
+      if (ok && mapaAtual !== mapa) aovivo.sair();
+    });
+    await (c ? Promise.race([p, c.pular]) : p);
   } catch (e) {
+  } finally {
+    if (c) c.fim();
   }
 }
 async function abrirServidor(idMundo) {
   if (entrando) return;
   entrando = true;
   try {
-    if (!await prepararMundoSemChar(idMundo, "servir")) return;
-    irPara("mapa", { gato: gatoPadrao(), servidor: idMundo });
+    await abrirMapaComCarga((pular) => prepararMundoSemChar(idMundo, "servir", pular), { gato: gatoPadrao(), servidor: idMundo });
   } finally {
     entrando = false;
   }
@@ -20191,7 +20567,7 @@ function chegarNaArea(ja, eu) {
     if (M.sub) sair(M);
     M.fis.teleportar(p.x, p.z);
     M.gatoGroup.position.set(M.fis.x, M.fis.y, M.fis.z);
-  });
+  }, "Preparando a brincadeira\u2026");
 }
 function atualizarPega(ms, j, eu, ja) {
   const M = mapaAtual;
@@ -20595,6 +20971,7 @@ conexao.on((t) => {
   if (q.has("local") || q.has("smoke")) gravarMarcaLocal();
 }
 irPara("menu");
+document.getElementById("carga-inicial")?.remove();
 conexao.iniciar();
 if (nuvem.codigo()) setTimeout(() => nuvem.sincronizar(), 1500);
 window.GATINHO = {
