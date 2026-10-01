@@ -9,27 +9,31 @@
   @media (prefers-color-scheme: dark) { :root { --bg: #16161d; --fg: #eee; --card: #22222c; --line: #33333f; --acc: #b39dff; --acc2: #2e2946; --muted: #a0a0ad; } }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
-  main { max-width: 680px; margin: 0 auto; padding: 28px 16px 40px; }
+  main { max-width: 920px; margin: 0 auto; padding: 28px 16px 40px; }
   h1 { margin: 0; font-size: 1.9rem; }
   .sub { margin: 4px 0 24px; color: var(--muted); }
-  .jogo { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 16px; align-items: start; }
+  .jogo { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+  .capa { height: 96px; display: flex; align-items: center; justify-content: center; font-size: 56px; }
+  .corpo { padding: 16px 18px 14px; }
   .topo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .jogo h2 { margin: 0; font-size: 1.25rem; }
   .versao { background: var(--acc2); color: var(--acc); font-weight: 700; font-size: .85rem; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
-  .desc { margin: 8px 0 14px; color: var(--muted); }
-  .acoes { display: flex; gap: 10px 16px; flex-wrap: wrap; align-items: center; }
-  a.btn { display: inline-block; background: var(--acc); color: #fff; text-decoration: none; padding: 11px 22px; border-radius: 10px; font-weight: 700; }
+  .desc { margin: 6px 0 14px; color: var(--muted); }
+  a.btn { display: block; text-align: center; background: var(--acc); color: #fff; text-decoration: none; padding: 12px 22px; border-radius: 12px; font-weight: 700; font-size: 1.05rem; }
+  a.btn.sec { background: var(--acc2); color: var(--acc); }
   a.link { color: var(--acc); text-decoration: none; font-size: .92rem; }
-  .novidades { margin: 14px 0 0; padding: 12px 14px; background: var(--acc2); border-radius: 10px; font-size: .95rem; }
-  .novidades b { color: var(--acc); }
-  details.cortina { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+  details.cortina { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
   details.cortina summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; color: var(--muted); font-weight: 600; padding: 4px 0; }
   details.cortina summary::-webkit-details-marker { display: none; }
   details.cortina summary::before { content: '▸'; transition: transform .2s; }
   details.cortina[open] summary::before { transform: rotate(90deg); }
   details.cortina summary .n { background: var(--line); color: var(--fg); border-radius: 999px; font-size: .78rem; padding: 1px 8px; }
-  ul.versoes { list-style: none; padding: 0; margin: 6px 0 0; }
-  ul.versoes li { padding: 10px 0; border-top: 1px solid var(--line); }
+  details.cortina h3 { margin: 14px 0 4px; font-size: .95rem; }
+  .novidades { margin: 0; padding: 12px 14px; background: var(--acc2); border-radius: 10px; font-size: .95rem; }
+  .novidades + .link, .novidades + a.btn { margin-top: 10px; }
+  ul.versoes { list-style: none; padding: 0; margin: 4px 0 0; }
+  ul.versoes li { padding: 10px 0; border-top: 1px solid var(--line); font-size: .95rem; }
   ul.versoes li:first-child { border-top: 0; }
   ul.versoes a { color: var(--acc); text-decoration: none; }
   ul.versoes span { color: var(--muted); font-size: .92rem; }
@@ -41,18 +45,21 @@
   <h1>Jogos</h1>
   <p class="sub">Feitos em casa. Funcionam no celular e no PC; os mais novos instalam na tela inicial e jogam sem internet.</p>
 
-  <!-- CARTAO:gatinho — ao publicar: trocar a versão no selo, no link do arquivo único e nas novidades; a novidade anterior desce para a cortina -->
+  <div class="grade">
+  <!-- CARTAO:gatinho — no cartão só selo, descrição e ▶ Jogar; ao publicar: trocar o selo e, na cortina, novidades e arquivo único; a novidade anterior desce para "Versões anteriores" (contagem +1) -->
   <article class="jogo">
-    <div class="topo"><h2>Avelã, o gatinho sobrevivente</h2><span class="versao">v0.9.8</span></div>
-    <p class="desc">O jogo da Luísa: ela escreve a história, decide como se joga e dirige a arte.</p>
-    <div class="acoes">
+    <div class="capa" style="background:linear-gradient(135deg,#ffd9a8,#c8e6b0)">🐱</div>
+    <div class="corpo">
+      <div class="topo"><h2>Avelã, o gatinho sobrevivente</h2><span class="versao">v0.9.9</span></div>
+      <p class="desc">O jogo da Luísa: um gatinho explora a floresta, caça, sobe em árvores e brinca com os amigos.</p>
       <a class="btn" href="gatinho/">▶ Jogar</a>
-      <a class="link" href="gatinho/v0/gatinho-0.9.8.html">arquivo único (abre com internet)</a>
-    </div>
-    <p class="novidades"><b>Novidades da 0.9:</b> pique-esconde e pique-pega zumbi com os amigos; missões (a primeira: caçar 10 comidas, juntos); sons da floresta, do rio, miados e ronronar (botão 🔊 para desligar); caçar ratos, pássaros, peixes (o gato nada!) e ovos nos ninhos — cada um vira comida; cauda de volta à original, bem mais fina; o pulo acompanha o movimento; correr bem mais rápido, com galope de verdade; a cauda balança quando o gato está parado; botão de postura (sentado, andando, correndo, espreita) e roda de gestos para conversar (lamber, rolar, dormir, alerta, miar…).</p>
-    <details class="cortina">
-      <summary>Versões anteriores <span class="n">8</span></summary>
-      <ul class="versoes">
+      <details class="cortina">
+        <summary>Novidades e versões anteriores <span class="n">8</span></summary>
+        <h3>Novidades da 0.9</h3>
+        <p class="novidades">bichos mais calmos: ficam parados bastante tempo e viram devagar, dá para dar a volta e chegar; o leque de visão desenhado no chão, acompanhando o relevo; o gato nada com o corpo dentro da água e ondinhas em volta; a árvore ficou bem mais alta, com a floresta lá embaixo; pique-esconde e pique-pega zumbi com os amigos; missões (a primeira: caçar 10 comidas, juntos); sons da floresta, do rio, miados e ronronar (botão 🔊 para desligar); caçar ratos, pássaros, peixes (o gato nada!) e ovos nos ninhos — cada um vira comida; cauda de volta à original, bem mais fina; o pulo acompanha o movimento; correr bem mais rápido, com galope de verdade; a cauda balança quando o gato está parado; botão de postura (sentado, andando, correndo, espreita) e roda de gestos para conversar (lamber, rolar, dormir, alerta, miar…).</p>
+        <a class="link" href="gatinho/v0/gatinho-0.9.9.html">arquivo único (abre com internet)</a>
+        <h3>Versões anteriores</h3>
+        <ul class="versoes">
         <li><b>0.8 — Família, mundos e brincar junto</b><br><span>a família guarda os personagens e os mundos; escolha o personagem e o mundo (ou "Continuar"); crie um mundo e convide pelo código; brinquem juntos ao vivo, cada um com o seu gatinho, com os mesmos bichos para todos; o menu mostra quem está brincando agora; dá para só assistir (seguindo alguém) e o PC pode cuidar do mundo como servidor. Sem internet, a brincadeira continua no aparelho e o que foi explorado volta para o mundo de todos depois. Com mais gente no mundo, mudar o horário vira votação. E cópias de cada gatinho e de cada mundo: dá para voltar no tempo.</span></li>
         <li><b>0.7 — Nuvem, deitado e instalar</b><br><span>Código da família (☁️ no menu) guarda os gatinhos na nuvem e leva para outro aparelho, sem nenhum dado pessoal. Joga com o celular deitado ou em pé. Botão Instalar e aviso quando já dá para jogar sem internet.</span></li>
         <li><b>0.6 — Árvores, cavernas, bichos, dia e noite</b><br><span>Árvores grandes para subir pelos galhos, com mirante no topo. Cavernas para explorar. Ratos, peixes, cervos e jacarés que fogem se virem o gatinho (à noite enxergam menos); o bote pega ratos e peixes. O mapa vai se abrindo conforme o gatinho anda. Instala na tela inicial e joga sem internet; pular em pedras e troncos. Dia, anoitecendo e noite; cauda mais fina; tamanho do laço e da gravata.</span></li>
@@ -62,33 +69,29 @@
         <li><b>0.2 — Gatinho 3D</b><br><span>Gatinho 3D animado: cor, padrão (sólido, rajado, face/corpo, meias, malhado, pontas), cor de cada parte, olhos e gravatinha ou lacinho. Modo Brincar para ver ele sentar, miar, pular, esconder, deitar e se lamber.</span></li>
         <li><b>0.1 — O começo</b><br><span>Menu, criar e editar o gatinho, mapa de teste com joystick.</span></li>
       </ul>
-      <p class="nota">O jogo publicado é sempre o mais novo; as versões 0.x anteriores ficam só na descrição.</p>
-    </details>
+        <p class="nota">O jogo publicado é sempre o mais novo; as versões 0.x anteriores ficam só na descrição.</p>
+      </details>
+    </div>
   </article>
 
-  <!-- CARTAO:torre — ao publicar: idem (selo, arquivo único, novidades; a anterior desce para a cortina) -->
+  <!-- CARTAO:torre — idem (selo; na cortina: novidades, beta, arquivo único e versões anteriores) -->
   <article class="jogo">
-    <div class="topo"><h2>Torre — tower defense</h2><span class="versao">v6.31.1 estável · beta 6.37.0</span></div>
-    <p class="desc">1916 contra a Horda do Vazio. Hobby e aprendizado: onde o método nasceu.</p>
-    <div class="acoes">
+    <div class="capa" style="background:linear-gradient(135deg,#c9d3e6,#7d8aa8)">🏰</div>
+    <div class="corpo">
+      <div class="topo"><h2>Torre — tower defense</h2><span class="versao">v6.31.1</span></div>
+      <p class="desc">1916 contra a Horda do Vazio. Hobby e aprendizado: onde o método nasceu.</p>
       <a class="btn" href="torre/">▶ Jogar</a>
-      <a class="link" href="torre/v6/torre-6.31.1.html">arquivo único para jogar sem internet</a>
-    </div>
-    <details class="cortina">
-      <summary>Novidades da 6.31 (estável)</summary>
-      <p class="novidades">Cinemáticas dos chefes — quando um chefe chega, o tempo desacelera e a câmera vai até ele; quando morre, a câmera acompanha o tiro da torre que o derrubou. Durante as cenas, o painel do jogo some.</p>
-    </details>
-    <div class="acoes">
-      <a class="btn" href="torre/beta/">▶ Jogar Beta 6.37.0</a>
-      <a class="link" href="torre/v6/torre-6.37.0.html">Beta em arquivo único</a>
-    </div>
-    <details class="cortina">
-      <summary>Novidades da Beta 6.37 (em teste)</summary>
-      <p class="novidades">Mini-chefe sorteado nas ondas 5 e 10 e escala de tamanhos; "Últimos resultados" e torres por tipo no relatório; equilíbrio das 4 torres; cinemáticas refeitas com câmera de cinema, mais longas e com o jogo parado durante a cena; mini-chefes nas ondas 3, 6, 9 e 10 (o da 10 mais forte), com entrada e morte em cena; menos vida nos inimigos e menos ouro; tela História e Lore em cortinas com miniaturas 3D.</p>
-    </details>
-    <details class="cortina">
-      <summary>Versões anteriores <span class="n">7</span></summary>
-      <ul class="versoes">
+      <details class="cortina">
+        <summary>Novidades, beta e versões anteriores <span class="n">7</span></summary>
+        <h3>Novidades da 6.31 (estável)</h3>
+        <p class="novidades">Cinemáticas dos chefes — quando um chefe chega, o tempo desacelera e a câmera vai até ele; quando morre, a câmera acompanha o tiro da torre que o derrubou. Durante as cenas, o painel do jogo some.</p>
+        <a class="link" href="torre/v6/torre-6.31.1.html">arquivo único para jogar sem internet</a>
+        <h3>Beta 6.37.0 (em teste)</h3>
+        <p class="novidades">Mini-chefe sorteado nas ondas 5 e 10 e escala de tamanhos; "Últimos resultados" e torres por tipo no relatório; equilíbrio das 4 torres; cinemáticas refeitas com câmera de cinema, mais longas e com o jogo parado durante a cena; mini-chefes nas ondas 3, 6, 9 e 10 (o da 10 mais forte), com entrada e morte em cena; menos vida nos inimigos e menos ouro; tela História e Lore em cortinas com miniaturas 3D.</p>
+        <a class="btn sec" href="torre/beta/">▶ Jogar a Beta 6.37.0</a>
+        <p class="nota"><a class="link" href="torre/v6/torre-6.37.0.html">Beta em arquivo único</a></p>
+        <h3>Versões anteriores</h3>
+        <ul class="versoes">
         <li><a href="torre/v6/torre-6.30.1.html"><b>6.30 — Instala e joga offline</b></a><br><span>Abre pelo navegador com o Three.js pela CDN e pode ser instalado na tela inicial (PWA): depois da primeira visita, joga sem internet.</span></li>
         <li><a href="torre/v6/torre-6.29.1.html"><b>6.29 — Chegada e bala de prata dos chefes</b></a><br><span>1916 contra a Horda do Vazio: torres de frente e retaguarda, bloqueios, inimigos que atacam torres, modelos e efeitos novos, relatório da partida; três domínios (solo, aéreo, espectral), resistências simples, suportes em ciclos, dificuldade agora definida por quantas torres completas vencem (calibrada com o bot), líderes e o Senhor do Vazio chegam de fora do mapa e só morrem por um tiro direto marcado como "bala de prata".</span></li>
         <li><a href="torre/v5/Torres-v5.html"><b>5 — Um arquivo, celular e PC</b></a><br><span>O jogo inteiro num só arquivo, com toque e layout para celular.</span></li>
@@ -97,8 +100,10 @@
         <li><a href="torre/v2/index.html"><b>2 — 3D e Horda</b></a><br><span>Primeira versão em 3D (Three.js): 3–4× mais inimigos e tiros na tela.</span></li>
         <li><a href="torre/v1/index.html"><b>1 — O começo</b></a><br><span>2D (Phaser): 10 mapas, 10 torres, 20 inimigos.</span></li>
       </ul>
-    </details>
+      </details>
+    </div>
   </article>
+  </div>
 </main>
 </body>
 </html>
