@@ -1745,6 +1745,7 @@ canvas,
 <div id="view"></div>
 <div id="ui"></div>
 <script>if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));</script>
+<script>globalThis.GATINHO_SONS_DIR = 'sons/';</script>
 <script type="module" data-bundle>globalThis.GATINHO_GLB = document.getElementById('dados-glb').textContent.trim(); globalThis.GATINHO_ANIMAIS = JSON.parse(document.getElementById('dados-animais').textContent);
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -1881,8 +1882,8 @@ ${(e.stack || "").split("\n").slice(1, 4).join("\n")}`);
       }
     }
     assert(G.tela === "menu", "n\xE3o voltou ao menu: " + G.tela);
-    const cont = btnComeca("Continuar") || btnLike("Jogar") || btnLike("Entrar");
-    assert(cont, "sem bot\xE3o Continuar no menu (save n\xE3o refletido)");
+    const cont2 = btnComeca("Continuar") || btnLike("Jogar") || btnLike("Entrar");
+    assert(cont2, "sem bot\xE3o Continuar no menu (save n\xE3o refletido)");
   });
   await step("mapa: entrar a partir do menu", async () => {
     if (G.ir) {
@@ -1967,19 +1968,19 @@ ${(e.stack || "").split("\n").slice(1, 4).join("\n")}`);
     poe(...achou);
     assert(botaoA("acao").classList.contains("desligado"), "A\xE7\xE3o deveria estar apagada longe de arbustos");
   });
-  const tocar = (el) => {
+  const tocar2 = (el) => {
     toque(el);
     el.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, cancelable: true }));
   };
   await step("mapa: Postura troca em ciclo (sentado, andando, correndo, espreita) e a tecla C liga a espreita", async () => {
     assert(rotulo("postura") === "Sentado", "come\xE7a Sentado: " + rotulo("postura"));
     for (const r of ["Andando", "Correndo", "Espreita", "Sentado"]) {
-      tocar(botaoA("postura"));
+      tocar2(botaoA("postura"));
       assert(rotulo("postura") === r, "ciclo esperava " + r + " e veio " + rotulo("postura"));
     }
-    tocar(botaoA("postura"));
-    tocar(botaoA("postura"));
-    tocar(botaoA("postura"));
+    tocar2(botaoA("postura"));
+    tocar2(botaoA("postura"));
+    tocar2(botaoA("postura"));
     assert(rotulo("postura") === "Espreita" && botaoA("postura").classList.contains("ligado"), "Espreita n\xE3o ligou");
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "c" }));
     assert(rotulo("postura") === "Andando", "tecla C n\xE3o desligou a espreita: " + rotulo("postura"));
@@ -2227,7 +2228,7 @@ if (typeof window !== "undefined") {
 import * as THREE10 from "three";
 
 // js/data.js
-var VERSION = "0.9.4";
+var VERSION = "0.9.5";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -2625,7 +2626,7 @@ function lerBruto() {
       return { v: 3, atual, gatos, apagados };
     }
     if (dados.gato && typeof dados.gato === "object") {
-      const agora = agoraISO();
+      const agora2 = agoraISO();
       const look = dados.v === 2 ? normalizarLook(dados.gato) : normalizarLook(migrarV1(dados.gato));
       const id = "g-antigo";
       return {
@@ -2634,8 +2635,8 @@ function lerBruto() {
         gatos: [{
           id,
           look,
-          criado: dados.criado || agora,
-          atualizado: dados.atualizado || agora,
+          criado: dados.criado || agora2,
+          atualizado: dados.atualizado || agora2,
           mundo: null,
           formato: 1
         }],
@@ -2669,8 +2670,8 @@ var Save = {
   pegar(id) {
     const dados = lerBruto();
     if (!dados || !Array.isArray(dados.gatos) || id == null) return null;
-    const alvo = String(id);
-    const g = dados.gatos.find((x) => x && x.id === alvo);
+    const alvo2 = String(id);
+    const g = dados.gatos.find((x) => x && x.id === alvo2);
     return g || null;
   },
   atual() {
@@ -2687,15 +2688,15 @@ var Save = {
     try {
       const dados = lerBruto() || { v: 3, atual: null, gatos: [], apagados: {} };
       if (!Array.isArray(dados.gatos)) dados.gatos = [];
-      const agora = agoraISO();
+      const agora2 = agoraISO();
       const lookFinal = look && typeof look === "object" ? normalizarLook(look) : normalizarLook(gatoPadrao());
       if (id != null) {
-        const alvo = String(id);
-        const g = dados.gatos.find((x) => x && x.id === alvo);
+        const alvo2 = String(id);
+        const g = dados.gatos.find((x) => x && x.id === alvo2);
         if (g) {
           g.look = lookFinal;
           aplicarExtras(g, extras2);
-          g.atualizado = agora;
+          g.atualizado = agora2;
           if (gravar(dados)) {
             try {
               Save.aoMudar?.(g.id);
@@ -2710,8 +2711,8 @@ var Save = {
       const novo = {
         id: novoIdGato,
         look: lookFinal,
-        criado: agora,
-        atualizado: agora,
+        criado: agora2,
+        atualizado: agora2,
         mundo: null,
         formato: 2,
         tipo: "gato"
@@ -2737,9 +2738,9 @@ var Save = {
       const dados = lerBruto();
       const g = dados && id != null && dados.gatos.find((x) => x && x.id === String(id));
       if (!g) return null;
-      const agora = agoraISO();
+      const agora2 = agoraISO();
       const nome = (String(g.look.nome || "Gatinho") + " (c\xF3pia)").slice(0, 30);
-      const novo = { id: novoId(), look: { ...JSON.parse(JSON.stringify(g.look)), nome }, criado: agora, atualizado: agora, mundo: null, formato: 2, tipo: g.tipo || "gato" };
+      const novo = { id: novoId(), look: { ...JSON.parse(JSON.stringify(g.look)), nome }, criado: agora2, atualizado: agora2, mundo: null, formato: 2, tipo: g.tipo || "gato" };
       if (g.ficha) novo.ficha = JSON.parse(JSON.stringify(g.ficha));
       if (g.dono) novo.dono = g.dono;
       dados.gatos.push(novo);
@@ -2757,9 +2758,9 @@ var Save = {
     try {
       const dados = lerBruto();
       if (!dados || !Array.isArray(dados.gatos) || id == null) return false;
-      const alvo = String(id);
-      if (!dados.gatos.some((g) => g && g.id === alvo)) return false;
-      dados.atual = alvo;
+      const alvo2 = String(id);
+      if (!dados.gatos.some((g) => g && g.id === alvo2)) return false;
+      dados.atual = alvo2;
       return gravar(dados);
     } catch {
       return false;
@@ -2769,19 +2770,19 @@ var Save = {
     try {
       const dados = lerBruto();
       if (!dados || !Array.isArray(dados.gatos) || id == null) return false;
-      const alvo = String(id);
+      const alvo2 = String(id);
       const antes = dados.gatos.length;
-      dados.gatos = dados.gatos.filter((g) => !(g && g.id === alvo));
+      dados.gatos = dados.gatos.filter((g) => !(g && g.id === alvo2));
       if (dados.gatos.length === antes) return false;
       if (!dados.apagados || typeof dados.apagados !== "object") dados.apagados = {};
-      dados.apagados[alvo] = agoraISO();
-      if (dados.atual === alvo) {
+      dados.apagados[alvo2] = agoraISO();
+      if (dados.atual === alvo2) {
         dados.atual = dados.gatos.length ? dados.gatos[0].id : null;
       }
       const ok = gravar(dados);
       if (ok) {
         try {
-          Save.aoMudar?.(alvo);
+          Save.aoMudar?.(alvo2);
         } catch {
         }
       }
@@ -2794,11 +2795,11 @@ var Save = {
     try {
       const dados = lerBruto();
       if (!dados || !Array.isArray(dados.gatos) || id == null) return false;
-      const alvo = String(id);
-      const g = dados.gatos.find((x) => x && x.id === alvo);
+      const alvo2 = String(id);
+      const g = dados.gatos.find((x) => x && x.id === alvo2);
       if (!g) return false;
       try {
-        Save.aoSalvarMundo?.(alvo);
+        Save.aoSalvarMundo?.(alvo2);
       } catch {
       }
       g.mundo = mundo && typeof mundo === "object" && !Array.isArray(mundo) ? mundo : null;
@@ -2806,7 +2807,7 @@ var Save = {
       const ok = gravar(dados);
       if (ok) {
         try {
-          Save.aoMudar?.(alvo);
+          Save.aoMudar?.(alvo2);
         } catch {
         }
       }
@@ -3077,8 +3078,8 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
   versao.textContent = "v" + VERSION;
   tela.appendChild(versao);
   async function atualizarPronto() {
-    const pronto = await semInternetPronto(VERSION);
-    versao.textContent = "v" + VERSION + (pronto ? " \xB7 \u2708\uFE0F sem internet \u2713" : "");
+    const pronto2 = await semInternetPronto(VERSION);
+    versao.textContent = "v" + VERSION + (pronto2 ? " \xB7 \u2708\uFE0F sem internet \u2713" : "");
   }
   atualizarPronto();
   const soltarControle = aoControlar(atualizarPronto);
@@ -3135,6 +3136,324 @@ function afinarAneis(pos, pesos, fator, tol = 0.12) {
   }
   return pos;
 }
+
+// js/som.js
+var NOMES = ["floresta", "passaros", "rio", "respingo-1", "respingo-2", "respingo-3", "ronronar", "ronronar-sono", "miau-1", "miau-2", "miau-3", "miau-comida", "rato"];
+var ALCANCE = 25;
+var V = { floresta: 0.15, florestaArvore: 0.22, passaros: 0.12, passarosArvore: 0.2, rio: 0.35, miau: 0.5, ronronar: 0.22, sono: 0.2, comida: 0.5, rato: 0.4, respingo: 0.4, asas: 0.08 };
+function atenuacao(d, alcance = ALCANCE) {
+  if (!(d > 0)) return 1;
+  if (!(d < alcance)) return 0;
+  const k = 1 - d / alcance;
+  return k * k;
+}
+function volumeRio(d, hw, max = V.rio, alcance = 30) {
+  const f = Math.max(0, d - hw);
+  if (!(f < alcance)) return 0;
+  const k = 1 - f / alcance;
+  return max * k * k;
+}
+var lerPref = () => {
+  try {
+    return localStorage.getItem("gatinho.som") !== "0";
+  } catch {
+    return true;
+  }
+};
+var ctx = null;
+var mestre = null;
+var sfx = null;
+var ecoEnvio = null;
+var ligado = lerPref();
+var carregando = false;
+var bufs = {};
+var falhas = [];
+var lacos = {};
+var dormindo = /* @__PURE__ */ new Map();
+var cont = { tocados: 0, ultimo: "", passaros: 0 };
+var alvo = { floresta: 0, rio: 0, passaros: 0, eco: 0 };
+var ouvinte = null;
+var proxPassaros = 0;
+var ultimoRato = -1e9;
+var ultimaAsa = -1e9;
+var ultimaVarredura = 0;
+var agora = () => typeof performance !== "undefined" ? performance.now() : Date.now();
+function dXZ(x, z) {
+  return ouvinte ? Math.hypot(x - ouvinte.x, z - ouvinte.z) : 0;
+}
+function dObj(o) {
+  if (!ouvinte || !o || !o.matrixWorld) return 0;
+  o.updateWorldMatrix(true, false);
+  const m = o.matrixWorld.elements;
+  return dXZ(m[12], m[14]);
+}
+function destravar() {
+  if (typeof AudioContext === "undefined" && typeof webkitAudioContext === "undefined") return;
+  if (!ctx) {
+    const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+    ctx = new AC();
+    mestre = ctx.createGain();
+    mestre.gain.value = ligado ? 1 : 0;
+    mestre.connect(ctx.destination);
+    sfx = ctx.createGain();
+    sfx.connect(mestre);
+    const atraso = ctx.createDelay(1), fb = ctx.createGain();
+    atraso.delayTime.value = 0.28;
+    fb.gain.value = 0.4;
+    ecoEnvio = ctx.createGain();
+    ecoEnvio.gain.value = 0;
+    sfx.connect(ecoEnvio);
+    ecoEnvio.connect(atraso);
+    atraso.connect(fb);
+    fb.connect(atraso);
+    atraso.connect(mestre);
+    carregar();
+  }
+  ctx.resume().then(() => {
+    if (ctx.state === "running") for (const ev of EVENTOS) removeEventListener(ev, ouvido, true);
+  }).catch(() => {
+  });
+}
+var EVENTOS = ["pointerup", "touchend", "click", "keydown"];
+var ouvido = () => {
+  try {
+    destravar();
+  } catch {
+  }
+};
+if (typeof window !== "undefined") {
+  for (const ev of EVENTOS) addEventListener(ev, ouvido, true);
+  document.addEventListener("visibilitychange", () => {
+    try {
+      if (ctx) (document.hidden ? ctx.suspend() : ctx.resume()).catch(() => {
+      });
+    } catch {
+    }
+  });
+}
+async function carregar() {
+  if (carregando) return;
+  carregando = true;
+  let emb = null;
+  try {
+    emb = JSON.parse(document.getElementById("dados-sons").textContent);
+  } catch {
+  }
+  const dir = globalThis.GATINHO_SONS_DIR || "assets/sons/";
+  await Promise.all(NOMES.map(async (n) => {
+    try {
+      let dados;
+      if (emb && emb[n]) dados = Uint8Array.from(atob(emb[n]), (c) => c.charCodeAt(0)).buffer;
+      else {
+        const r = await fetch(dir + n + ".mp3");
+        if (!r.ok) throw new Error(r.status);
+        dados = await r.arrayBuffer();
+      }
+      bufs[n] = await ctx.decodeAudioData(dados);
+    } catch (e) {
+      falhas.push(n);
+    }
+  }));
+  for (const n of ["floresta", "rio"]) if (bufs[n]) {
+    lacos[n] = laco(n, mestre);
+    lacos[n].g.gain.value = 0;
+  }
+  proxPassaros = agora() + 5e3;
+}
+function laco(nome, saida2) {
+  const f = ctx.createBufferSource(), g = ctx.createGain();
+  f.buffer = bufs[nome];
+  f.loop = true;
+  f.connect(g);
+  g.connect(saida2 || sfx);
+  f.start();
+  return { f, g };
+}
+var ajusta = (g, v) => {
+  v = Math.round(v * 200) / 200;
+  if (g._v === v) return;
+  g._v = v;
+  g.gain.setTargetAtTime(v, ctx.currentTime, 0.5);
+};
+function pronto(nome) {
+  return !!(ctx && ligado && ctx.state === "running" && bufs[nome]);
+}
+function tocar(nome, vol, dist = 0) {
+  if (!pronto(nome)) return false;
+  const v = vol * atenuacao(dist);
+  if (v < 0.01) return false;
+  const f = ctx.createBufferSource(), g = ctx.createGain();
+  f.buffer = bufs[nome];
+  f.playbackRate.value = 0.95 + Math.random() * 0.1;
+  g.gain.value = v;
+  f.connect(g);
+  g.connect(sfx);
+  f.start();
+  cont.tocados++;
+  cont.ultimo = nome;
+  return true;
+}
+function ronronar(dist, dur) {
+  const v = V.ronronar * atenuacao(dist);
+  if (!pronto("ronronar") || v < 0.01) return;
+  const t = ctx.currentTime, { f, g } = laco("ronronar");
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(v, t + 0.6);
+  g.gain.setValueAtTime(v, t + dur - 1);
+  g.gain.linearRampToValueAtTime(0, t + dur);
+  f.stop(t + dur + 0.1);
+  cont.tocados++;
+  cont.ultimo = "ronronar";
+}
+function soltar(e) {
+  const t = ctx.currentTime;
+  e.g.gain.setTargetAtTime(0, t, 0.3);
+  e.f.stop(t + 1.5);
+}
+function trechoPassaros(vol) {
+  const b = bufs.passaros, dur = Math.min(b.duration, 6 + Math.random() * 5), t = ctx.currentTime;
+  const f = ctx.createBufferSource(), g = ctx.createGain();
+  f.buffer = b;
+  f.connect(g);
+  g.connect(mestre);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + 1.5);
+  g.gain.setValueAtTime(vol, t + dur - 1.5);
+  g.gain.linearRampToValueAtTime(0, t + dur);
+  f.start(t, Math.random() * (b.duration - dur), dur);
+  cont.passaros++;
+}
+var api = {
+  /** Toda tela, todo quadro. `e` = null (menu, criador...) ou { sub: null|'caverna'|'arvore', x, z, d, hw } (posição do gato e distância ao rio). */
+  mapa(e) {
+    ouvinte = e ? { x: e.x, z: e.z } : null;
+    if (!ctx) return;
+    const sub = e ? e.sub : null;
+    alvo.floresta = !e || sub === "caverna" ? 0 : sub === "arvore" ? V.florestaArvore : V.floresta;
+    alvo.passaros = !e || sub === "caverna" ? 0 : sub === "arvore" ? V.passarosArvore : V.passaros;
+    alvo.rio = !e || sub ? 0 : volumeRio(e.d, e.hw);
+    alvo.eco = sub === "caverna" ? 0.35 : 0;
+    for (const n of ["floresta", "rio"]) if (lacos[n]) ajusta(lacos[n].g, alvo[n]);
+    ajusta(ecoEnvio, alvo.eco);
+    const t = agora();
+    if (t > proxPassaros && bufs.passaros) {
+      proxPassaros = t + (15 + Math.random() * 30) * 1e3;
+      if (alvo.passaros > 0 && ligado && ctx.state === "running") trechoPassaros(alvo.passaros);
+    }
+    if (t - ultimaVarredura > 500) {
+      ultimaVarredura = t;
+      for (const [o, d] of dormindo) if (t - d.visto > 600) {
+        soltar(d);
+        dormindo.delete(o);
+      }
+    }
+  },
+  /** Gesto começou num gato (`obj` = o object3D dele): 'miar' | 'lamber' | 'deitar' | 'comer' | 'respingo'. */
+  gesto(nome, obj) {
+    const d = dObj(obj);
+    if (nome === "miar") tocar("miau-" + (1 + Math.floor(Math.random() * 3)), V.miau, d);
+    else if (nome === "comer") tocar("miau-comida", V.comida, d);
+    else if (nome === "lamber" || nome === "deitar") ronronar(d, 4);
+    else if (nome === "respingo") tocar("respingo-" + (1 + Math.floor(Math.random() * 3)), V.respingo, d);
+  },
+  /** Todo quadro, de cada gato: `rt` = gesto em andamento (cat.gesto()). 'Dormir' liga o ronronar de sono em loop até o gato acordar. */
+  gato(obj, rt) {
+    if (!ctx) return;
+    let e = dormindo.get(obj);
+    if (rt === "Dormir" && pronto("ronronar-sono")) {
+      if (!e) {
+        e = laco("ronronar-sono");
+        e.g.gain.value = 0;
+        dormindo.set(obj, e);
+        cont.tocados++;
+        cont.ultimo = "ronronar-sono";
+      }
+      e.visto = agora();
+      ajusta(e.g, V.sono * atenuacao(dObj(obj)));
+    } else if (e && rt !== "Dormir") {
+      soltar(e);
+      dormindo.delete(obj);
+    }
+  },
+  solta(obj) {
+    const e = dormindo.get(obj);
+    if (e && ctx) {
+      soltar(e);
+      dormindo.delete(obj);
+    }
+  },
+  /** Rato que viu o gato / fugiu em (x, z): no máximo um a cada 3 s. */
+  rato(x, z) {
+    if (agora() - ultimoRato > 3e3 && tocar("rato", V.rato, dXZ(x, z))) ultimoRato = agora();
+  },
+  /** Água batendo em (x, z) (peixe no Bote). */
+  respingo(x, z) {
+    tocar("respingo-" + (1 + Math.floor(Math.random() * 3)), V.respingo, dXZ(x, z));
+  },
+  /** Bater de asas: ainda sem som próprio, um respingo bem baixo faz as vezes. */
+  asas(x, z) {
+    if (agora() - ultimaAsa > 300 && tocar("respingo-3", V.asas, dXZ(x, z))) ultimaAsa = agora();
+  },
+  destravar: ouvido,
+  alternar() {
+    ligado = !ligado;
+    try {
+      localStorage.setItem("gatinho.som", ligado ? "1" : "0");
+    } catch {
+    }
+    if (mestre) mestre.gain.setTargetAtTime(ligado ? 1 : 0, ctx.currentTime, 0.05);
+    return ligado;
+  },
+  get ligado() {
+    return ligado;
+  },
+  /** Botão 🔊/🔇 (Opções e pausa). */
+  botao(classe = "botao") {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = classe;
+    b.dataset.som = "1";
+    const pinta = () => {
+      b.textContent = ligado ? "\u{1F50A} Som: ligado" : "\u{1F507} Som: desligado";
+    };
+    pinta();
+    b.addEventListener("click", () => {
+      api.alternar();
+      pinta();
+    });
+    return b;
+  },
+  /** Para os testes (window.GATINHO.som.estado()). */
+  estado() {
+    return {
+      ligado,
+      ctx: ctx ? ctx.state : null,
+      carregados: Object.keys(bufs).length,
+      falhas: falhas.slice(),
+      tocados: cont.tocados,
+      ultimo: cont.ultimo,
+      passaros: cont.passaros,
+      dormindo: dormindo.size,
+      alvo: { ...alvo },
+      lacos: Object.keys(lacos),
+      ouvinte
+    };
+  }
+};
+for (const k of Object.keys(api)) {
+  const d = Object.getOwnPropertyDescriptor(api, k);
+  if (typeof d.value === "function" && k !== "botao") {
+    const f = d.value;
+    api[k] = (...a) => {
+      try {
+        return f(...a);
+      } catch (e) {
+        return void 0;
+      }
+    };
+  }
+}
+var Som = api;
 
 // dados:retarget
 var retarget_default = JSON.parse(document.getElementById("dados-retarget").textContent);
@@ -3322,21 +3641,21 @@ function texturaBolinhas(hex) {
   const canvas = document.createElement("canvas");
   canvas.width = 128;
   canvas.height = 128;
-  const ctx = canvas.getContext("2d");
+  const ctx2 = canvas.getContext("2d");
   const corFundo = "#" + hex.toString(16).padStart(6, "0");
-  ctx.fillStyle = corFundo;
-  ctx.fillRect(0, 0, 128, 128);
+  ctx2.fillStyle = corFundo;
+  ctx2.fillRect(0, 0, 128, 128);
   const raio = 13;
   const passo = 64;
-  ctx.fillStyle = "#fffaf2";
+  ctx2.fillStyle = "#fffaf2";
   for (let linha = -1; linha <= 2; linha++) {
     const desloc = linha % 2 === 0 ? 0 : passo / 2;
     for (let col = -1; col <= 2; col++) {
       const cx = col * passo + desloc;
       const cy = linha * passo;
-      ctx.beginPath();
-      ctx.arc(cx, cy, raio, 0, Math.PI * 2);
-      ctx.fill();
+      ctx2.beginPath();
+      ctx2.arc(cx, cy, raio, 0, Math.PI * 2);
+      ctx2.fill();
     }
   }
   const tex = new THREE.CanvasTexture(canvas);
@@ -3704,9 +4023,9 @@ async function loadCat(_THREE, look) {
     if (!cabeca && o.isBone && /^Head/.test(o.name)) cabeca = o;
   });
   function ancorar(osso, pos, quat) {
-    const alvo = new THREE.Matrix4().compose(pos, quat, new THREE.Vector3(1, 1, 1));
+    const alvo2 = new THREE.Matrix4().compose(pos, quat, new THREE.Vector3(1, 1, 1));
     const ancora2 = new THREE.Object3D();
-    new THREE.Matrix4().copy(osso.matrixWorld).invert().multiply(alvo).decompose(ancora2.position, ancora2.quaternion, ancora2.scale);
+    new THREE.Matrix4().copy(osso.matrixWorld).invert().multiply(alvo2).decompose(ancora2.position, ancora2.quaternion, ancora2.scale);
     osso.add(ancora2);
     return ancora2;
   }
@@ -3874,9 +4193,11 @@ async function loadCat(_THREE, look) {
         a.reset();
         a.play();
         rt = nome;
+        Som.gesto(nome.toLowerCase(), object);
       }
     } else if (ACOES_CODIGO[id]) {
       acao = { id, t: 0 };
+      Som.gesto(id, object);
     }
   }
   function setMove(v) {
@@ -3886,6 +4207,7 @@ async function loadCat(_THREE, look) {
     agachado = !!v;
   }
   function setNadando(v) {
+    if (!!v !== nadando) Som.gesto("respingo", object);
     nadando = !!v;
   }
   function setAr(noAr, vy) {
@@ -3953,22 +4275,23 @@ async function loadCat(_THREE, look) {
       }
     }
     const andar = smoothstep(0.02, 0.45, move);
-    const alvo = { Idle: 0, WalkClean: 0, SitDown: 0, SittingIdle: 0, StandUp: 0 };
+    const alvo2 = { Idle: 0, WalkClean: 0, SitDown: 0, SittingIdle: 0, StandUp: 0 };
     if (trans) {
-      alvo[trans.nome] = 1;
+      alvo2[trans.nome] = 1;
     } else if (base === "sentado") {
-      alvo.SittingIdle = 1;
+      alvo2.SittingIdle = 1;
     } else {
-      alvo.Idle = 1 - andar;
-      alvo.WalkClean = andar;
+      alvo2.Idle = 1 - andar;
+      alvo2.WalkClean = andar;
     }
-    for (const n in peso) peso[n] += (alvo[n] - peso[n]) * Math.min(1, dt / 0.3);
+    for (const n in peso) peso[n] += (alvo2[n] - peso[n]) * Math.min(1, dt / 0.3);
     if (alvoMove > 0.1) {
       if (INTERROMPE.includes(rt)) rt = null;
       if (pendente && INTERROMPE.includes(pendente.slice(7))) pendente = null;
       if (acao && acao.id === "miar") acao = null;
     }
     if (rt && !SEGURA.includes(rt) && doador[rt].loop === THREE.LoopOnce && doador[rt].time >= doador[rt].getClip().duration - 0.2) rt = null;
+    Som.gato(object, rt);
     const livre = base === "emPe" && !trans && !rt ? 1 : 0;
     const galope = livre * smoothstep(0.7, 0.85, move) * (1 - ag);
     let somaD = 0;
@@ -4029,6 +4352,7 @@ async function loadCat(_THREE, look) {
     }
   }
   function dispose() {
+    Som.solta(object);
     if (object.parent) object.parent.remove(object);
     mixer.stopAllAction();
     mixer.uncacheRoot(modelo);
@@ -4569,8 +4893,8 @@ function moverNoEstudio(pos, dx, dy, correndo, dt, raio) {
   const angulo = Math.atan2(dx, dy);
   return { x, z, angulo };
 }
-function anguloMaisCurto(atual, alvo, dt) {
-  let diff = alvo - atual;
+function anguloMaisCurto(atual, alvo2, dt) {
+  let diff = alvo2 - atual;
   diff = ((diff + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
   const fator = Math.min(1, dt * 8);
   return atual + diff * fator;
@@ -5668,38 +5992,38 @@ function ehObjeto2(v) {
 function ehNumeroFinito(v) {
   return typeof v === "number" && Number.isFinite(v);
 }
-function ovoPego(pegos, id, agora) {
+function ovoPego(pegos, id, agora2) {
   if (!ehObjeto2(pegos)) return false;
   if (!Object.hasOwn(pegos, id)) return false;
   const v = pegos[id];
   if (!ehNumeroFinito(v)) return false;
-  if (!ehNumeroFinito(agora)) return false;
-  return v > agora;
+  if (!ehNumeroFinito(agora2)) return false;
+  return v > agora2;
 }
-function pegarOvo(pegos, id, agora, espera2 = ESPERA_OVO_MS) {
+function pegarOvo(pegos, id, agora2, espera2 = ESPERA_OVO_MS) {
   if (!ehObjeto2(pegos)) return false;
   if (typeof id !== "string" || !RE_ID.test(id)) return false;
-  if (!ehNumeroFinito(agora)) return false;
+  if (!ehNumeroFinito(agora2)) return false;
   if (!ehNumeroFinito(espera2)) return false;
-  if (ovoPego(pegos, id, agora)) return false;
-  pegos[id] = agora + espera2;
+  if (ovoPego(pegos, id, agora2)) return false;
+  pegos[id] = agora2 + espera2;
   return true;
 }
-function podarPegos(pegos, agora) {
+function podarPegos(pegos, agora2) {
   if (!ehObjeto2(pegos)) return false;
   let apagou = false;
   for (const k of Object.keys(pegos)) {
     const v = pegos[k];
-    if (!ehNumeroFinito(v) || ehNumeroFinito(agora) && v <= agora) {
+    if (!ehNumeroFinito(v) || ehNumeroFinito(agora2) && v <= agora2) {
       delete pegos[k];
       apagou = true;
     }
   }
   return apagou;
 }
-function ovosFora(pegos, agora) {
+function ovosFora(pegos, agora2) {
   if (!ehObjeto2(pegos)) return [];
-  const ids = Object.keys(pegos).filter((id) => ovoPego(pegos, id, agora)).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
+  const ids = Object.keys(pegos).filter((id) => ovoPego(pegos, id, agora2)).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
   return ids.slice(0, 60);
 }
 function lerOvosFora(texto) {
@@ -5725,23 +6049,23 @@ function criarCanvas(n) {
   return { c, g };
 }
 function criarTexturaTerreno(THREE11, mundo, tam = 1024) {
-  const { c: canvas, g: ctx } = criarCanvas(tam);
+  const { c: canvas, g: ctx2 } = criarCanvas(tam);
   const k = tam / TERRENO;
   const rnd = mulberry32(777);
-  ctx.fillStyle = "#6fa04a";
-  ctx.fillRect(0, 0, tam, tam);
+  ctx2.fillStyle = "#6fa04a";
+  ctx2.fillRect(0, 0, tam, tam);
   for (let i = 0; i < 360; i++) {
     const cx = rnd() * tam;
     const cy = rnd() * tam;
     const raio = 40 + rnd() * 100;
     const cor = i % 2 === 0 ? "#88b657" : "#5d8f3f";
-    const grad2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, raio);
+    const grad2 = ctx2.createRadialGradient(cx, cy, 0, cx, cy, raio);
     grad2.addColorStop(0, cor + "59");
     grad2.addColorStop(1, cor + "00");
-    ctx.fillStyle = grad2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, raio, 0, Math.PI * 2);
-    ctx.fill();
+    ctx2.fillStyle = grad2;
+    ctx2.beginPath();
+    ctx2.arc(cx, cy, raio, 0, Math.PI * 2);
+    ctx2.fill();
   }
   for (let i = 0; i < 40; i++) {
     let x, z;
@@ -5752,80 +6076,80 @@ function criarTexturaTerreno(THREE11, mundo, tam = 1024) {
     const cx = (x + TERRENO / 2) / TERRENO * tam;
     const cy = (z + TERRENO / 2) / TERRENO * tam;
     const raio = 15 + rnd() * 40;
-    const grad2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, raio);
+    const grad2 = ctx2.createRadialGradient(cx, cy, 0, cx, cy, raio);
     grad2.addColorStop(0, "#a9855899");
     grad2.addColorStop(1, "#a9855800");
-    ctx.fillStyle = grad2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, raio, 0, Math.PI * 2);
-    ctx.fill();
+    ctx2.fillStyle = grad2;
+    ctx2.beginPath();
+    ctx2.arc(cx, cy, raio, 0, Math.PI * 2);
+    ctx2.fill();
   }
   const rio = mundo.rio;
   if (rio && rio.pts && rio.pts.length > 1) {
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "#b8a06e";
+    ctx2.lineCap = "round";
+    ctx2.strokeStyle = "#b8a06e";
     for (let i = 0; i < rio.pts.length - 1; i++) {
       const a = rio.pts[i];
       const b = rio.pts[i + 1];
       const hw = (a.hw + b.hw) / 2;
-      ctx.lineWidth = (2 * hw + 3.2) * k;
-      ctx.beginPath();
-      ctx.moveTo((a.x + TERRENO / 2) / TERRENO * tam, (a.z + TERRENO / 2) / TERRENO * tam);
-      ctx.lineTo((b.x + TERRENO / 2) / TERRENO * tam, (b.z + TERRENO / 2) / TERRENO * tam);
-      ctx.stroke();
+      ctx2.lineWidth = (2 * hw + 3.2) * k;
+      ctx2.beginPath();
+      ctx2.moveTo((a.x + TERRENO / 2) / TERRENO * tam, (a.z + TERRENO / 2) / TERRENO * tam);
+      ctx2.lineTo((b.x + TERRENO / 2) / TERRENO * tam, (b.z + TERRENO / 2) / TERRENO * tam);
+      ctx2.stroke();
     }
-    ctx.strokeStyle = "#7c6a49";
+    ctx2.strokeStyle = "#7c6a49";
     for (let i = 0; i < rio.pts.length - 1; i++) {
       const a = rio.pts[i];
       const b = rio.pts[i + 1];
       const hw = (a.hw + b.hw) / 2;
-      ctx.lineWidth = (2 * hw + 1.4) * k;
-      ctx.beginPath();
-      ctx.moveTo((a.x + TERRENO / 2) / TERRENO * tam, (a.z + TERRENO / 2) / TERRENO * tam);
-      ctx.lineTo((b.x + TERRENO / 2) / TERRENO * tam, (b.z + TERRENO / 2) / TERRENO * tam);
-      ctx.stroke();
+      ctx2.lineWidth = (2 * hw + 1.4) * k;
+      ctx2.beginPath();
+      ctx2.moveTo((a.x + TERRENO / 2) / TERRENO * tam, (a.z + TERRENO / 2) / TERRENO * tam);
+      ctx2.lineTo((b.x + TERRENO / 2) / TERRENO * tam, (b.z + TERRENO / 2) / TERRENO * tam);
+      ctx2.stroke();
     }
   }
   const trilhas = mundo.trilhas;
   if (trilhas) {
-    ctx.lineJoin = "round";
-    ctx.lineCap = "round";
+    ctx2.lineJoin = "round";
+    ctx2.lineCap = "round";
     for (const trilha of trilhas) {
       const pts = trilha.pts;
       const larg = trilha.larg;
       if (!pts || pts.length < 2) continue;
-      ctx.strokeStyle = "rgba(120,88,52,0.35)";
-      ctx.lineWidth = larg * 1.5 * k;
-      ctx.beginPath();
-      ctx.moveTo((pts[0].x + TERRENO / 2) / TERRENO * tam, (pts[0].z + TERRENO / 2) / TERRENO * tam);
+      ctx2.strokeStyle = "rgba(120,88,52,0.35)";
+      ctx2.lineWidth = larg * 1.5 * k;
+      ctx2.beginPath();
+      ctx2.moveTo((pts[0].x + TERRENO / 2) / TERRENO * tam, (pts[0].z + TERRENO / 2) / TERRENO * tam);
       for (let i = 1; i < pts.length; i++) {
-        ctx.lineTo((pts[i].x + TERRENO / 2) / TERRENO * tam, (pts[i].z + TERRENO / 2) / TERRENO * tam);
+        ctx2.lineTo((pts[i].x + TERRENO / 2) / TERRENO * tam, (pts[i].z + TERRENO / 2) / TERRENO * tam);
       }
-      ctx.stroke();
-      ctx.strokeStyle = "#b98f5a";
-      ctx.lineWidth = larg * k;
-      ctx.beginPath();
-      ctx.moveTo((pts[0].x + TERRENO / 2) / TERRENO * tam, (pts[0].z + TERRENO / 2) / TERRENO * tam);
+      ctx2.stroke();
+      ctx2.strokeStyle = "#b98f5a";
+      ctx2.lineWidth = larg * k;
+      ctx2.beginPath();
+      ctx2.moveTo((pts[0].x + TERRENO / 2) / TERRENO * tam, (pts[0].z + TERRENO / 2) / TERRENO * tam);
       for (let i = 1; i < pts.length; i++) {
-        ctx.lineTo((pts[i].x + TERRENO / 2) / TERRENO * tam, (pts[i].z + TERRENO / 2) / TERRENO * tam);
+        ctx2.lineTo((pts[i].x + TERRENO / 2) / TERRENO * tam, (pts[i].z + TERRENO / 2) / TERRENO * tam);
       }
-      ctx.stroke();
-      ctx.strokeStyle = "rgba(214,178,120,0.55)";
-      ctx.lineWidth = larg * 0.5 * k;
-      ctx.beginPath();
-      ctx.moveTo((pts[0].x + TERRENO / 2) / TERRENO * tam, (pts[0].z + TERRENO / 2) / TERRENO * tam);
+      ctx2.stroke();
+      ctx2.strokeStyle = "rgba(214,178,120,0.55)";
+      ctx2.lineWidth = larg * 0.5 * k;
+      ctx2.beginPath();
+      ctx2.moveTo((pts[0].x + TERRENO / 2) / TERRENO * tam, (pts[0].z + TERRENO / 2) / TERRENO * tam);
       for (let i = 1; i < pts.length; i++) {
-        ctx.lineTo((pts[i].x + TERRENO / 2) / TERRENO * tam, (pts[i].z + TERRENO / 2) / TERRENO * tam);
+        ctx2.lineTo((pts[i].x + TERRENO / 2) / TERRENO * tam, (pts[i].z + TERRENO / 2) / TERRENO * tam);
       }
-      ctx.stroke();
+      ctx2.stroke();
     }
   }
   for (let i = 0; i < 7e3; i++) {
     const x = rnd() * tam;
     const y = rnd() * tam;
     const tamP = 1 + rnd();
-    ctx.fillStyle = i % 2 === 0 ? "rgba(255,255,200,0.12)" : "rgba(30,70,20,0.16)";
-    ctx.fillRect(x, y, tamP, tamP);
+    ctx2.fillStyle = i % 2 === 0 ? "rgba(255,255,200,0.12)" : "rgba(30,70,20,0.16)";
+    ctx2.fillRect(x, y, tamP, tamP);
   }
   const texture = new THREE11.CanvasTexture(canvas);
   texture.colorSpace = THREE11.SRGBColorSpace;
@@ -5837,10 +6161,10 @@ function criarTexturaTerreno(THREE11, mundo, tam = 1024) {
 }
 function criarTexturaDetalhe(THREE11) {
   const n = 256;
-  const { c: canvas, g: ctx } = criarCanvas(n);
+  const { c: canvas, g: ctx2 } = criarCanvas(n);
   const rnd = mulberry32(1234);
-  ctx.fillStyle = "#b0b0b0";
-  ctx.fillRect(0, 0, n, n);
+  ctx2.fillStyle = "#b0b0b0";
+  ctx2.fillRect(0, 0, n, n);
   for (let i = 0; i < 2500; i++) {
     const x = rnd() * n;
     const y = rnd() * n;
@@ -5849,8 +6173,8 @@ function criarTexturaDetalhe(THREE11) {
     const dx = Math.cos(ang) * comp;
     const dy = Math.sin(ang) * comp;
     const cor = i % 2 === 0 ? "rgba(255,255,255,0.35)" : "rgba(60,60,60,0.35)";
-    ctx.strokeStyle = cor;
-    ctx.lineWidth = 1;
+    ctx2.strokeStyle = cor;
+    ctx2.lineWidth = 1;
     const offsets = [
       [0, 0],
       [n, 0],
@@ -5870,10 +6194,10 @@ function criarTexturaDetalhe(THREE11) {
       [0, -n]
     ];
     for (const [ox, oy] of descs) {
-      ctx.beginPath();
-      ctx.moveTo(x + ox, y + oy);
-      ctx.lineTo(x + ox + dx, y + oy + dy);
-      ctx.stroke();
+      ctx2.beginPath();
+      ctx2.moveTo(x + ox, y + oy);
+      ctx2.lineTo(x + ox + dx, y + oy + dy);
+      ctx2.stroke();
     }
   }
   const texture = new THREE11.CanvasTexture(canvas);
@@ -5885,8 +6209,8 @@ function criarTexturaDetalhe(THREE11) {
 }
 function criarTexturaRuido(THREE11) {
   const n = 128;
-  const { c: canvas, g: ctx } = criarCanvas(n);
-  const img = ctx.createImageData(n, n);
+  const { c: canvas, g: ctx2 } = criarCanvas(n);
+  const img = ctx2.createImageData(n, n);
   const data = img.data;
   function smooth(t) {
     return t * t * (3 - 2 * t);
@@ -5943,7 +6267,7 @@ function criarTexturaRuido(THREE11) {
       data[idx + 3] = 255;
     }
   }
-  ctx.putImageData(img, 0, 0);
+  ctx2.putImageData(img, 0, 0);
   const texture = new THREE11.CanvasTexture(canvas);
   texture.wrapS = THREE11.RepeatWrapping;
   texture.wrapT = THREE11.RepeatWrapping;
@@ -6406,12 +6730,12 @@ function atualizarNevoa(mapa, dt) {
     revelar(mapa, p.x, p.z, raio);
   }
 }
-function desenharNevoa(ctx, mapa, W) {
+function desenharNevoa(ctx2, mapa, W) {
   if (!mapa.nevoaCache) mapa.nevoaCache = /* @__PURE__ */ new Map();
   const v = mapa.nevoaVersao || 0;
   const entrada = mapa.nevoaCache.get(W);
   if (entrada && entrada.v === v) {
-    ctx.drawImage(entrada.canvas, 0, 0);
+    ctx2.drawImage(entrada.canvas, 0, 0);
     return;
   }
   const LIM3 = mapa.mundo.LIMITE;
@@ -6450,26 +6774,26 @@ function desenharNevoa(ctx, mapa, W) {
   const saida2 = document.createElement("canvas");
   saida2.width = W;
   saida2.height = W;
-  const ctx2 = saida2.getContext("2d");
+  const ctx22 = saida2.getContext("2d");
   const e = W / L;
-  ctx2.imageSmoothingEnabled = true;
-  ctx2.imageSmoothingQuality = "high";
+  ctx22.imageSmoothingEnabled = true;
+  ctx22.imageSmoothingQuality = "high";
   try {
-    ctx2.filter = "blur(" + e * 1.2 + "px)";
+    ctx22.filter = "blur(" + e * 1.2 + "px)";
   } catch (err) {
   }
-  ctx2.drawImage(mascara, -P * e, -P * e, (L + 2 * P) * e, (L + 2 * P) * e);
-  ctx2.filter = "none";
-  ctx2.globalCompositeOperation = "source-in";
-  const pattern = ctx2.createPattern(texturaNuvem(), "repeat");
+  ctx22.drawImage(mascara, -P * e, -P * e, (L + 2 * P) * e, (L + 2 * P) * e);
+  ctx22.filter = "none";
+  ctx22.globalCompositeOperation = "source-in";
+  const pattern = ctx22.createPattern(texturaNuvem(), "repeat");
   const matrix = new DOMMatrix();
   matrix.scaleSelf(W / 256);
   pattern.setTransform(matrix);
-  ctx2.fillStyle = pattern;
-  ctx2.fillRect(0, 0, W, W);
-  ctx2.globalCompositeOperation = "source-over";
+  ctx22.fillStyle = pattern;
+  ctx22.fillRect(0, 0, W, W);
+  ctx22.globalCompositeOperation = "source-over";
   mapa.nevoaCache.set(W, { v, canvas: saida2 });
-  ctx.drawImage(saida2, 0, 0);
+  ctx2.drawImage(saida2, 0, 0);
 }
 var _nuvem = null;
 function texturaNuvem() {
@@ -6477,9 +6801,9 @@ function texturaNuvem() {
   const c = document.createElement("canvas");
   c.width = 128;
   c.height = 128;
-  const ctx = c.getContext("2d");
-  ctx.fillStyle = "#dfe5ea";
-  ctx.fillRect(0, 0, 128, 128);
+  const ctx2 = c.getContext("2d");
+  ctx2.fillStyle = "#dfe5ea";
+  ctx2.fillRect(0, 0, 128, 128);
   for (let i = 0; i < 60; i++) {
     const x = Math.random() * 128;
     const y = Math.random() * 128;
@@ -6487,13 +6811,13 @@ function texturaNuvem() {
     const cor = Math.random() > 0.5 ? "rgba(255,255,255,0.35)" : "rgba(150,165,180,0.25)";
     const offsets = [[0, 0], [-128, 0], [128, 0], [0, -128], [0, 128]];
     for (const [dx, dy] of offsets) {
-      const g = ctx.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
+      const g = ctx2.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
       g.addColorStop(0, cor);
       g.addColorStop(1, cor.replace(/[\d.]+\)$/, "0)"));
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2);
-      ctx.fill();
+      ctx2.fillStyle = g;
+      ctx2.beginPath();
+      ctx2.arc(x + dx, y + dy, r, 0, Math.PI * 2);
+      ctx2.fill();
     }
   }
   _nuvem = c;
@@ -6567,10 +6891,10 @@ function usarAcao(mapa) {
   const e = est(mapa);
   const gp = mapa.gatoGroup.position;
   if (a.id === "bote") {
-    const alvo = a.alvo;
-    mapa.gatoGroup.rotation.y = Math.atan2(alvo.x - gp.x, alvo.z - gp.z);
+    const alvo2 = a.alvo;
+    mapa.gatoGroup.rotation.y = Math.atan2(alvo2.x - gp.x, alvo2.z - gp.z);
     mapa.cat.play("bote");
-    if (mapa.animais) mapa.animais.bote(alvo);
+    if (mapa.animais) mapa.animais.bote(alvo2);
   } else if (a.id === "esconder") {
     e.arbusto = a.alvo;
     e.modo = "indo";
@@ -7161,6 +7485,7 @@ function criarAnimais(mapa, salvos) {
     m.estado = "foge";
     m.faseFuga = "voa";
     m.yVoo = m.base;
+    Som.asas(m.x, m.z);
   }
   function pousar(m) {
     const v = m.voo;
@@ -7221,6 +7546,7 @@ function criarAnimais(mapa, salvos) {
       o.estado = "foge";
       o.tFuga = rr(3.5, 5);
       o.faseFuga = "";
+      if (o.tipo === "rato") Som.rato(o.x, o.z);
     }
   }
   const SEG = 12, ANEIS = 3;
@@ -7280,26 +7606,26 @@ function criarAnimais(mapa, salvos) {
     const canvas = document.createElement("canvas");
     canvas.width = 320;
     canvas.height = 120;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.strokeStyle = "#333333";
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.roundRect(6, 6, 308, 98, 40);
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(140, 104);
-    ctx.lineTo(180, 104);
-    ctx.lineTo(160, 118);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#333333";
-    ctx.font = "bold 46px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(txt, 160, 52);
+    const ctx2 = canvas.getContext("2d");
+    ctx2.fillStyle = "#ffffff";
+    ctx2.strokeStyle = "#333333";
+    ctx2.lineWidth = 5;
+    ctx2.beginPath();
+    ctx2.roundRect(6, 6, 308, 98, 40);
+    ctx2.fill();
+    ctx2.stroke();
+    ctx2.beginPath();
+    ctx2.moveTo(140, 104);
+    ctx2.lineTo(180, 104);
+    ctx2.lineTo(160, 118);
+    ctx2.closePath();
+    ctx2.fill();
+    ctx2.stroke();
+    ctx2.fillStyle = "#333333";
+    ctx2.font = "bold 46px sans-serif";
+    ctx2.textAlign = "center";
+    ctx2.textBaseline = "middle";
+    ctx2.fillText(txt, 160, 52);
     const tex = new THREE6.CanvasTexture(canvas);
     tex.colorSpace = THREE6.SRGBColorSpace;
     balaoSprite = new THREE6.Sprite(new THREE6.SpriteMaterial({ map: tex, transparent: true, depthTest: false, fog: false }));
@@ -7351,12 +7677,12 @@ function criarAnimais(mapa, salvos) {
       m.mixer = new THREE6.AnimationMixer(mod);
       m.acoes = {};
       for (const c of gltf.animations) m.acoes[c.name] = m.mixer.clipAction(c);
-      tocar(m, esp.pausa || "Idle");
+      tocar2(m, esp.pausa || "Idle");
     }
     obj.visible = false;
     mapa.grupo.add(obj);
   }
-  function tocar(m, nome) {
+  function tocar2(m, nome) {
     if (!m.acoes || m.animAtual === nome) return;
     const nova = m.acoes[nome];
     if (!nova) return;
@@ -7385,21 +7711,23 @@ function criarAnimais(mapa, salvos) {
     }
     return out.sort((a, b) => a.d - b.d);
   }
-  function bote(alvo) {
-    if (!alvo || !alvo.mob) return;
+  function bote(alvo2) {
+    if (!alvo2 || !alvo2.mob) return;
+    if (alvo2.mob.tipo === "peixe") Som.respingo(alvo2.mob.x, alvo2.mob.z);
     if (espelhoModo) {
-      const i = mobs.indexOf(alvo.mob);
-      if (i >= 0 && api.aoBote) {
-        api.aoBote(i);
-        esperaPegou = { m: alvo.mob, t: 3 };
+      const i = mobs.indexOf(alvo2.mob);
+      if (i >= 0 && api2.aoBote) {
+        api2.aoBote(i);
+        esperaPegou = { m: alvo2.mob, t: 3 };
       }
       return;
     }
-    pend = { m: alvo.mob, t: 0.25 };
+    pend = { m: alvo2.mob, t: 0.25 };
   }
   function boteRemoto(i, o) {
     const m = mobs[i];
     if (espelhoModo || !m || !o || m.sumido > 0 || !ESPECIES[m.tipo].presa) return false;
+    if (m.tipo === "peixe") Som.respingo(m.x, m.z);
     const d = Math.hypot(m.x - o.x, m.z - o.z);
     if (m.tipo === "passaro" && (m.estado === "foge" || Math.abs((Number.isFinite(o.y) ? o.y : m.y) - m.y) > 0.9)) return false;
     if (d <= 1.2 && (m.estado !== "foge" || d < 0.8)) {
@@ -7452,6 +7780,7 @@ function criarAnimais(mapa, salvos) {
     balao(fila.txt);
     fila = null;
     if (mapa.cat && mapa.cat.velocidade() < 0.05) mapa.cat.play("comer");
+    else if (mapa.cat) Som.gesto("comer", mapa.cat.object);
   }
   function reaparecer(m) {
     if (m.tipo === "passaro") {
@@ -7507,7 +7836,7 @@ function criarAnimais(mapa, salvos) {
     o.rotation.y = m.rot;
     if (m.mixer && m.dist < LONGE) {
       const foge = m.estado === "foge", anda = m.vMov > 0.05;
-      tocar(m, foge ? esp.foge : anda ? esp.anda : esp.pausa);
+      tocar2(m, foge ? esp.foge : anda ? esp.anda : esp.pausa);
       m.mixer.update(dt);
     }
     if (m.tipo === "jacare" && m.mod) {
@@ -7641,7 +7970,7 @@ function criarAnimais(mapa, salvos) {
       pend = null;
       return;
     }
-    const agora = performance.now();
+    const agora2 = performance.now();
     for (const p of poleiros) p.dono = null;
     mobs.forEach((m, i) => {
       const v = ultimo && ultimo.it[i];
@@ -7660,7 +7989,7 @@ function criarAnimais(mapa, salvos) {
       m.acc = 0;
       m.vMov = 0;
       m.bloq = 0;
-      if (m.sumido > 0) m.sumido = Math.max(1, REAPARECE - (agora - (m.tSumido || agora)) / 1e3);
+      if (m.sumido > 0) m.sumido = Math.max(1, REAPARECE - (agora2 - (m.tSumido || agora2)) / 1e3);
       if (m.tipo === "peixe") encaixarPeixe(m);
       if (m.tipo === "passaro") assentar(m);
       m.y = alturaDe(m);
@@ -7712,6 +8041,10 @@ function criarAnimais(mapa, salvos) {
           m.sumido = 0;
           m.y = alturaDe(m);
         }
+        if (v.a === 2 && m.estado !== "foge") {
+          if (m.tipo === "rato") Som.rato(m.x, m.z);
+          else if (m.tipo === "passaro") Som.asas(m.x, m.z);
+        }
         m.estado = v.a === 2 ? "foge" : "passeio";
         m.vMov = v.a === 0 ? 0 : v.a === 2 ? 3 : 0.5;
       }
@@ -7762,11 +8095,11 @@ function criarAnimais(mapa, salvos) {
       balaoSprite = null;
     }
   }
-  const api = { mobs, info, atualizar, comeu, tick: (dt) => {
+  const api2 = { mobs, info, atualizar, comeu, tick: (dt) => {
     atualizarBalao(dt);
     tickComida(dt);
   }, poleiros, presas, bote, estado, descartar, visao, mover, posRio, definirObservadores, serializar, espelho, modoEspelho, boteRemoto, emEspelho: () => espelhoModo, aoBote: null };
-  return api;
+  return api2;
 }
 
 // js/caverna.js
@@ -7917,9 +8250,9 @@ function gerarPlanta(seed) {
     }
     ligados.add(`${Math.min(i, nearest)}-${Math.max(i, nearest)}`);
   }
-  let lacos = 0;
+  let lacos2 = 0;
   let tentLacos = 0;
-  while (lacos < 2 && tentLacos < 50) {
+  while (lacos2 < 2 && tentLacos < 50) {
     tentLacos++;
     const a = Math.floor(rc() * salas.length);
     const b = Math.floor(rc() * salas.length);
@@ -7929,7 +8262,7 @@ function gerarPlanta(seed) {
     if (Math.hypot(salas[a].cx - salas[b].cx, salas[a].cz - salas[b].cz) >= 16) continue;
     cavaCorredor(salas[a], salas[b]);
     ligados.add(key);
-    lacos++;
+    lacos2++;
   }
   const becos = [];
   for (let b = 0; b < 3; b++) {
@@ -8185,11 +8518,11 @@ function texturaPedra(seed, tipo) {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 256;
-  const ctx = canvas.getContext("2d");
+  const ctx2 = canvas.getContext("2d");
   const rnd = mulberry32(seed * 31 + 5);
   const base = tipo === "chao" ? "#8b8782" : "#9b8f84";
-  ctx.fillStyle = base;
-  ctx.fillRect(0, 0, 256, 256);
+  ctx2.fillStyle = base;
+  ctx2.fillRect(0, 0, 256, 256);
   const offsets = [-256, 0, 256];
   for (let i = 0; i < 420; i++) {
     const x = rnd() * 256;
@@ -8201,18 +8534,18 @@ function texturaPedra(seed, tipo) {
       for (const dy of offsets) {
         const cx = x + dx;
         const cy = y + dy;
-        const grad2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        const grad2 = ctx2.createRadialGradient(cx, cy, 0, cx, cy, r);
         grad2.addColorStop(0, color);
         grad2.addColorStop(1, isLight ? "rgba(255,255,255,0)" : "rgba(20,16,30,0)");
-        ctx.fillStyle = grad2;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fill();
+        ctx2.fillStyle = grad2;
+        ctx2.beginPath();
+        ctx2.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx2.fill();
       }
     }
   }
-  ctx.strokeStyle = "rgba(25,20,35,0.45)";
-  ctx.lineWidth = 1.2;
+  ctx2.strokeStyle = "rgba(25,20,35,0.45)";
+  ctx2.lineWidth = 1.2;
   for (let i = 0; i < 16; i++) {
     const x = rnd() * 256, y = rnd() * 256;
     let angle = rnd() * Math.PI * 2;
@@ -8223,9 +8556,9 @@ function texturaPedra(seed, tipo) {
       pts.push([px + Math.cos(angle) * len, py + Math.sin(angle) * len]);
     }
     for (const dx of offsets) for (const dy of offsets) {
-      ctx.beginPath();
-      pts.forEach(([px, py], k) => k ? ctx.lineTo(x + dx + px, y + dy + py) : ctx.moveTo(x + dx, y + dy));
-      ctx.stroke();
+      ctx2.beginPath();
+      pts.forEach(([px, py], k) => k ? ctx2.lineTo(x + dx + px, y + dy + py) : ctx2.moveTo(x + dx, y + dy));
+      ctx2.stroke();
     }
   }
   const tex = new THREE7.CanvasTexture(canvas);
@@ -8316,13 +8649,13 @@ function texturaBrilho() {
   const canvas = document.createElement("canvas");
   canvas.width = 64;
   canvas.height = 64;
-  const ctx = canvas.getContext("2d");
-  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  const ctx2 = canvas.getContext("2d");
+  const gradient = ctx2.createRadialGradient(32, 32, 0, 32, 32, 32);
   gradient.addColorStop(0, "rgba(255,255,255,1)");
   gradient.addColorStop(0.35, "rgba(255,255,255,0.45)");
   gradient.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 64, 64);
+  ctx2.fillStyle = gradient;
+  ctx2.fillRect(0, 0, 64, 64);
   const texture = new THREE7.CanvasTexture(canvas);
   texture.colorSpace = THREE7.SRGBColorSpace;
   return texture;
@@ -8331,35 +8664,35 @@ function texturaPoca() {
   const canvas = document.createElement("canvas");
   canvas.width = 128;
   canvas.height = 128;
-  const ctx = canvas.getContext("2d");
-  const grad2 = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  const ctx2 = canvas.getContext("2d");
+  const grad2 = ctx2.createRadialGradient(64, 64, 0, 64, 64, 64);
   grad2.addColorStop(0, "#8fdcf0");
   grad2.addColorStop(0.55, "#2c6f95");
   grad2.addColorStop(1, "#0d2038");
-  ctx.fillStyle = grad2;
-  ctx.fillRect(0, 0, 128, 128);
-  ctx.strokeStyle = "rgba(255,255,255,0.22)";
-  ctx.lineWidth = 1.5;
+  ctx2.fillStyle = grad2;
+  ctx2.fillRect(0, 0, 128, 128);
+  ctx2.strokeStyle = "rgba(255,255,255,0.22)";
+  ctx2.lineWidth = 1.5;
   [18, 30, 42].forEach((r) => {
-    ctx.beginPath();
-    ctx.arc(64, 64, r, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx2.beginPath();
+    ctx2.arc(64, 64, r, 0, Math.PI * 2);
+    ctx2.stroke();
   });
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.beginPath();
-  ctx.ellipse(50, 46, 10, 2.5, -0.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "rgba(255,255,255,0.6)";
-  ctx.beginPath();
-  ctx.ellipse(80, 72, 6, 2, -0.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalCompositeOperation = "destination-in";
-  const gradBorda = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  ctx2.fillStyle = "rgba(255,255,255,0.85)";
+  ctx2.beginPath();
+  ctx2.ellipse(50, 46, 10, 2.5, -0.2, 0, Math.PI * 2);
+  ctx2.fill();
+  ctx2.fillStyle = "rgba(255,255,255,0.6)";
+  ctx2.beginPath();
+  ctx2.ellipse(80, 72, 6, 2, -0.2, 0, Math.PI * 2);
+  ctx2.fill();
+  ctx2.globalCompositeOperation = "destination-in";
+  const gradBorda = ctx2.createRadialGradient(64, 64, 0, 64, 64, 64);
   gradBorda.addColorStop(0, "rgba(0,0,0,1)");
   gradBorda.addColorStop(0.8, "rgba(0,0,0,1)");
   gradBorda.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = gradBorda;
-  ctx.fillRect(0, 0, 128, 128);
+  ctx2.fillStyle = gradBorda;
+  ctx2.fillRect(0, 0, 128, 128);
   const texture = new THREE7.CanvasTexture(canvas);
   texture.colorSpace = THREE7.SRGBColorSpace;
   return texture;
@@ -8448,12 +8781,12 @@ function criarRochas(planta) {
   }
   return grupo;
 }
-function desenharPlanta(ctx, W, planta) {
+function desenharPlanta(ctx2, W, planta) {
   const e = W / N;
   const px = (x) => (x + LIM) * e;
   const py = (z) => (z + LIM) * e;
-  ctx.fillStyle = "#0b1024";
-  ctx.fillRect(0, 0, W, W);
+  ctx2.fillStyle = "#0b1024";
+  ctx2.fillRect(0, 0, W, W);
   const pequeno = document.createElement("canvas");
   pequeno.width = N;
   pequeno.height = N;
@@ -8488,31 +8821,31 @@ function desenharPlanta(ctx, W, planta) {
     }
   }
   pctx.putImageData(img, 0, 0);
-  ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(pequeno, 0, 0, W, W);
+  ctx2.imageSmoothingEnabled = true;
+  ctx2.drawImage(pequeno, 0, 0, W, W);
   const rCog = Math.max(1.5, 0.3 * e);
-  ctx.fillStyle = "#7fffd4";
+  ctx2.fillStyle = "#7fffd4";
   for (const c of planta.cogumelos) {
-    ctx.beginPath();
-    ctx.arc(px(c.x), py(c.z), rCog, 0, Math.PI * 2);
-    ctx.fill();
+    ctx2.beginPath();
+    ctx2.arc(px(c.x), py(c.z), rCog, 0, Math.PI * 2);
+    ctx2.fill();
   }
   const rCris = Math.max(2, 0.4 * e);
-  ctx.fillStyle = "#c48bff";
+  ctx2.fillStyle = "#c48bff";
   for (const c of planta.cristais) {
-    ctx.beginPath();
-    ctx.arc(px(c.x), py(c.z), rCris, 0, Math.PI * 2);
-    ctx.fill();
+    ctx2.beginPath();
+    ctx2.arc(px(c.x), py(c.z), rCris, 0, Math.PI * 2);
+    ctx2.fill();
   }
   if (planta.poca) {
     const p = planta.poca;
-    ctx.fillStyle = "#4fb3d9";
-    ctx.beginPath();
-    ctx.ellipse(px(p.x), py(p.z), p.rx * e, p.rz * e, p.rot, 0, Math.PI * 2);
-    ctx.fill();
+    ctx2.fillStyle = "#4fb3d9";
+    ctx2.beginPath();
+    ctx2.ellipse(px(p.x), py(p.z), p.rx * e, p.rz * e, p.rot, 0, Math.PI * 2);
+    ctx2.fill();
   }
-  ctx.fillStyle = "#ffe9a8";
-  ctx.fillRect(px(planta.saida.x) - 1.5 * e, W - 0.7 * e, 3 * e, 0.7 * e);
+  ctx2.fillStyle = "#ffe9a8";
+  ctx2.fillRect(px(planta.saida.x) - 1.5 * e, W - 0.7 * e, 3 * e, 0.7 * e);
 }
 function criarBocas(cavernas) {
   const g = new THREE7.Group();
@@ -8667,7 +9000,7 @@ function criar(scene2, seed, salvo) {
       }
     },
     estado: () => ({ descoberto: descobertoParaBase64(nevoa.descoberto) }),
-    desenharCapa: (ctx, W) => desenharPlanta(ctx, W, planta),
+    desenharCapa: (ctx2, W) => desenharPlanta(ctx2, W, planta),
     descartar() {
       fis.descartar();
       grupo.traverse((o) => {
@@ -8942,67 +9275,67 @@ function paredes(andar) {
   }
   return caixas;
 }
-function desenharPlanta2(ctx, W, planta, ia) {
+function desenharPlanta2(ctx2, W, planta, ia) {
   const A = planta.andares[ia];
   const e = W / (2 * LIM2);
   const px = (x) => (x + LIM2) * e;
   const py = (z) => (z + LIM2) * e;
-  ctx.fillStyle = "#20331f";
-  ctx.fillRect(0, 0, W, W);
-  ctx.lineCap = "round";
+  ctx2.fillStyle = "#20331f";
+  ctx2.fillRect(0, 0, W, W);
+  ctx2.lineCap = "round";
   for (const s of A.segs) {
-    ctx.strokeStyle = "#a5794a";
-    ctx.lineWidth = Math.max(3, 2 * s.hw1 * e);
-    ctx.beginPath();
-    ctx.moveTo(px(s.x0), py(s.z0));
-    ctx.lineTo(px(s.x1), py(s.z1));
-    ctx.stroke();
+    ctx2.strokeStyle = "#a5794a";
+    ctx2.lineWidth = Math.max(3, 2 * s.hw1 * e);
+    ctx2.beginPath();
+    ctx2.moveTo(px(s.x0), py(s.z0));
+    ctx2.lineTo(px(s.x1), py(s.z1));
+    ctx2.stroke();
   }
   for (const j of A.juntas) {
-    ctx.fillStyle = "#a5794a";
-    ctx.beginPath();
-    ctx.arc(px(j.x), py(j.z), Math.max(2, j.r * e), 0, Math.PI * 2);
-    ctx.fill();
+    ctx2.fillStyle = "#a5794a";
+    ctx2.beginPath();
+    ctx2.arc(px(j.x), py(j.z), Math.max(2, j.r * e), 0, Math.PI * 2);
+    ctx2.fill();
   }
-  ctx.fillStyle = "#5b3d22";
-  ctx.beginPath();
-  ctx.arc(px(0), py(0), 1 * e, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = 0.55;
+  ctx2.fillStyle = "#5b3d22";
+  ctx2.beginPath();
+  ctx2.arc(px(0), py(0), 1 * e, 0, Math.PI * 2);
+  ctx2.fill();
+  ctx2.globalAlpha = 0.55;
   for (const t of A.tufos) {
-    ctx.fillStyle = "#4f8a3a";
-    ctx.beginPath();
-    ctx.arc(px(t.x), py(t.z), Math.max(2, 0.45 * t.s * e), 0, Math.PI * 2);
-    ctx.fill();
+    ctx2.fillStyle = "#4f8a3a";
+    ctx2.beginPath();
+    ctx2.arc(px(t.x), py(t.z), Math.max(2, 0.45 * t.s * e), 0, Math.PI * 2);
+    ctx2.fill();
   }
-  ctx.globalAlpha = 1;
+  ctx2.globalAlpha = 1;
   for (const it of A.itens) {
     const cx = px(it.x), cy = py(it.z);
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "#fff";
+    ctx2.lineWidth = 1;
+    ctx2.strokeStyle = "#fff";
     if (it.tipo === "ninho") {
-      ctx.fillStyle = "#bfe6f2";
-      ctx.beginPath();
-      ctx.arc(cx, cy, Math.max(3, 0.35 * e), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      ctx2.fillStyle = "#bfe6f2";
+      ctx2.beginPath();
+      ctx2.arc(cx, cy, Math.max(3, 0.35 * e), 0, Math.PI * 2);
+      ctx2.fill();
+      ctx2.stroke();
     } else if (it.tipo === "casinha") {
       const s = Math.max(5, 0.6 * e);
-      ctx.fillStyle = "#f2c96b";
-      ctx.fillRect(cx - s / 2, cy - s / 2, s, s);
-      ctx.strokeRect(cx - s / 2, cy - s / 2, s, s);
+      ctx2.fillStyle = "#f2c96b";
+      ctx2.fillRect(cx - s / 2, cy - s / 2, s, s);
+      ctx2.strokeRect(cx - s / 2, cy - s / 2, s, s);
     } else if (it.tipo === "frutas") {
-      ctx.fillStyle = "#e0352b";
-      ctx.beginPath();
-      ctx.arc(cx, cy, Math.max(2.5, 0.3 * e), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      ctx2.fillStyle = "#e0352b";
+      ctx2.beginPath();
+      ctx2.arc(cx, cy, Math.max(2.5, 0.3 * e), 0, Math.PI * 2);
+      ctx2.fill();
+      ctx2.stroke();
     } else if (it.tipo === "borboleta") {
-      ctx.fillStyle = "#ff9a3c";
-      ctx.beginPath();
-      ctx.arc(cx, cy, Math.max(2.5, 0.25 * e), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      ctx2.fillStyle = "#ff9a3c";
+      ctx2.beginPath();
+      ctx2.arc(cx, cy, Math.max(2.5, 0.25 * e), 0, Math.PI * 2);
+      ctx2.fill();
+      ctx2.stroke();
     }
   }
   if (A.mirante && ia === 2) {
@@ -9010,45 +9343,45 @@ function desenharPlanta2(ctx, W, planta, ia) {
     const cx = px(m.x), cy = py(m.z);
     const R = Math.max(6, 0.9 * e);
     const r2 = R / 2;
-    ctx.fillStyle = "#ffd34d";
-    ctx.strokeStyle = "#7a5a00";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
+    ctx2.fillStyle = "#ffd34d";
+    ctx2.strokeStyle = "#7a5a00";
+    ctx2.lineWidth = 1;
+    ctx2.beginPath();
     for (let i = 0; i < 5; i++) {
       const a1 = (i * 72 - 90) * Math.PI / 180;
       const a2 = (i * 72 + 36 - 90) * Math.PI / 180;
-      if (i === 0) ctx.moveTo(cx + R * Math.cos(a1), cy + R * Math.sin(a1));
-      else ctx.lineTo(cx + R * Math.cos(a1), cy + R * Math.sin(a1));
-      ctx.lineTo(cx + r2 * Math.cos(a2), cy + r2 * Math.sin(a2));
+      if (i === 0) ctx2.moveTo(cx + R * Math.cos(a1), cy + R * Math.sin(a1));
+      else ctx2.lineTo(cx + R * Math.cos(a1), cy + R * Math.sin(a1));
+      ctx2.lineTo(cx + r2 * Math.cos(a2), cy + r2 * Math.sin(a2));
     }
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    ctx2.closePath();
+    ctx2.fill();
+    ctx2.stroke();
   }
   const r = Math.max(4, 0.6 * e);
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = "#fff";
+  ctx2.lineWidth = 1;
+  ctx2.strokeStyle = "#fff";
   if (ia < 2) {
     const cx = px(PAD.subir.x), cy = py(PAD.subir.z);
-    ctx.fillStyle = "#6fdc6f";
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - r);
-    ctx.lineTo(cx - r, cy + r);
-    ctx.lineTo(cx + r, cy + r);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    ctx2.fillStyle = "#6fdc6f";
+    ctx2.beginPath();
+    ctx2.moveTo(cx, cy - r);
+    ctx2.lineTo(cx - r, cy + r);
+    ctx2.lineTo(cx + r, cy + r);
+    ctx2.closePath();
+    ctx2.fill();
+    ctx2.stroke();
   }
   {
     const cx = px(PAD.descer.x), cy = py(PAD.descer.z);
-    ctx.fillStyle = "#ffa93a";
-    ctx.beginPath();
-    ctx.moveTo(cx, cy + r);
-    ctx.lineTo(cx - r, cy - r);
-    ctx.lineTo(cx + r, cy - r);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    ctx2.fillStyle = "#ffa93a";
+    ctx2.beginPath();
+    ctx2.moveTo(cx, cy + r);
+    ctx2.lineTo(cx - r, cy - r);
+    ctx2.lineTo(cx + r, cy - r);
+    ctx2.closePath();
+    ctx2.fill();
+    ctx2.stroke();
   }
 }
 function criarArvoresGrandes(arvores) {
@@ -9081,8 +9414,8 @@ function geoSeta(cima) {
   if (!cima) g.rotateY(Math.PI);
   return g;
 }
-function criar2(scene2, seed, salvo, ctx = {}) {
-  const { mapa, entrada, restaurar: restaurar2 } = ctx;
+function criar2(scene2, seed, salvo, ctx2 = {}) {
+  const { mapa, entrada, restaurar: restaurar2 } = ctx2;
   const planta = gerarPlanta2(seed);
   colocarDetalhes(planta, seed);
   let andar = restaurar2 && Number.isInteger(restaurar2.andar) && restaurar2.andar >= 0 && restaurar2.andar <= 2 ? restaurar2.andar : 0;
@@ -9618,12 +9951,12 @@ function inclinarGato(mapa, dt) {
   const g = mapa.gatoGroup, gp = g.position, f = mapa.fis, w = mapa.mundo;
   const rumo = g.rotation.y;
   const fx = Math.sin(rumo), fz = Math.cos(rumo);
-  let alvo = 0;
+  let alvo2 = 0;
   if (!mapa.nadando && f.noChao && gp.y <= w.altura(gp.x, gp.z) + 0.2) {
-    alvo = Math.atan2(w.altura(gp.x + fx * 0.4, gp.z + fz * 0.4) - w.altura(gp.x - fx * 0.4, gp.z - fz * 0.4), 0.8);
-    alvo = Math.max(-INCLINA_MAX, Math.min(INCLINA_MAX, alvo));
+    alvo2 = Math.atan2(w.altura(gp.x + fx * 0.4, gp.z + fz * 0.4) - w.altura(gp.x - fx * 0.4, gp.z - fz * 0.4), 0.8);
+    alvo2 = Math.max(-INCLINA_MAX, Math.min(INCLINA_MAX, alvo2));
   }
-  mapa.pitch += (alvo - mapa.pitch) * Math.min(1, dt * 8);
+  mapa.pitch += (alvo2 - mapa.pitch) * Math.min(1, dt * 8);
   g.rotation.x = -mapa.pitch;
 }
 var _m = new THREE9.Matrix4();
@@ -9652,8 +9985,8 @@ function moverGato(mapa, dt, input) {
   }
   mapa.sentadoAnt = sentado;
   if (dx !== 0 || dy !== 0) {
-    const alvo = Math.atan2(dx, dy);
-    mapa.gatoGroup.rotation.y = lerpAngle2(mapa.gatoGroup.rotation.y, alvo, Math.min(1, dt * 12));
+    const alvo2 = Math.atan2(dx, dy);
+    mapa.gatoGroup.rotation.y = lerpAngle2(mapa.gatoGroup.rotation.y, alvo2, Math.min(1, dt * 12));
   }
   const vel = mapa.nadando ? VEL.nadar : mapa.cat ? mapa.cat.velocidade() : agachado ? 1 : correndo && len > 0.75 ? 8 : 2;
   const tem = dx !== 0 || dy !== 0;
@@ -9811,9 +10144,9 @@ function criarCapaEstatica(mapa, W) {
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = W;
-  const ctx = canvas.getContext("2d");
+  const ctx2 = canvas.getContext("2d");
   if (mapa.desenharCapa) {
-    mapa.desenharCapa(ctx, W);
+    mapa.desenharCapa(ctx2, W);
     return canvas;
   }
   const LIMITE = mapa.mundo.LIMITE;
@@ -9825,33 +10158,33 @@ function criarCapaEstatica(mapa, W) {
     const k = tex.width / TERRENO;
     const origem = (TERRENO / 2 - LIMITE) * k;
     const lado = 2 * LIMITE * k;
-    ctx.drawImage(tex, origem, origem, lado, lado, 0, 0, W, W);
+    ctx2.drawImage(tex, origem, origem, lado, lado, 0, 0, W, W);
   }
   const rio = mapa.mundo.rio;
   if (rio && rio.pts) {
-    ctx.strokeStyle = "#4fb3d9";
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+    ctx2.strokeStyle = "#4fb3d9";
+    ctx2.lineCap = "round";
+    ctx2.lineJoin = "round";
     for (let i = 0; i < rio.pts.length - 1; i++) {
       const seg = rio.pts[i], nxt = rio.pts[i + 1];
       const hw = seg.hw || 0.5;
-      ctx.lineWidth = Math.max(2, 2 * hw * e);
-      ctx.beginPath();
-      ctx.moveTo(px(seg.x), py(seg.z));
-      ctx.lineTo(px(nxt.x), py(nxt.z));
-      ctx.stroke();
+      ctx2.lineWidth = Math.max(2, 2 * hw * e);
+      ctx2.beginPath();
+      ctx2.moveTo(px(seg.x), py(seg.z));
+      ctx2.lineTo(px(nxt.x), py(nxt.z));
+      ctx2.stroke();
     }
   }
   const travessias = mapa.mundo.travessias;
   if (travessias) {
     for (const t of travessias) {
-      ctx.strokeStyle = t.tipo === "tronco" ? "#8b6b3e" : "#b5b0a5";
-      ctx.lineWidth = Math.max(2, 1.2 * e);
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(px(t.ax), py(t.az));
-      ctx.lineTo(px(t.bx), py(t.bz));
-      ctx.stroke();
+      ctx2.strokeStyle = t.tipo === "tronco" ? "#8b6b3e" : "#b5b0a5";
+      ctx2.lineWidth = Math.max(2, 1.2 * e);
+      ctx2.lineCap = "round";
+      ctx2.beginPath();
+      ctx2.moveTo(px(t.ax), py(t.az));
+      ctx2.lineTo(px(t.bx), py(t.bz));
+      ctx2.stroke();
     }
   }
   const inst = mapa.mundo.inst;
@@ -9866,44 +10199,44 @@ function criarCapaEstatica(mapa, W) {
     for (const tipo of tipos) {
       const lista = inst[tipo.chave];
       if (!lista) continue;
-      ctx.fillStyle = tipo.cor;
+      ctx2.fillStyle = tipo.cor;
       for (const item of lista) {
         const r = tipo.raio(item.s || 1);
-        ctx.beginPath();
-        ctx.arc(px(item.x), py(item.z), r, 0, Math.PI * 2);
-        ctx.fill();
+        ctx2.beginPath();
+        ctx2.arc(px(item.x), py(item.z), r, 0, Math.PI * 2);
+        ctx2.fill();
       }
     }
   }
   for (const c of mapa.mundo.cavernas || []) {
-    ctx.fillStyle = "#5a534b";
-    ctx.beginPath();
-    ctx.arc(px(c.x), py(c.z), Math.max(3, c.R * e), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#0a0a12";
-    ctx.beginPath();
-    ctx.arc(px(c.bx), py(c.bz), Math.max(1.6, 0.45 * c.R * e), 0, Math.PI * 2);
-    ctx.fill();
+    ctx2.fillStyle = "#5a534b";
+    ctx2.beginPath();
+    ctx2.arc(px(c.x), py(c.z), Math.max(3, c.R * e), 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.fillStyle = "#0a0a12";
+    ctx2.beginPath();
+    ctx2.arc(px(c.bx), py(c.bz), Math.max(1.6, 0.45 * c.R * e), 0, Math.PI * 2);
+    ctx2.fill();
   }
   for (const a of mapa.mundo.arvores || []) {
     const ax = px(a.x);
     const ay = py(a.z);
-    ctx.fillStyle = "#2f7d2a";
-    ctx.beginPath();
-    ctx.arc(ax, ay, Math.max(4, 5.5 * e), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#8fd14f";
-    ctx.beginPath();
-    ctx.arc(ax, ay, Math.max(2.5, 3 * e), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#5b3d22";
-    ctx.beginPath();
-    ctx.arc(ax, ay, Math.max(1.5, 1 * e), 0, Math.PI * 2);
-    ctx.fill();
+    ctx2.fillStyle = "#2f7d2a";
+    ctx2.beginPath();
+    ctx2.arc(ax, ay, Math.max(4, 5.5 * e), 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.fillStyle = "#8fd14f";
+    ctx2.beginPath();
+    ctx2.arc(ax, ay, Math.max(2.5, 3 * e), 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.fillStyle = "#5b3d22";
+    ctx2.beginPath();
+    ctx2.arc(ax, ay, Math.max(1.5, 1 * e), 0, Math.PI * 2);
+    ctx2.fill();
   }
   return canvas;
 }
-function desenharGato(ctx, mapa, W) {
+function desenharGato(ctx2, mapa, W) {
   const LIMITE = mapa.mundo.LIMITE;
   const e = W / (2 * LIMITE);
   const g = mapa.gatoGroup;
@@ -9916,16 +10249,16 @@ function desenharGato(ctx, mapa, W) {
   const ponta = { x: cx + Math.sin(a) * L, y: cy + Math.cos(a) * L };
   const p1 = { x: cx + Math.sin(a + 2.5) * 0.7 * L, y: cy + Math.cos(a + 2.5) * 0.7 * L };
   const p2 = { x: cx + Math.sin(a - 2.5) * 0.7 * L, y: cy + Math.cos(a - 2.5) * 0.7 * L };
-  ctx.beginPath();
-  ctx.moveTo(ponta.x, ponta.y);
-  ctx.lineTo(p1.x, p1.y);
-  ctx.lineTo(p2.x, p2.y);
-  ctx.closePath();
-  ctx.fillStyle = "#e05a2b";
-  ctx.fill();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = "#ffffff";
-  ctx.stroke();
+  ctx2.beginPath();
+  ctx2.moveTo(ponta.x, ponta.y);
+  ctx2.lineTo(p1.x, p1.y);
+  ctx2.lineTo(p2.x, p2.y);
+  ctx2.closePath();
+  ctx2.fillStyle = "#e05a2b";
+  ctx2.fill();
+  ctx2.lineWidth = 1.5;
+  ctx2.strokeStyle = "#ffffff";
+  ctx2.stroke();
 }
 function criarMapaCompleto({ container, mapa, aoFechar }) {
   const elemento = document.createElement("div");
@@ -9952,12 +10285,12 @@ function criarMapaCompleto({ container, mapa, aoFechar }) {
   });
   elemento.appendChild(botao);
   container.appendChild(elemento);
-  const ctx = canvas.getContext("2d");
+  const ctx2 = canvas.getContext("2d");
   const capa = criarCapaEstatica(mapa, lado * 2);
   function atualizar() {
-    ctx.drawImage(capa, 0, 0);
-    desenharNevoa(ctx, mapa, lado * 2);
-    desenharGato(ctx, mapa, lado * 2);
+    ctx2.drawImage(capa, 0, 0);
+    desenharNevoa(ctx2, mapa, lado * 2);
+    desenharGato(ctx2, mapa, lado * 2);
   }
   atualizar();
   function destruir() {
@@ -10012,7 +10345,7 @@ function entrar(mapa, entrada, restaurar2) {
     },
     ajustarZoom() {
     },
-    desenharCapa: (ctx, W) => inst.desenharCapa(ctx, W),
+    desenharCapa: (ctx2, W) => inst.desenharCapa(ctx2, W),
     // planta 2D (criarCapaEstatica usa em vez do terreno)
     acao(id) {
       if (id === "pular" && !fis.pular()) return;
@@ -11256,8 +11589,8 @@ function criarVersoes({ nuvem: nuvem2 }) {
       const bruto = lerBruto();
       if (!bruto) return false;
       const d = copia(versao.dados);
-      const agora = agoraISO3();
-      const novo = { id: String(gatoId), look: d.look, mundo: d.mundo || null, criado: d.criado || agora, atualizado: agora, formato: Number.isInteger(d.formato) ? d.formato : 1, ...extras(d) };
+      const agora2 = agoraISO3();
+      const novo = { id: String(gatoId), look: d.look, mundo: d.mundo || null, criado: d.criado || agora2, atualizado: agora2, formato: Number.isInteger(d.formato) ? d.formato : 1, ...extras(d) };
       const i = bruto.gatos.findIndex((g) => g.id === novo.id);
       if (i >= 0) bruto.gatos[i] = novo;
       else {
@@ -11304,12 +11637,12 @@ function criarVersoes({ nuvem: nuvem2 }) {
     }
     if (!dados || dados.app !== "gatinho" || !Array.isArray(dados.gatos)) throw new Error("arquivo n\xE3o \xE9 uma c\xF3pia do gatinho");
     const bruto = lerBruto() || { v: 3, atual: null, gatos: [], apagados: {} };
-    const agora = agoraISO3();
+    const agora2 = agoraISO3();
     const ids = [];
     for (const x of dados.gatos) {
       if (!x || typeof x !== "object" || !ID_GATO.test(String(x.id)) || !x.look || typeof x.look !== "object") continue;
       const id = String(x.id);
-      const novo = { id, look: copia(x.look), mundo: x.mundo && typeof x.mundo === "object" ? copia(x.mundo) : null, criado: typeof x.criado === "string" ? x.criado : agora, atualizado: agora, formato: Number.isInteger(x.formato) ? x.formato : 1, ...extras(x) };
+      const novo = { id, look: copia(x.look), mundo: x.mundo && typeof x.mundo === "object" ? copia(x.mundo) : null, criado: typeof x.criado === "string" ? x.criado : agora2, atualizado: agora2, formato: Number.isInteger(x.formato) ? x.formato : 1, ...extras(x) };
       const i = bruto.gatos.findIndex((g) => g.id === id);
       if (i >= 0) {
         guardar(id, "antes-importar");
@@ -11419,7 +11752,7 @@ function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
   btnVoltar.addEventListener("click", () => aoVoltar());
   raiz.appendChild(btnVoltar);
   let destruida = false;
-  function carregar() {
+  function carregar2() {
     if (destruida) {
       return;
     }
@@ -11525,7 +11858,7 @@ function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
         } else {
           aviso.textContent = "N\xE3o deu certo.";
         }
-        carregar();
+        carregar2();
       });
     });
     btnApagar.addEventListener("click", () => {
@@ -11564,7 +11897,7 @@ function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
             return;
           }
           aviso.textContent = ok ? "C\xF3pia apagada." : "Apagada aqui. Sem internet, na nuvem ela ainda fica.";
-          carregar();
+          carregar2();
         }).catch(() => {
           if (destruida) {
             return;
@@ -11581,7 +11914,7 @@ function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
     }
     versoes2.guardar(gato.id, "manual");
     aviso.textContent = "C\xF3pia guardada!";
-    carregar();
+    carregar2();
   });
   btnApagarTodas.addEventListener("click", () => {
     if (destruida) {
@@ -11620,7 +11953,7 @@ function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
         }
         aviso.textContent = ok ? "C\xF3pias apagadas." : "Apagadas aqui. Sem internet, na nuvem elas ainda ficam.";
         painel.replaceChild(btnApagarTodas, confirma);
-        carregar();
+        carregar2();
       }).catch(() => {
         if (destruida) {
           return;
@@ -11631,7 +11964,7 @@ function criarTelaVersoes({ container, versoes: versoes2, gato, aoVoltar }) {
     });
   });
   container.appendChild(raiz);
-  carregar();
+  carregar2();
   return {
     elemento: raiz,
     atualizar() {
@@ -12554,13 +12887,13 @@ function criarMundos({ nuvem: nuvem2 }) {
     });
     return juntando;
   }
-  const api = { criar: criar3, entrarComCodigo, listar, listarLocal, pegar, obter, salvarEstado, sincronizar, guardarVersao, listarVersoes, apagar, apagarVersao, apagarVersoes, restaurar: restaurar2, enviarVersoes, entregarOferta, escutarOfertas, voltouParaRede, mundoDoGato, mundo1, migrarSave07, juntar, juntando: () => juntando, precisaJuntar: () => online2() && !lerJson2(CHAVE_JUNTOU + (nuvem2.publico() || ""), null), ganchos, formatarCodigo, minhaFamilia: () => nuvem2.codigo(), convidadas, tirarConvidada, sairDoMundo, verificar, esquecer, reiniciar: () => {
+  const api2 = { criar: criar3, entrarComCodigo, listar, listarLocal, pegar, obter, salvarEstado, sincronizar, guardarVersao, listarVersoes, apagar, apagarVersao, apagarVersoes, restaurar: restaurar2, enviarVersoes, entregarOferta, escutarOfertas, voltouParaRede, mundoDoGato, mundo1, migrarSave07, juntar, juntando: () => juntando, precisaJuntar: () => online2() && !lerJson2(CHAVE_JUNTOU + (nuvem2.publico() || ""), null), ganchos, formatarCodigo, minhaFamilia: () => nuvem2.codigo(), convidadas, tirarConvidada, sairDoMundo, verificar, esquecer, reiniciar: () => {
     ultimaSync.clear();
     andamento.clear();
     usuarioOk = "";
     juntando = null;
   } };
-  return api;
+  return api2;
 }
 
 // js/mundos-tela.js
@@ -13362,7 +13695,7 @@ function criarTelaMundos({ container, mundos: mundos2, gato, atual, aoJogar, aoA
 }
 
 // js/escolher-mundo.js
-function criarEscolherMundo({ container, nome, carregar, aoEscolher, aoAssistir, aoServir, aoCriar, sugestaoNome, aoVoltar }) {
+function criarEscolherMundo({ container, nome, carregar: carregar2, aoEscolher, aoAssistir, aoServir, aoCriar, sugestaoNome, aoVoltar }) {
   const raiz = document.createElement("div");
   raiz.className = "tela tela-escolher-mundo";
   const titulo = document.createElement("h2");
@@ -13476,10 +13809,10 @@ function criarEscolherMundo({ container, nome, carregar, aoEscolher, aoAssistir,
     }
   }
   mostrarVazio("Procurando\u2026");
-  if (typeof carregar === "function") {
+  if (typeof carregar2 === "function") {
     let p;
     try {
-      p = carregar();
+      p = carregar2();
     } catch (e) {
       p = Promise.reject(e);
     }
@@ -13509,7 +13842,7 @@ function criarEscolherMundo({ container, nome, carregar, aoEscolher, aoAssistir,
 var VIVA = 6e3;
 var MORTO = 3e3;
 var HISTERESE = 1.3;
-function calcularNota({ pc, quadroMs, atrasoMs, carregando, avocado }) {
+function calcularNota({ pc, quadroMs, atrasoMs, carregando: carregando2, avocado }) {
   let nota = 0;
   nota += pc ? 100 : 40;
   if (typeof quadroMs === "number" && quadroMs > 0) {
@@ -13520,7 +13853,7 @@ function calcularNota({ pc, quadroMs, atrasoMs, carregando, avocado }) {
   if (typeof atrasoMs === "number" && atrasoMs >= 0) {
     nota -= Math.min(30, atrasoMs / 10);
   }
-  if (carregando) {
+  if (carregando2) {
     nota += 20;
   }
   if (avocado) {
@@ -13528,7 +13861,7 @@ function calcularNota({ pc, quadroMs, atrasoMs, carregando, avocado }) {
   }
   return Math.round(nota * 10) / 10;
 }
-function eleger(presencas, gestor, agora) {
+function eleger(presencas, gestor, agora2) {
   if (!Array.isArray(presencas)) {
     presencas = [];
   }
@@ -13537,7 +13870,7 @@ function eleger(presencas, gestor, agora) {
     if (!p || typeof p.uid !== "string" || typeof p.t !== "number") {
       continue;
     }
-    if (agora - p.t < VIVA) {
+    if (agora2 - p.t < VIVA) {
       candidatos.push(p);
     }
   }
@@ -13558,7 +13891,7 @@ function eleger(presencas, gestor, agora) {
   }
   let gestorVivo = null;
   if (gestor && typeof gestor.uid === "string" && typeof gestor.t === "number") {
-    if (agora - gestor.t <= MORTO) {
+    if (agora2 - gestor.t <= MORTO) {
       const atual = candidatos.find((c) => c.uid === gestor.uid);
       if (atual) {
         gestorVivo = atual;
@@ -13594,11 +13927,11 @@ function textoHorario(valor) {
 var TIPOS_VOTACAO = {
   ciclo: {
     nome: "hor\xE1rio",
-    valido(valor, ctx) {
+    valido(valor, ctx2) {
       const lista = ["dia", "anoitecer", "noite"];
       if (!lista.includes(valor)) return false;
-      if (ctx && ctx.mapa && ctx.mapa.ciclo !== void 0) {
-        return ctx.mapa.ciclo !== valor;
+      if (ctx2 && ctx2.mapa && ctx2.mapa.ciclo !== void 0) {
+        return ctx2.mapa.ciclo !== valor;
       }
       return true;
     },
@@ -13611,15 +13944,15 @@ var TIPOS_VOTACAO = {
     pergunta(nome, valor) {
       return nome + " quer que fique " + textoHorario(valor).fique + ". Voc\xEA quer?";
     },
-    resultado(aprovada, valor, ctx) {
+    resultado(aprovada, valor, ctx2) {
       const t = textoHorario(valor);
       if (aprovada) return t.ficou;
-      const atual = ctx && ctx.mapa && ctx.mapa.ciclo ? ctx.mapa.ciclo : "dia";
+      const atual = ctx2 && ctx2.mapa && ctx2.mapa.ciclo ? ctx2.mapa.ciclo : "dia";
       return textoHorario(atual).continuou;
     },
-    aplicar(valor, ctx) {
-      if (this.valido(valor, ctx) && ctx && ctx.mapa && typeof ctx.mapa.setCiclo === "function") {
-        ctx.mapa.setCiclo(valor);
+    aplicar(valor, ctx2) {
+      if (this.valido(valor, ctx2) && ctx2 && ctx2.mapa && typeof ctx2.mapa.setCiclo === "function") {
+        ctx2.mapa.setCiclo(valor);
       }
     }
   }
@@ -13642,12 +13975,12 @@ function precisaVotar(presentes) {
   const jogadores = presentes.filter((p) => p && p.papel === "jogador").length;
   return jogadores >= 2;
 }
-function validarPedido(tipo, valor, ctx) {
+function validarPedido(tipo, valor, ctx2) {
   if (!Object.hasOwn(TIPOS_VOTACAO, tipo)) return false;
   if (typeof valor !== "string" || valor.length < 1 || valor.length > 30) return false;
-  return TIPOS_VOTACAO[tipo].valido(valor, ctx) === true;
+  return TIPOS_VOTACAO[tipo].valido(valor, ctx2) === true;
 }
-function concluirVotacao({ tipo, valor, quem, votos }, ctx) {
+function concluirVotacao({ tipo, valor, quem, votos }, ctx2) {
   const { sim, nao, aprovada } = contarVotos({ votos, quem });
   if (!Object.hasOwn(TIPOS_VOTACAO, tipo)) {
     return { aprovada: false, sim, nao, texto: "" };
@@ -13655,12 +13988,12 @@ function concluirVotacao({ tipo, valor, quem, votos }, ctx) {
   const tipoDef = TIPOS_VOTACAO[tipo];
   if (aprovada) {
     try {
-      tipoDef.aplicar(valor, ctx);
+      tipoDef.aplicar(valor, ctx2);
     } catch (e) {
-      return { aprovada: false, sim, nao, texto: tipoDef.resultado(false, valor, ctx) };
+      return { aprovada: false, sim, nao, texto: tipoDef.resultado(false, valor, ctx2) };
     }
   }
-  const texto = tipoDef.resultado(aprovada, valor, ctx);
+  const texto = tipoDef.resultado(aprovada, valor, ctx2);
   return { aprovada, sim, nao, texto };
 }
 
@@ -13902,11 +14235,11 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
   function eleicao(st) {
     try {
       if (S !== st || !st.visto.presenca || !st.visto.gestor) return;
-      const agora = agoraServ();
-      const g = st.gestor, morto = g && agora - g.t > MORTO;
+      const agora2 = agoraServ();
+      const g = st.gestor, morto = g && agora2 - g.t > MORTO;
       const lista = [...st.presencas.values()].filter((p) => !(morto && p.uid === g.uid));
-      const eleito = eleger(lista, st.gestor, agora);
-      st.diag = { eleito: eleito && eleito.slice(0, 4), eu: st.con.uid.slice(0, 4), idadeGestor: g ? Math.round(agora - g.t) : null, gestor: g && g.uid.slice(0, 4), tomando: st.tomando, presencas: lista.map((p) => [p.uid.slice(0, 4), Math.round(agora - p.t), p.nota]) };
+      const eleito = eleger(lista, st.gestor, agora2);
+      st.diag = { eleito: eleito && eleito.slice(0, 4), eu: st.con.uid.slice(0, 4), idadeGestor: g ? Math.round(agora2 - g.t) : null, gestor: g && g.uid.slice(0, 4), tomando: st.tomando, presencas: lista.map((p) => [p.uid.slice(0, 4), Math.round(agora2 - p.t), p.nota]) };
       if (eleito === st.con.uid) tomarGestao(st, !!morto);
     } catch {
     }
@@ -13961,22 +14294,22 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     return [...st.presencas.values()].filter((p) => p.papel === "jogador" && a - p.t < VIVA);
   };
   function abrirVotacao(st, quem, tipo, valor) {
-    const eu = st.con.uid, ctx = { mapa: st.mapa };
-    if (!validarPedido(tipo, valor, ctx)) return "igual";
+    const eu = st.con.uid, ctx2 = { mapa: st.mapa };
+    if (!validarPedido(tipo, valor, ctx2)) return "igual";
     if (st.dinamico && st.dinamico.votacao) return "ocupada";
     if ((quem === eu ? st.papelMeu : (st.presencas.get(quem) || {}).papel) !== "jogador") return "igual";
     if (!precisaVotar(jogadoresVivos(st))) {
-      TIPOS_VOTACAO[tipo].aplicar(valor, ctx);
+      TIPOS_VOTACAO[tipo].aplicar(valor, ctx2);
       return "direto";
     }
     if (!souGestorGravado(st)) return "igual";
-    const agora = Math.round(agoraServ());
+    const agora2 = Math.round(agoraServ());
     const corpo2 = { tipo, valor, quem };
-    if (agora < (st.recusadoAte.get(quem + "|" + tipo) || 0)) {
-      if (quem !== eu) st.D.set(ref(st, "dinamico/votacao"), { ...corpo2, fim: agora, resultado: "espere" }).catch(nada2);
+    if (agora2 < (st.recusadoAte.get(quem + "|" + tipo) || 0)) {
+      if (quem !== eu) st.D.set(ref(st, "dinamico/votacao"), { ...corpo2, fim: agora2, resultado: "espere" }).catch(nada2);
       return "espere";
     }
-    st.D.set(ref(st, "dinamico/votacao"), { ...corpo2, fim: agora + tempoVotacao }).catch(nada2);
+    st.D.set(ref(st, "dinamico/votacao"), { ...corpo2, fim: agora2 + tempoVotacao }).catch(nada2);
     return "aberta";
   }
   function tocarVotacao(st) {
@@ -14017,13 +14350,13 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     }
   }
   const outrosVivos = (st) => {
-    const agora = agoraServ();
+    const agora2 = agoraServ();
     let n = 0;
-    for (const p of st.presencas.values()) if (p.uid !== st.con.uid && agora - p.t < VIVA) n++;
+    for (const p of st.presencas.values()) if (p.uid !== st.con.uid && agora2 - p.t < VIVA) n++;
     return n;
   };
-  function enviar(st, agora) {
-    const mapa = st.mapa, alvo = mapa.sub || mapa, g = mapa.gatoGroup;
+  function enviar(st, agora2) {
+    const mapa = st.mapa, alvo2 = mapa.sub || mapa, g = mapa.gatoGroup;
     if (!g || st.semGato) return;
     const sub = mapa.sub ? String(mapa.sub.tipo + ":" + mapa.sub.id).slice(0, 60) : "";
     const e = {
@@ -14032,16 +14365,16 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
       z: arred(g.position.z),
       r: arred(g.rotation.y),
       m: arred(st.m, 100),
-      ag: !!alvo.agachado,
-      es: !!(alvo.acaoEst && alvo.acaoEst.modo === "escondido"),
+      ag: !!alvo2.agachado,
+      es: !!(alvo2.acaoEst && alvo2.acaoEst.modo === "escondido"),
       n: st.n,
       sub
     };
     const u = st.ult;
     const mudou2 = !u || Math.hypot(e.x - u.x, e.z - u.z) > 0.02 || Math.abs(e.y - u.y) > 0.02 || Math.abs(menorArco(u.r, e.r)) > 0.02 || e.m !== u.m || e.ag !== u.ag || e.es !== u.es || e.n !== u.n || e.sub !== u.sub;
-    if (agora - st.ultEnvio < (mudou2 ? ENVIO : PARADO)) return;
+    if (agora2 - st.ultEnvio < (mudou2 ? ENVIO : PARADO)) return;
     st.ult = e;
-    st.ultEnvio = agora;
+    st.ultEnvio = agora2;
     const doc = { look: st.lookJson, x: e.x, y: e.y, z: e.z, r: e.r, m: e.m, tc: Date.now() + offset };
     if (e.ag) doc.ag = true;
     if (e.es) doc.es = true;
@@ -14143,10 +14476,10 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     } catch {
     }
   }
-  function animarRemoto(r, dt, agora, meuSub) {
+  function animarRemoto(r, dt, agora2, meuSub) {
     const b = r.buf;
     if (!r.cat || !b.length) return;
-    const rt = agora - ATRASO_DESENHO;
+    const rt = agora2 - ATRASO_DESENHO;
     while (b.length > 2 && b[1].t <= rt) b.shift();
     const a = b[0], c = b[1];
     let x = a.x, y = a.y, z = a.z, rot = a.r, s = a;
@@ -14179,14 +14512,14 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     r.cat.update(dt);
   }
   function listarObservadores(st) {
-    const mapa = st.mapa, lista = [], agora = agoraServ();
+    const mapa = st.mapa, lista = [], agora2 = agoraServ();
     if (!st.semGato && !mapa.sub && mapa.gatoGroup) {
       const g = mapa.gatoGroup.position;
       lista.push({ x: g.x, y: g.y, z: g.z, agachado: !!mapa.agachado, correndo: !!mapa.correndo, escondido: !!(mapa.acaoEst && mapa.acaoEst.modo === "escondido"), id: st.con.uid });
     }
     for (const r of st.remotos.values()) {
       const p = st.presencas.get(r.uid);
-      if (!p || agora - p.t >= VIVA) continue;
+      if (!p || agora2 - p.t >= VIVA) continue;
       const o = observadorDe(st, r.uid);
       if (o) lista.push(o);
     }
@@ -14196,12 +14529,12 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
     const st = S;
     if (!st || !st.pronto) return;
     try {
-      const agora = performance.now();
+      const agora2 = performance.now();
       if (st.ultQuadro) {
-        const ms = agora - st.ultQuadro;
+        const ms = agora2 - st.ultQuadro;
         if (ms < 1e3) st.quadroMs = st.quadroMs == null ? ms : st.quadroMs * 0.95 + ms * 0.05;
       }
-      st.ultQuadro = agora;
+      st.ultQuadro = agora2;
       vigiarGato(st);
       const mapa = st.mapa, animais = mapa.animais;
       const papel = papelDe(st);
@@ -14230,11 +14563,11 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
           st.D.update(ref(st, "dinamico"), { ciclo: String(mapa.ciclo || "dia").slice(0, 12) }).catch(nada2);
         }
         tocarVotacao(st);
-        if (agora - st.ultBichos >= BICHOS && outrosVivos(st) > 0) publicarBichos(st);
+        if (agora2 - st.ultBichos >= BICHOS && outrosVivos(st) > 0) publicarBichos(st);
       }
-      enviar(st, agora);
+      enviar(st, agora2);
       const meuSub = mapa.sub ? mapa.sub.tipo + ":" + mapa.sub.id : "";
-      for (const r of st.remotos.values()) animarRemoto(r, dt, agora, meuSub);
+      for (const r of st.remotos.values()) animarRemoto(r, dt, agora2, meuSub);
     } catch {
     }
   }
@@ -14245,8 +14578,8 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
   function presentes() {
     const st = S;
     if (!st) return [];
-    const agora = agoraServ();
-    return [...st.presencas.values()].filter((p) => agora - p.t < VIVA).map((p) => {
+    const agora2 = agoraServ();
+    return [...st.presencas.values()].filter((p) => agora2 - p.t < VIVA).map((p) => {
       const r = st.remotos.get(p.uid);
       return { uid: p.uid, nome: p.nome, gato: p.gato, nota: p.nota, avocado: p.avocado, papel: p.papel, char: p.char, gestor: !!(st.gestor && st.gestor.uid === p.uid), eu: p.uid === st.con.uid, atrasoMs: r && r.atraso != null ? Math.max(0, Math.round(r.atraso)) : null };
     }).sort((a, b) => a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : a.uid < b.uid ? -1 : 1);
@@ -14254,8 +14587,8 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE11, loadCat: loadCat2, conexao
   function jogadores() {
     const st = S;
     if (!st) return [];
-    const agora = agoraServ();
-    return [...st.presencas.values()].filter((p) => p.papel === "jogador" && p.char && p.uid !== st.con.uid && agora - p.t < VIVA).map((p) => ({ uid: p.uid, char: p.char, nome: p.nome })).sort((a, b) => a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : a.uid < b.uid ? -1 : 1);
+    const agora2 = agoraServ();
+    return [...st.presencas.values()].filter((p) => p.papel === "jogador" && p.char && p.uid !== st.con.uid && agora2 - p.t < VIVA).map((p) => ({ uid: p.uid, char: p.char, nome: p.nome })).sort((a, b) => a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : a.uid < b.uid ? -1 : 1);
   }
   function posicaoChar(charId) {
     const st = S;
@@ -16023,11 +16356,11 @@ function atualizarVotacao(ms) {
     avisoVotacao.esconder();
     return;
   }
-  const T2 = TIPOS_VOTACAO[v.tipo], ctx = { mapa: mapaAtual }, chave = v.fim + v.resultado;
+  const T2 = TIPOS_VOTACAO[v.tipo], ctx2 = { mapa: mapaAtual }, chave = v.fim + v.resultado;
   if (v.resultado === "aprovada" || v.resultado === "recusada") {
     if (chave !== vistaResultado) {
       vistaResultado = chave;
-      avisoVotacao.resultado(T2.resultado(v.resultado === "aprovada", v.valor, ctx));
+      avisoVotacao.resultado(T2.resultado(v.resultado === "aprovada", v.valor, ctx2));
     }
   } else if (v.resultado === "espere") {
     if (v.souQuem && chave !== vistaResultado) {
@@ -16089,6 +16422,10 @@ function mostrarPlaceholder(titulo, texto, itens) {
   p.textContent = texto;
   div.appendChild(p);
   for (const item of itens || []) {
+    if (item === "\xC1udio") {
+      div.appendChild(Som.botao("botao"));
+      continue;
+    }
     const b = document.createElement("button");
     b.className = "botao";
     b.textContent = item;
@@ -16151,6 +16488,7 @@ function abrirPausa() {
     if (div.parentNode) div.parentNode.removeChild(div);
   });
   div.appendChild(continuar);
+  div.appendChild(Som.botao("botao"));
   const voltar = document.createElement("button");
   voltar.className = "botao";
   voltar.textContent = "Voltar ao menu";
@@ -16198,32 +16536,34 @@ function restaurarRenderNormal() {
   camera.updateProjectionMatrix();
 }
 var ultimoTempo = 0;
+var tRioSom = -1e9;
+var rioSom = null;
 function desenharMinimapa() {
-  const alvo = alvoAtivo();
-  if (!alvo) return;
+  const alvo2 = alvoAtivo();
+  if (!alvo2) return;
   const canvas = document.getElementById("minimapa");
-  const ctx = canvas && canvas.getContext("2d");
-  if (!ctx) return;
-  if (!capaMini) capaMini = criarCapaEstatica(alvo, canvas.width);
-  ctx.drawImage(capaMini, 0, 0);
-  desenharNevoa(ctx, alvo, canvas.width);
-  desenharGato(ctx, alvo, canvas.width);
+  const ctx2 = canvas && canvas.getContext("2d");
+  if (!ctx2) return;
+  if (!capaMini) capaMini = criarCapaEstatica(alvo2, canvas.width);
+  ctx2.drawImage(capaMini, 0, 0);
+  desenharNevoa(ctx2, alvo2, canvas.width);
+  desenharGato(ctx2, alvo2, canvas.width);
 }
 function atualizarCameraEspectador(dt, estado) {
   const f = mapaAtual.focoMundo;
-  let alvo = null;
+  let alvo2 = null;
   if (seguirChar) {
-    alvo = aovivo.posicaoChar(seguirChar);
-    if (!alvo) {
+    alvo2 = aovivo.posicaoChar(seguirChar);
+    if (!alvo2) {
       if (!seguirAchou && !seguirAte && aovivo.ativo()) seguirAte = performance.now() + 8e3;
       if (seguirAchou || seguirAte && performance.now() > seguirAte) seguirChar = null;
     }
   }
-  if (alvo) {
-    if (!alvo.sub) {
+  if (alvo2) {
+    if (!alvo2.sub) {
       const k = seguirAchou ? Math.min(1, dt * 8) : 1;
-      f.x += (alvo.x - f.x) * k;
-      f.z += (alvo.z - f.z) * k;
+      f.x += (alvo2.x - f.x) * k;
+      f.z += (alvo2.z - f.z) * k;
     }
     seguirAchou = true;
   } else {
@@ -16263,7 +16603,7 @@ if (renderer) {
       atualizarVotacao(tempoMs);
     }
     if (telaAtual === "mapa" && !pausado && mapaAtual) {
-      const alvo = alvoAtivo();
+      const alvo2 = alvoAtivo();
       const estado = inputAtual && !trocando ? inputAtual.estado() : { dx: 0, dy: 0, correndo: false };
       const estadoMapa = espectando ? { dx: 0, dy: 0, correndo: false } : estado;
       try {
@@ -16274,15 +16614,15 @@ if (renderer) {
         if (espectando) atualizarCameraEspectador(dt, estado);
       } catch (e) {
       }
-      if (camera && alvo.gatoGroup) {
-        const g = servidorMundo ? mapaAtual.focoMundo : alvo.gatoGroup.position;
+      if (camera && alvo2.gatoGroup) {
+        const g = servidorMundo ? mapaAtual.focoMundo : alvo2.gatoGroup.position;
         if (zoomAtual) distCam += (zoomAtual.get() - distCam) * Math.min(1, dt * 10);
-        alvo.ajustarZoom(distCam);
-        const cy = espectando ? camYEsp : servidorMundo ? 0 : alvo.camY;
+        alvo2.ajustarZoom(distCam);
+        const cy = espectando ? camYEsp : servidorMundo ? 0 : alvo2.camY;
         camera.position.set(g.x, cy + 0.3 + 0.8 * distCam, g.z + 0.6 * distCam);
         camera.lookAt(g.x, cy + 0.3, g.z);
       }
-      if (inputAtual && !trocando) inputAtual.definirAcao(alvo.acaoContextual());
+      if (inputAtual && !trocando) inputAtual.definirAcao(alvo2.acaoContextual());
       tempoSalvar += dt;
       if (tempoSalvar >= 5) {
         salvarMundoAgora();
@@ -16293,6 +16633,16 @@ if (renderer) {
       }
       if (!servidorMundo) desenharMinimapa();
     }
+    if (telaAtual === "mapa" && mapaAtual && !servidorMundo && !trocando) {
+      const a = alvoAtivo(), gp = a && a.gatoGroup && a.gatoGroup.position;
+      if (gp) {
+        if (tempoMs - tRioSom > 150) {
+          tRioSom = tempoMs;
+          rioSom = mapaAtual.sub ? null : mapaAtual.mundo.distRio(gp.x, gp.z);
+        }
+        Som.mapa({ sub: mapaAtual.sub ? mapaAtual.sub.tipo : null, x: gp.x, z: gp.z, d: rioSom ? rioSom.d : Infinity, hw: rioSom ? rioSom.hw : 0 });
+      } else Som.mapa(null);
+    } else Som.mapa(null);
     if (mapaCompleto) mapaCompleto.atualizar();
     if (renderer) renderer.render(scene, camera);
   });
@@ -16389,6 +16739,10 @@ window.GATINHO = {
   get aovivo() {
     return aovivo;
   },
+  get som() {
+    return Som;
+  },
+  // 0.9.5 (testes: Som.estado())
   get avisoVotacao() {
     return avisoVotacao;
   },
