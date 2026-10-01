@@ -1783,6 +1783,38 @@ canvas,
 .pega-placar-lista li { padding: 4px 8px; background: #f0faea; border-radius: 10px; }
 .pega-placar-lista li.pega-placar-1 { background: #ffe9a3; }
 @media (max-height: 520px) { .pega-faixa { font-size: 0.85rem; padding: 3px 8px; } .pega-dica { top: 56%; padding: 3px 10px; font-size: 0.9rem; } .pega-aviso { top: 14%; } .pega-aviso p { padding: 6px 14px; font-size: 1.2rem; } .pega-rapido { top: 10%; padding: 3px 10px; font-size: 1rem; } .pega-placar { top: 48%; padding: 6px 12px; } .pega-placar-titulo { font-size: 1.15rem; margin-bottom: 3px; } .pega-placar-lista { font-size: 0.9rem; gap: 2px; } .pega-placar-lista li { padding: 2px 6px; } }
+
+/* 0.9.10: estatísticas do gatinho (js/estatisticas-ui.js) — por cima da pausa e de "Meus gatinhos"; a grade rola por dentro */
+.tela-estat { z-index: 80; justify-content: flex-start; gap: 8px; padding: 12px 12px 12px; overflow: hidden; background: #eef3fb; }
+.estat-titulo { margin: 2px 0 0; flex: 0 0 auto; font-size: 1.4rem; color: #5b6bb0; }
+.estat-abas { flex: 0 0 auto; display: flex; gap: 8px; width: min(100%, 520px); }
+.estat-aba { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 6px 8px; font-size: 1rem; }
+.estat-mundo { flex: 0 0 auto; max-width: min(100%, 520px); min-height: 40px; font-family: inherit; font-size: 1.05rem; font-weight: 700; color: #3a3a55; background: #fff; border: 3px solid #cdd6f0; border-radius: 14px; padding: 4px 10px; pointer-events: auto; }
+.estat-aba.selecionado { background: #ffd9e8; border-color: #f7a8c6; box-shadow: 0 4px 0 #f7a8c6; }
+.estat-mundo[hidden] { display: none; }
+.estat-grade { flex: 1 1 auto; min-height: 0; width: min(100%, 520px); overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 8px; padding: 2px 2px 6px; box-sizing: border-box; -webkit-overflow-scrolling: touch; pointer-events: auto; }
+.estat-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 8px 6px; background: #fff; border: 3px solid #cdd6f0; border-radius: 18px; box-shadow: 0 3px 0 #cdd6f0; text-align: center; min-width: 0; }
+.estat-icone { font-size: 2.1rem; line-height: 1.1; }
+.estat-rotulo { font-size: 0.85rem; font-weight: 700; opacity: 0.75; }
+.estat-valor { font-size: 1.25rem; font-weight: 900; line-height: 1.15; }
+.estat-detalhe { font-size: 0.75rem; font-weight: 700; opacity: 0.7; line-height: 1.2; }
+.estat-vazio { grid-column: 1 / -1; margin: 24px 0; font-size: 1.2rem; font-weight: 700; color: #7a86b8; }
+.estat-fechar { flex: 0 0 auto; min-height: 48px; }
+.gato-estat { margin-left: auto; min-width: 0; min-height: 36px; padding: 2px 12px; font-size: 0.95rem; background: #eaf6ff; border-color: #a9d3f0; box-shadow: 0 3px 0 #a9d3f0; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .tela-estat { gap: 4px; padding: 6px 10px; }
+  .estat-titulo { font-size: 1.05rem; margin: 0; }
+  .estat-abas { width: min(100%, 560px); }
+  .estat-aba { min-height: 34px; font-size: 0.85rem; padding: 2px 6px; }
+  .estat-mundo { min-height: 30px; font-size: 0.9rem; padding: 0 8px; }
+  .estat-grade { width: min(100%, 720px); grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .estat-card { padding: 3px 4px; border-width: 2px; border-radius: 12px; box-shadow: 0 2px 0 #cdd6f0; }
+  .estat-icone { font-size: 1.3rem; }
+  .estat-rotulo { font-size: 0.7rem; }
+  .estat-valor { font-size: 0.95rem; }
+  .estat-detalhe { font-size: 0.62rem; }
+  .estat-fechar { min-height: 32px; padding: 2px 14px; font-size: 0.9rem; }
+}
 </style>
 <script type="importmap">{
   "imports": {
@@ -2285,7 +2317,7 @@ if (typeof window !== "undefined") {
 import * as THREE12 from "three";
 
 // js/data.js
-var VERSION = "0.9.9";
+var VERSION = "0.9.10";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -2597,6 +2629,173 @@ function totalComida(ficha) {
   const g = c.geral;
   if (!ehNumeroValido(g)) return 0;
   return Math.floor(g);
+}
+
+// js/estatisticas.js
+var CAMPOS_NUM = ["tempo", "distancia", "nado", "corrida", "pulos", "botes", "missoes", "arvores", "cavernas"];
+var TIPOS_CACA = ["rato", "peixe", "passaro", "ovo"];
+var TIPOS_BRINC = ["esconde", "pega"];
+var CHAVES_PERIGOSAS2 = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
+function ehObjeto2(v) {
+  return v !== null && typeof v === "object";
+}
+function ehNumeroValido2(v) {
+  return typeof v === "number" && Number.isFinite(v) && v >= 0;
+}
+function num2(v) {
+  return ehNumeroValido2(v) ? v : 0;
+}
+function ehTextoValido(v) {
+  return typeof v === "string" && v.length > 0;
+}
+function mundoIdValido(id) {
+  return typeof id === "string" && id.length > 0 && !CHAVES_PERIGOSAS2.has(id);
+}
+function entradaZerada() {
+  const e = {};
+  for (const c of CAMPOS_NUM) e[c] = 0;
+  e.cacas = {};
+  for (const t of TIPOS_CACA) e.cacas[t] = 0;
+  e.brincadeiras = {};
+  for (const b of TIPOS_BRINC) e.brincadeiras[b] = { jogou: 0, ganhou: 0 };
+  e.primeiro = "";
+  e.ultimo = "";
+  return e;
+}
+function normalizarEntrada(e) {
+  const z = entradaZerada();
+  if (!ehObjeto2(e)) return z;
+  for (const c of CAMPOS_NUM) z[c] = num2(e[c]);
+  if (ehObjeto2(e.cacas)) {
+    for (const t of TIPOS_CACA) z.cacas[t] = num2(e.cacas[t]);
+  }
+  if (ehObjeto2(e.brincadeiras)) {
+    for (const b of TIPOS_BRINC) {
+      const bb = e.brincadeiras[b];
+      if (ehObjeto2(bb)) {
+        z.brincadeiras[b].jogou = num2(bb.jogou);
+        z.brincadeiras[b].ganhou = num2(bb.ganhou);
+      }
+    }
+  }
+  z.primeiro = ehTextoValido(e.primeiro) ? e.primeiro : "";
+  z.ultimo = ehTextoValido(e.ultimo) ? e.ultimo : "";
+  return z;
+}
+function copiarFicha(ficha) {
+  const f = {};
+  if (ehObjeto2(ficha)) {
+    for (const k in ficha) {
+      if (Object.prototype.hasOwnProperty.call(ficha, k)) {
+        f[k] = ficha[k];
+      }
+    }
+  }
+  return f;
+}
+function mundosDe(ficha) {
+  const f = ehObjeto2(ficha) ? ficha : {};
+  const est2 = ehObjeto2(f.estatisticas) ? f.estatisticas : {};
+  const m = ehObjeto2(est2.mundos) ? est2.mundos : {};
+  const out = {};
+  for (const k in m) {
+    if (Object.prototype.hasOwnProperty.call(m, k) && !CHAVES_PERIGOSAS2.has(k)) {
+      out[k] = m[k];
+    }
+  }
+  return out;
+}
+function somarEstat(ficha, mundoId, delta, agora2) {
+  const f = copiarFicha(ficha);
+  const est2 = ehObjeto2(f.estatisticas) ? { ...f.estatisticas } : {};
+  f.estatisticas = est2;
+  const mundos2 = mundosDe(f);
+  est2.mundos = mundos2;
+  if (!mundoIdValido(mundoId)) {
+    return f;
+  }
+  const agoraIso = ehTextoValido(agora2) ? agora2 : (/* @__PURE__ */ new Date()).toISOString();
+  const atual = normalizarEntrada(mundos2[mundoId]);
+  const d = ehObjeto2(delta) ? delta : {};
+  for (const c of CAMPOS_NUM) {
+    atual[c] += num2(d[c]);
+  }
+  if (ehObjeto2(d.cacas)) {
+    for (const t of TIPOS_CACA) {
+      atual.cacas[t] += num2(d.cacas[t]);
+    }
+  }
+  if (ehObjeto2(d.brincadeiras)) {
+    for (const b of TIPOS_BRINC) {
+      const bb = d.brincadeiras[b];
+      if (ehObjeto2(bb)) {
+        atual.brincadeiras[b].jogou += num2(bb.jogou);
+        atual.brincadeiras[b].ganhou += num2(bb.ganhou);
+      }
+    }
+  }
+  if (!ehTextoValido(atual.primeiro)) {
+    atual.primeiro = agoraIso;
+  }
+  atual.ultimo = agoraIso;
+  mundos2[mundoId] = atual;
+  return f;
+}
+function totaisEstat(ficha) {
+  const t = entradaZerada();
+  const mundos2 = mundosDe(ficha);
+  let qtd = 0;
+  let primeiro = "";
+  let ultimo = "";
+  for (const k in mundos2) {
+    if (!Object.prototype.hasOwnProperty.call(mundos2, k)) continue;
+    qtd++;
+    const e = normalizarEntrada(mundos2[k]);
+    for (const c of CAMPOS_NUM) t[c] += e[c];
+    for (const tt of TIPOS_CACA) t.cacas[tt] += e.cacas[tt];
+    for (const b of TIPOS_BRINC) {
+      t.brincadeiras[b].jogou += e.brincadeiras[b].jogou;
+      t.brincadeiras[b].ganhou += e.brincadeiras[b].ganhou;
+    }
+    if (ehTextoValido(e.primeiro)) {
+      if (!ehTextoValido(primeiro) || e.primeiro < primeiro) primeiro = e.primeiro;
+    }
+    if (ehTextoValido(e.ultimo)) {
+      if (!ehTextoValido(ultimo) || e.ultimo > ultimo) ultimo = e.ultimo;
+    }
+  }
+  t.primeiro = primeiro;
+  t.ultimo = ultimo;
+  t.mundos = qtd;
+  return t;
+}
+function entradaEstat(ficha, mundoId) {
+  if (!mundoIdValido(mundoId)) {
+    return entradaZerada();
+  }
+  const mundos2 = mundosDe(ficha);
+  if (!Object.prototype.hasOwnProperty.call(mundos2, mundoId)) {
+    return entradaZerada();
+  }
+  return normalizarEntrada(mundos2[mundoId]);
+}
+function formatarTempo(s) {
+  if (!ehNumeroValido2(s)) return "menos de 1 min";
+  const total = Math.floor(s);
+  if (total < 60) return "menos de 1 min";
+  const h = Math.floor(total / 3600);
+  const min = Math.floor(total % 3600 / 60);
+  if (h === 0) return `${min} min`;
+  if (min === 0) return `${h} h`;
+  return `${h} h ${min} min`;
+}
+function formatarDistancia(m) {
+  if (!ehNumeroValido2(m) || m < 1) return "0 m";
+  if (m < 1e3) return `${Math.round(m)} m`;
+  const km = m / 1e3;
+  const dec = Math.round(km * 10) / 10;
+  if (dec === Math.floor(dec)) return `${Math.floor(dec)} km`;
+  return dec.toFixed(1).replace(".", ",") + " km";
 }
 
 // js/save.js
@@ -2920,6 +3119,24 @@ var Save = {
   totalComida(id) {
     const g = Save.pegar(id);
     return g ? totalComida(g.ficha) : 0;
+  },
+  // 0.9.10: estatísticas do char num mundo (js/estatisticas.js): soma o `delta` (tempo, distância, pulos, caças...) em ficha.estatisticas.mundos[mundoId]. O main.js junta em memória e chama a cada ~60 s e ao sair/pausar. true se gravou.
+  somarEstat(id, mundoId, delta) {
+    try {
+      const dados = lerBruto();
+      const g = dados && dados.gatos.find((x) => x && x.id === String(id));
+      if (!g) return false;
+      g.ficha = somarEstat(g.ficha, mundoId, delta);
+      g.atualizado = agoraISO();
+      if (!gravar(dados)) return false;
+      try {
+        Save.aoMudar?.(g.id);
+      } catch {
+      }
+      return true;
+    } catch {
+      return false;
+    }
   },
   // 0.9.6: o char cumpriu a missão `missaoId` (js/missoes.js): ficha.missoes = { <id>: n vezes }. Devolve o novo n ou null se não gravou.
   missaoCumprida(id, missaoId) {
@@ -5443,7 +5660,7 @@ function formatarData(criado) {
   const mes = String(d.getMonth() + 1).padStart(2, "0");
   return "Criado em " + dia3 + "/" + mes;
 }
-function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar, aoCopias, aoDuplicar }) {
+function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar, aoCopias, aoDuplicar, aoEstat }) {
   const elemento = document.createElement("div");
   elemento.className = "tela tela-gatos";
   const titulo = document.createElement("h2");
@@ -5492,6 +5709,14 @@ function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar, aoCopias, 
       dataEl.textContent = formatarData(gato.criado);
       info.appendChild(dataEl);
       cartao.appendChild(info);
+      if (aoEstat) {
+        const btnEstat = document.createElement("button");
+        btnEstat.className = "botao gato-estat";
+        btnEstat.type = "button";
+        btnEstat.textContent = "\u{1F4CA} Estat\xEDsticas";
+        btnEstat.addEventListener("click", () => aoEstat(gato.id));
+        info.insertBefore(btnEstat, dataEl);
+      }
       const botoes = document.createElement("div");
       botoes.className = "gato-botoes";
       const btnJogar = document.createElement("button");
@@ -6201,14 +6426,14 @@ function lerMissao(texto) {
 // js/ovos.js
 var ESPERA_OVO_MS = 18e4;
 var RE_ID = /^(?!__proto__$)[A-Za-z0-9_-]{1,40}$/;
-function ehObjeto2(v) {
+function ehObjeto3(v) {
   return v !== null && typeof v === "object";
 }
 function ehNumeroFinito(v) {
   return typeof v === "number" && Number.isFinite(v);
 }
 function ovoPego(pegos, id, agora2) {
-  if (!ehObjeto2(pegos)) return false;
+  if (!ehObjeto3(pegos)) return false;
   if (!Object.hasOwn(pegos, id)) return false;
   const v = pegos[id];
   if (!ehNumeroFinito(v)) return false;
@@ -6216,7 +6441,7 @@ function ovoPego(pegos, id, agora2) {
   return v > agora2;
 }
 function pegarOvo(pegos, id, agora2, espera2 = ESPERA_OVO_MS) {
-  if (!ehObjeto2(pegos)) return false;
+  if (!ehObjeto3(pegos)) return false;
   if (typeof id !== "string" || !RE_ID.test(id)) return false;
   if (!ehNumeroFinito(agora2)) return false;
   if (!ehNumeroFinito(espera2)) return false;
@@ -6225,7 +6450,7 @@ function pegarOvo(pegos, id, agora2, espera2 = ESPERA_OVO_MS) {
   return true;
 }
 function podarPegos(pegos, agora2) {
-  if (!ehObjeto2(pegos)) return false;
+  if (!ehObjeto3(pegos)) return false;
   let apagou = false;
   for (const k of Object.keys(pegos)) {
     if (k === "missao") continue;
@@ -6238,7 +6463,7 @@ function podarPegos(pegos, agora2) {
   return apagou;
 }
 function ovosFora(pegos, agora2) {
-  if (!ehObjeto2(pegos)) return [];
+  if (!ehObjeto3(pegos)) return [];
   const ids = Object.keys(pegos).filter((id) => ovoPego(pegos, id, agora2)).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
   return ids.slice(0, 60);
 }
@@ -7186,6 +7411,7 @@ function usarAcao(mapa) {
     const alvo2 = a.alvo;
     mapa.gatoGroup.rotation.y = Math.atan2(alvo2.x - gp.x, alvo2.z - gp.z);
     mapa.cat.play("bote");
+    if (mapa.aoStat) mapa.aoStat("botes");
     if (mapa.animais) mapa.animais.bote(alvo2);
   } else if (a.id === "esconder") {
     e.arbusto = a.alvo;
@@ -10024,7 +10250,7 @@ function ehInteiro(v) {
 function ehNumeroFinito2(v) {
   return typeof v === "number" && Number.isFinite(v);
 }
-function ehObjeto3(v) {
+function ehObjeto4(v) {
   return v !== null && typeof v === "object" && !Array.isArray(v);
 }
 function uidValido(u) {
@@ -10076,7 +10302,7 @@ function novoJogo(tipo, uids, agora2, rnd) {
   };
 }
 function registrarEscondidos(jogo, esc) {
-  if (!ehObjeto3(jogo) || jogo.fase !== "contando" || !ehObjeto3(esc)) return false;
+  if (!ehObjeto4(jogo) || jogo.fase !== "contando" || !ehObjeto4(esc)) return false;
   const filaSet = new Set(jogo.fila);
   let mudou2 = false;
   for (const uid in esc) {
@@ -10091,7 +10317,7 @@ function registrarEscondidos(jogo, esc) {
   return mudou2;
 }
 function olhar(jogo, uid, idx) {
-  if (!ehObjeto3(jogo) || jogo.fase !== "procurando" || uid !== jogo.peg) return [];
+  if (!ehObjeto4(jogo) || jogo.fase !== "procurando" || uid !== jogo.peg) return [];
   if (!ehInteiro(idx) || idx < 0) return [];
   const achados = [];
   for (const u in jogo.esc) {
@@ -10099,7 +10325,7 @@ function olhar(jogo, uid, idx) {
     if (jogo.esc[u] === idx && !emLista(jogo.ach, u)) {
       jogo.ach.push(u);
       achados.push(u);
-      if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[uid]) && ehInteiro(jogo.placar[uid][0])) {
+      if (ehObjeto4(jogo.placar) && Array.isArray(jogo.placar[uid]) && ehInteiro(jogo.placar[uid][0])) {
         jogo.placar[uid][0] += 1;
       }
     }
@@ -10107,7 +10333,7 @@ function olhar(jogo, uid, idx) {
   return achados;
 }
 function avancar(jogo, agora2, vivos) {
-  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || !Array.isArray(vivos)) return "";
+  if (!ehObjeto4(jogo) || !ehNumeroFinito2(agora2) || !Array.isArray(vivos)) return "";
   const cfg = Object.hasOwn(BRINCADEIRAS, jogo.tipo) ? BRINCADEIRAS[jogo.tipo] : null;
   if (!cfg) return "";
   const vivosSet = new Set(vivos);
@@ -10163,7 +10389,7 @@ function avancar(jogo, agora2, vivos) {
           if (!vivosSet.has(u)) continue;
           if (!Object.hasOwn(jogo.esc, u)) continue;
           if (emLista(jogo.ach, u)) continue;
-          if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[u]) && ehInteiro(jogo.placar[u][1])) {
+          if (ehObjeto4(jogo.placar) && Array.isArray(jogo.placar[u]) && ehInteiro(jogo.placar[u][1])) {
             jogo.placar[u][1] += 1;
           }
         }
@@ -10197,7 +10423,7 @@ function avancar(jogo, agora2, vivos) {
   return "";
 }
 function restante(jogo, agora2) {
-  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || !ehNumeroFinito2(jogo.fimFase)) return 0;
+  if (!ehObjeto4(jogo) || !ehNumeroFinito2(agora2) || !ehNumeroFinito2(jogo.fimFase)) return 0;
   const s = Math.ceil((jogo.fimFase - agora2) / 1e3);
   return s < 0 ? 0 : s;
 }
@@ -10209,7 +10435,7 @@ function tempoTexto(seg) {
   return m + ":" + (r < 10 ? "0" + r : "" + r);
 }
 function faixaTexto(jogo, agora2, nomeDe) {
-  if (!ehObjeto3(jogo) || !ehNumeroFinito2(agora2) || typeof nomeDe !== "function") return "";
+  if (!ehObjeto4(jogo) || !ehNumeroFinito2(agora2) || typeof nomeDe !== "function") return "";
   const cfg = Object.hasOwn(BRINCADEIRAS, jogo.tipo) ? BRINCADEIRAS[jogo.tipo] : null;
   if (!cfg) return "";
   const icone = cfg.icone;
@@ -10232,13 +10458,13 @@ function faixaTexto(jogo, agora2, nomeDe) {
   return "";
 }
 function resumoRodada(jogo) {
-  if (!ehObjeto3(jogo)) return { achados: [], escondidos: [], perderam: [] };
+  if (!ehObjeto4(jogo)) return { achados: [], escondidos: [], perderam: [] };
   const perdSet = new Set(Array.isArray(jogo.perd) ? jogo.perd : []);
   const achSet = new Set(Array.isArray(jogo.ach) ? jogo.ach : []);
   const achados = [];
   for (const u of jogo.ach) if (!perdSet.has(u)) achados.push(u);
   const escondidos = [];
-  if (ehObjeto3(jogo.esc)) {
+  if (ehObjeto4(jogo.esc)) {
     for (const u in jogo.esc) {
       if (!Object.hasOwn(jogo.esc, u)) continue;
       if (!achSet.has(u)) escondidos.push(u);
@@ -10248,13 +10474,13 @@ function resumoRodada(jogo) {
   return { achados, escondidos, perderam };
 }
 function placarFinal(jogo) {
-  if (!ehObjeto3(jogo) || !Array.isArray(jogo.fila)) return [];
+  if (!ehObjeto4(jogo) || !Array.isArray(jogo.fila)) return [];
   const arr = [];
   for (let i = 0; i < jogo.fila.length; i++) {
     const u = jogo.fila[i];
     let achou = 0;
     let escondeu = 0;
-    if (ehObjeto3(jogo.placar) && Array.isArray(jogo.placar[u])) {
+    if (ehObjeto4(jogo.placar) && Array.isArray(jogo.placar[u])) {
       if (ehInteiro(jogo.placar[u][0])) achou = jogo.placar[u][0];
       if (ehInteiro(jogo.placar[u][1])) escondeu = jogo.placar[u][1];
     }
@@ -10267,7 +10493,7 @@ function placarFinal(jogo) {
   return arr.map((x) => ({ uid: x.uid, achou: x.achou, escondeu: x.escondeu, total: x.total }));
 }
 function serializarJogo(jogo) {
-  if (!ehObjeto3(jogo)) return "";
+  if (!ehObjeto4(jogo)) return "";
   let s;
   try {
     s = JSON.stringify(jogo);
@@ -10285,7 +10511,7 @@ function lerJogo(texto) {
   } catch (e) {
     return null;
   }
-  if (!ehObjeto3(obj)) return null;
+  if (!ehObjeto4(obj)) return null;
   if (obj.tipo !== "esconde") return null;
   if (!Array.isArray(obj.fila) || obj.fila.length < 2 || obj.fila.length > 12) return null;
   for (const u of obj.fila) {
@@ -10299,7 +10525,7 @@ function lerJogo(texto) {
   if (!fases.includes(obj.fase)) return null;
   if (!ehNumeroFinito2(obj.fimFase)) return null;
   const esc = {};
-  if (ehObjeto3(obj.esc)) {
+  if (ehObjeto4(obj.esc)) {
     for (const u in obj.esc) {
       if (!Object.hasOwn(obj.esc, u)) continue;
       if (!filaSet.has(u)) continue;
@@ -10323,7 +10549,7 @@ function lerJogo(texto) {
   for (const u of obj.fila) {
     let a = 0;
     let e = 0;
-    if (ehObjeto3(obj.placar) && Array.isArray(obj.placar[u])) {
+    if (ehObjeto4(obj.placar) && Array.isArray(obj.placar[u])) {
       if (ehInteiro(obj.placar[u][0]) && obj.placar[u][0] >= 0 && obj.placar[u][0] <= 99) a = obj.placar[u][0];
       if (ehInteiro(obj.placar[u][1]) && obj.placar[u][1] >= 0 && obj.placar[u][1] <= 99) e = obj.placar[u][1];
     }
@@ -10356,7 +10582,7 @@ var PEGA = {
   fator: 1.2,
   teto: 2.5
 };
-function num2(v) {
+function num3(v) {
   return typeof v === "number" && Number.isFinite(v);
 }
 function r1(v) {
@@ -10366,7 +10592,7 @@ function r2(v) {
   return Math.round(v * 100) / 100;
 }
 function dist(a, b) {
-  if (!num2(a.x) || !num2(a.z) || !num2(b.x) || !num2(b.z)) return Infinity;
+  if (!num3(a.x) || !num3(a.z) || !num3(b.x) || !num3(b.z)) return Infinity;
   const dx = a.x - b.x;
   const dz = a.z - b.z;
   return Math.sqrt(dx * dx + dz * dz);
@@ -10381,7 +10607,7 @@ function mulberry322(seed) {
   };
 }
 function areaPega(posicoes, limite = 55) {
-  const pts = (posicoes || []).filter((p) => p && num2(p.x) && num2(p.z));
+  const pts = (posicoes || []).filter((p) => p && num3(p.x) && num3(p.z));
   if (pts.length === 0) {
     return { cx: 0, cz: 0, raio: r1(PEGA.raioMin) };
   }
@@ -10401,7 +10627,7 @@ function areaPega(posicoes, limite = 55) {
   }
   let raio = Math.min(PEGA.raioMax, Math.max(PEGA.raioMin, maxD + PEGA.folga));
   let cx = 0, cz = 0;
-  if (num2(limite) && limite > raio) {
+  if (num3(limite) && limite > raio) {
     const m = limite - raio;
     cx = Math.max(-m, Math.min(m, cx0));
     cz = Math.max(-m, Math.min(m, cz0));
@@ -10409,7 +10635,7 @@ function areaPega(posicoes, limite = 55) {
   return { cx: r1(cx), cz: r1(cz), raio: r1(raio) };
 }
 function troncosArea(centro, raio, seed) {
-  if (!centro || !num2(centro.x) || !num2(centro.z) || !num2(raio) || raio <= 0) return [];
+  if (!centro || !num3(centro.x) || !num3(centro.z) || !num3(raio) || raio <= 0) return [];
   const rnd = mulberry322(seed | 0);
   const n = Math.round(Math.PI * raio * raio / 80);
   const tentativas = n * 12;
@@ -10438,16 +10664,16 @@ function troncosArea(centro, raio, seed) {
   return aceitos;
 }
 function multVelocidade(seg) {
-  if (!num2(seg) || seg < PEGA.passoBonus) return 1;
+  if (!num3(seg) || seg < PEGA.passoBonus) return 1;
   return Math.min(PEGA.teto, PEGA.fator ** Math.floor(seg / PEGA.passoBonus));
 }
 function pegou(a, b, raio) {
-  if (!a || !b || !num2(raio)) return false;
+  if (!a || !b || !num3(raio)) return false;
   return dist(a, b) <= raio;
 }
 function pegouTrecho(a0, a1, b, raio) {
-  if (!a0 || !a1 || !b || !num2(raio)) return false;
-  if (!num2(a0.x) || !num2(a0.z) || !num2(a1.x) || !num2(a1.z) || !num2(b.x) || !num2(b.z)) return false;
+  if (!a0 || !a1 || !b || !num3(raio)) return false;
+  if (!num3(a0.x) || !num3(a0.z) || !num3(a1.x) || !num3(a1.z) || !num3(b.x) || !num3(b.z)) return false;
   const ax = a1.x - a0.x;
   const az = a1.z - a0.z;
   const len2 = ax * ax + az * az;
@@ -10505,7 +10731,7 @@ function novoPega({ uids, posicoes, agora: agora2, seed, primeiro, limite }) {
 }
 function registrarPegadas(jogo, agora2, pos, ant, raio = PEGA.aura) {
   const resultado = [];
-  if (!jogo || jogo.fase !== "jogando" || !num2(agora2) || agora2 < jogo.ini) return resultado;
+  if (!jogo || jogo.fase !== "jogando" || !num3(agora2) || agora2 < jogo.ini) return resultado;
   if (!pos || typeof pos !== "object") return resultado;
   const zumbis = Object.keys(jogo.pegos || {});
   const livres = (jogo.fila || []).filter((u) => !Object.hasOwn(jogo.pegos || {}, u));
@@ -10532,7 +10758,7 @@ function registrarPegadas(jogo, agora2, pos, ant, raio = PEGA.aura) {
   return resultado;
 }
 function avancarPega(jogo, agora2, vivos) {
-  if (!jogo || !num2(agora2)) return "";
+  if (!jogo || !num3(agora2)) return "";
   if (jogo.fase === "fim") {
     return agora2 >= jogo.fimFase ? "acabou" : "";
   }
@@ -10574,7 +10800,7 @@ function contagemPega(jogo, vivos) {
   return out;
 }
 function faixaPega(jogo, agora2, vivos) {
-  if (!jogo || !num2(agora2)) return "";
+  if (!jogo || !num3(agora2)) return "";
   if (jogo.fase === "jogando") {
     if (agora2 < jogo.ini) {
       const n = Math.ceil((jogo.ini - agora2) / 1e3);
@@ -10638,10 +10864,10 @@ function lerPega(texto) {
     fila.push(u);
   }
   if (o.fase !== "jogando" && o.fase !== "fim") return null;
-  if (!num2(o.ini) || !num2(o.fimFase)) return null;
-  if (!num2(o.cx) || o.cx < -200 || o.cx > 200) return null;
-  if (!num2(o.cz) || o.cz < -200 || o.cz > 200) return null;
-  if (!num2(o.raio) || o.raio < 5 || o.raio > 80) return null;
+  if (!num3(o.ini) || !num3(o.fimFase)) return null;
+  if (!num3(o.cx) || o.cx < -200 || o.cx > 200) return null;
+  if (!num3(o.cz) || o.cz < -200 || o.cz > 200) return null;
+  if (!num3(o.raio) || o.raio < 5 || o.raio > 80) return null;
   if (!Number.isInteger(o.seed)) return null;
   const set = new Set(fila);
   const pegos = {};
@@ -10649,7 +10875,7 @@ function lerPega(texto) {
     for (const k of Object.keys(o.pegos)) {
       if (!set.has(k)) continue;
       const v = o.pegos[k];
-      if (num2(v)) pegos[k] = v;
+      if (num3(v)) pegos[k] = v;
     }
   }
   const pg = {};
@@ -11119,6 +11345,7 @@ function criarMapa(scene2, gato, salvo) {
         }
         sairDoEsconderijo(mapa);
         if (!mapa.fis.pular()) return;
+        if (mapa.aoStat) mapa.aoStat("pulos");
       }
       if (mapa.cat) mapa.cat.play(id);
     },
@@ -11594,7 +11821,10 @@ function entrar(mapa, entrada, restaurar2) {
     desenharCapa: (ctx2, W) => inst.desenharCapa(ctx2, W),
     // planta 2D (criarCapaEstatica usa em vez do terreno)
     acao(id) {
-      if (id === "pular" && !fis.pular()) return;
+      if (id === "pular") {
+        if (!fis.pular()) return;
+        if (mapa.aoStat) mapa.aoStat("pulos");
+      }
       if (mapa.cat) mapa.cat.play(id);
     },
     acaoContextual() {
@@ -17165,6 +17395,216 @@ function mostrarFesta(texto = "Miss\xE3o cumprida! \u{1F389}", ms = 3e3) {
   return removerAgora;
 }
 
+// js/estatisticas-ui.js
+function num4(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+function dataBR(iso) {
+  if (!iso) return "\u2014";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "\u2014";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const aaaa = String(d.getFullYear());
+  return `${dd}/${mm}/${aaaa}`;
+}
+function pluralMundo(n) {
+  return n === 1 ? "1 mundo" : `${n} mundos`;
+}
+function temJogo(e) {
+  if (num4(e.tempo) > 0) return true;
+  if (num4(e.distancia) > 0) return true;
+  if (num4(e.nado) > 0) return true;
+  if (num4(e.corrida) > 0) return true;
+  if (num4(e.pulos) > 0) return true;
+  if (num4(e.botes) > 0) return true;
+  if (num4(e.missoes) > 0) return true;
+  if (num4(e.arvores) > 0) return true;
+  if (num4(e.cavernas) > 0) return true;
+  const c = e.cacas || {};
+  if (num4(c.rato) > 0 || num4(c.peixe) > 0 || num4(c.passaro) > 0 || num4(c.ovo) > 0) return true;
+  const b = e.brincadeiras || {};
+  if (b.esconde && (num4(b.esconde.jogou) > 0 || num4(b.esconde.ganhou) > 0)) return true;
+  if (b.pega && (num4(b.pega.jogou) > 0 || num4(b.pega.ganhou) > 0)) return true;
+  return false;
+}
+function criarCartao(icone, rotulo, valor, detalhe) {
+  const card = document.createElement("div");
+  card.className = "estat-card";
+  const ic = document.createElement("span");
+  ic.className = "estat-icone";
+  ic.textContent = icone;
+  const ro = document.createElement("span");
+  ro.className = "estat-rotulo";
+  ro.textContent = rotulo;
+  const va = document.createElement("span");
+  va.className = "estat-valor";
+  va.textContent = String(valor);
+  card.appendChild(ic);
+  card.appendChild(ro);
+  card.appendChild(va);
+  if (detalhe) {
+    const de = document.createElement("span");
+    de.className = "estat-detalhe";
+    de.textContent = detalhe;
+    card.appendChild(de);
+  }
+  return card;
+}
+function montarCartoes(e, aba) {
+  const grade = document.createElement("div");
+  grade.className = "estat-grade";
+  if (!temJogo(e)) {
+    const p = document.createElement("p");
+    p.className = "estat-vazio";
+    p.textContent = "Ainda n\xE3o tem nada por aqui. V\xE1 brincar! \u{1F431}";
+    grade.appendChild(p);
+    return grade;
+  }
+  const tempo = num4(e.tempo);
+  const distancia = num4(e.distancia);
+  const nado = num4(e.nado);
+  const corrida = num4(e.corrida);
+  const pulos = num4(e.pulos);
+  const missoes = num4(e.missoes);
+  const arvores = num4(e.arvores);
+  const cavernas = num4(e.cavernas);
+  const cacas = e.cacas || {};
+  const rato = num4(cacas.rato);
+  const peixe = num4(cacas.peixe);
+  const passaro = num4(cacas.passaro);
+  const ovo = num4(cacas.ovo);
+  const somaCacas = rato + peixe + passaro + ovo;
+  const b = e.brincadeiras || {};
+  const esconde = b.esconde || {};
+  const pega = b.pega || {};
+  const escondeJogou = num4(esconde.jogou);
+  const escondeGanhou = num4(esconde.ganhou);
+  const pegaJogou = num4(pega.jogou);
+  const pegaGanhou = num4(pega.ganhou);
+  const andando = Math.max(0, distancia - corrida - nado);
+  const detalheCaminhada = "\u{1F6B6} " + formatarDistancia(andando) + " \xB7 \u{1F3C3} " + formatarDistancia(corrida) + " \xB7 \u{1F3CA} " + formatarDistancia(nado);
+  const detalheCacas = "\u{1F42D} " + rato + "  \u{1F41F} " + peixe + "  \u{1F426} " + passaro + "  \u{1F95A} " + ovo;
+  const detalheEsconde = "jogou " + escondeJogou + " \xB7 ganhou " + escondeGanhou;
+  const detalhePega = "jogou " + pegaJogou + " \xB7 ganhou " + pegaGanhou;
+  const primeiro = e.primeiro || "";
+  const ultimo = e.ultimo || "";
+  const valorDesde = dataBR(primeiro);
+  let detalheDesde = "";
+  if (ultimo && dataBR(ultimo) !== "\u2014") {
+    detalheDesde = "\xFAltima vez: " + dataBR(ultimo);
+  }
+  if (aba === "todos") {
+    const nMundos = num4(e.mundos);
+    if (nMundos > 0) {
+      detalheDesde = detalheDesde ? detalheDesde + " \xB7 " + pluralMundo(nMundos) : pluralMundo(nMundos);
+    }
+  }
+  grade.appendChild(criarCartao("\u23F1\uFE0F", "Tempo jogando", formatarTempo(tempo)));
+  grade.appendChild(criarCartao("\u{1F43E}", "Caminhou", formatarDistancia(distancia), detalheCaminhada));
+  grade.appendChild(criarCartao("\u{1F356}", "Ca\xE7as", somaCacas, detalheCacas));
+  grade.appendChild(criarCartao("\u{1F3AF}", "Miss\xF5es cumpridas", missoes));
+  grade.appendChild(criarCartao("\u{1F648}", "Pique-esconde", detalheEsconde));
+  grade.appendChild(criarCartao("\u{1F9DF}", "Pique-pega", detalhePega));
+  grade.appendChild(criarCartao("\u{1F333}", "\xC1rvores", arvores));
+  grade.appendChild(criarCartao("\u{1F573}\uFE0F", "Cavernas", cavernas));
+  grade.appendChild(criarCartao("\u{1F998}", "Pulos", pulos));
+  grade.appendChild(criarCartao("\u{1F4C5}", "Desde", valorDesde, detalheDesde));
+  return grade;
+}
+function criarTelaEstatisticas({ container, nome, ficha, mundos: mundos2, mundoInicial, aoFechar }) {
+  const listaMundos = Array.isArray(mundos2) ? mundos2 : [];
+  const elemento = document.createElement("div");
+  elemento.className = "tela tela-estat";
+  const titulo = document.createElement("h2");
+  titulo.className = "estat-titulo";
+  titulo.textContent = "\u{1F4CA} Estat\xEDsticas do " + (nome ? nome : "gatinho");
+  elemento.appendChild(titulo);
+  const abas = document.createElement("div");
+  abas.className = "estat-abas";
+  const abaMundo = document.createElement("button");
+  abaMundo.type = "button";
+  abaMundo.className = "botao estat-aba";
+  abaMundo.dataset.aba = "mundo";
+  abaMundo.textContent = "Neste mundo";
+  const abaTodos = document.createElement("button");
+  abaTodos.type = "button";
+  abaTodos.className = "botao estat-aba";
+  abaTodos.dataset.aba = "todos";
+  abaTodos.textContent = "Em todos os mundos";
+  abas.appendChild(abaMundo);
+  abas.appendChild(abaTodos);
+  elemento.appendChild(abas);
+  const select = document.createElement("select");
+  select.className = "estat-mundo";
+  for (const m of listaMundos) {
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = m.nome ? m.nome : "Mundo";
+    select.appendChild(opt);
+  }
+  if (mundoInicial && listaMundos.some((m) => m.id === mundoInicial)) {
+    select.value = mundoInicial;
+  } else if (listaMundos.length > 0) {
+    select.value = listaMundos[0].id;
+  }
+  elemento.appendChild(select);
+  const grade = document.createElement("div");
+  grade.className = "estat-grade";
+  elemento.appendChild(grade);
+  const fechar = document.createElement("button");
+  fechar.type = "button";
+  fechar.className = "botao estat-fechar";
+  fechar.textContent = "Voltar";
+  fechar.addEventListener("click", () => {
+    if (typeof aoFechar === "function") aoFechar();
+  });
+  elemento.appendChild(fechar);
+  let abaAtual = mundoInicial ? "mundo" : "todos";
+  function mundoSelecionado() {
+    if (listaMundos.length > 0) {
+      return select.value || listaMundos[0].id;
+    }
+    return mundoInicial || "";
+  }
+  function atualizar() {
+    abaMundo.classList.toggle("selecionado", abaAtual === "mundo");
+    abaTodos.classList.toggle("selecionado", abaAtual === "todos");
+    const mostrarSelect = abaAtual === "mundo" && listaMundos.length >= 2;
+    select.hidden = !mostrarSelect;
+    let entrada;
+    if (abaAtual === "mundo") {
+      const id = mundoSelecionado();
+      entrada = entradaEstat(ficha, id);
+    } else {
+      entrada = totaisEstat(ficha);
+    }
+    grade.replaceChildren(...montarCartoes(entrada, abaAtual).childNodes);
+  }
+  abaMundo.addEventListener("click", () => {
+    abaAtual = "mundo";
+    atualizar();
+  });
+  abaTodos.addEventListener("click", () => {
+    abaAtual = "todos";
+    atualizar();
+  });
+  select.addEventListener("change", () => {
+    atualizar();
+  });
+  container.appendChild(elemento);
+  atualizar();
+  return {
+    elemento,
+    destruir() {
+      if (elemento.parentNode === container) {
+        container.removeChild(elemento);
+      }
+    }
+  };
+}
+
 // js/brincadeiras-ui.js
 function criarTelaBrincadeira() {
   const elemento = document.createElement("div");
@@ -17709,8 +18149,82 @@ function montarSalvoMundo(idMundo) {
   const w = mundos.pegar(idMundo);
   return w ? { ...w.estado || {}, v: 1, seed: w.registro.seed } : null;
 }
+var estatVazio = () => ({ tempo: 0, distancia: 0, nado: 0, corrida: 0, pulos: 0, botes: 0, cacas: {}, missoes: 0, brincadeiras: {}, arvores: 0, cavernas: 0 });
+var estat = estatVazio();
+var estatT = 0;
+var estatUlt = 0;
+var estatPos = null;
+var estatBr = null;
+var estatJoga = () => !!idGatoMapa && !!idMundoMapa && !semSalvarChar && !servidorMundo && !espectando;
+function estatMais(campo, n = 1) {
+  if (estatJoga()) estat[campo] += n;
+}
+function descarregarEstat() {
+  const d = estat;
+  estat = estatVazio();
+  estatT = 0;
+  if (!estatJoga()) return;
+  if (d.tempo > 0 || d.distancia > 0 || d.pulos || d.botes || d.missoes || d.arvores || d.cavernas || Object.keys(d.cacas).length || Object.keys(d.brincadeiras).length) Save.somarEstat(idGatoMapa, idMundoMapa, d);
+}
+function estatQuadro(ds, alvo2) {
+  if (document.visibilityState !== "visible") {
+    estatPos = null;
+    return;
+  }
+  estat.tempo += ds;
+  estatT += ds;
+  const p = alvo2.gatoGroup.position;
+  if (estatPos) {
+    const d = Math.hypot(p.x - estatPos.x, p.z - estatPos.z);
+    if (d <= 5) {
+      estat.distancia += d;
+      if (alvo2.nadando) estat.nado += d;
+      else if (alvo2.correndo) estat.corrida += d;
+    }
+  }
+  estatPos = { x: p.x, z: p.z };
+  if (estatT >= 60) descarregarEstat();
+}
+function estatCaca(tipo) {
+  if (estatJoga()) estat.cacas[tipo] = (estat.cacas[tipo] || 0) + 1;
+}
+function estatBrincar(jj, eu) {
+  if (!jj) {
+    estatBr = null;
+    return;
+  }
+  if (!estatJoga() || !eu || !(jj.fila || []).includes(eu)) return;
+  const k = jj.tipo === "pega" ? "pega" : "esconde", chave = k + ":" + jj.fila.join(",");
+  const e = estat.brincadeiras[k] = estat.brincadeiras[k] || { jogou: 0, ganhou: 0 };
+  if (!estatBr || estatBr.chave !== chave || estatBr.fim && jj.fase !== "fim") {
+    estatBr = { chave, fim: false };
+    e.jogou++;
+  }
+  if (jj.fase === "fim" && !estatBr.fim) {
+    estatBr.fim = true;
+    let ganhou;
+    if (k === "pega") ganhou = (jj.venc || []).includes(eu);
+    else {
+      const pl = placarFinal(jj), meu = pl.find((x) => x.uid === eu);
+      ganhou = !!meu && meu.total > 0 && meu.total >= (pl[0] ? pl[0].total : 0);
+    }
+    if (ganhou) e.ganhou++;
+  }
+}
+function abrirEstatisticas(idGato, idMundo) {
+  const g = Save.pegar(idGato);
+  if (!g) return null;
+  const ids = new Set(Object.keys(g.ficha?.estatisticas?.mundos || {}));
+  if (idMundo) ids.add(idMundo);
+  const lista = [...ids].map((id) => ({ id, nome: mundos.pegar(id)?.registro?.nome || "Mundo que sumiu" }));
+  const t = criarTelaEstatisticas({ container: uiRoot, nome: g.look?.nome, ficha: g.ficha, mundos: lista, mundoInicial: idMundo || "", aoFechar: () => t.destruir() });
+  return t;
+}
 function aoSairDaPagina() {
-  if (telaAtual === "mapa") salvarMundoAgora();
+  if (telaAtual === "mapa") {
+    descarregarEstat();
+    salvarMundoAgora();
+  }
 }
 window.addEventListener("pagehide", () => {
   try {
@@ -17726,6 +18240,7 @@ var trocando = false;
 var alvoAtivo = () => mapaAtual && (mapaAtual.sub || mapaAtual);
 function aoMudarSub() {
   capaMini = null;
+  estatPos = null;
   fecharMapaCompleto();
   const dentro2 = !!(mapaAtual && mapaAtual.sub);
   const fechado = dentro2 && !mapaAtual.sub.inst.aoArLivre;
@@ -17764,6 +18279,7 @@ function trocarSub(fn) {
   }, 200);
 }
 function desmontarMapa() {
+  descarregarEstat();
   salvarMundoAgora();
   if (idGatoMapa) versoes?.guardar(idGatoMapa, "fim-sessao");
   if (idMundoMapa) {
@@ -17913,6 +18429,7 @@ function irPara(nome, opcoes) {
       aoDuplicar: (id) => {
         if (Save.duplicar(id)) irPara("gatos");
       },
+      aoEstat: (id) => abrirEstatisticas(id, Save.pegar(id)?.mundoAtual || ""),
       aoVoltar: () => irPara("menu")
     });
     telaAtual = "gatos";
@@ -18015,9 +18532,13 @@ function irPara(nome, opcoes) {
       }
     }
     const mapaNovo = mapaAtual;
-    mapaNovo.aoEntrar = (entrada) => trocarSub(() => entrar(mapaNovo, entrada));
+    mapaNovo.aoEntrar = (entrada) => trocarSub(() => {
+      entrar(mapaNovo, entrada);
+      estatMais(entrada.tipo === "arvore" ? "arvores" : "cavernas");
+    });
     mapaNovo.aoSair = () => trocarSub(() => sair(mapaNovo));
     mapaNovo.aoTrocar = (fn) => trocarSub(fn);
+    mapaNovo.aoStat = (campo) => estatMais(campo);
     mapaNovo.aoOlhar = (idx) => {
       olhando = { t: performance.now(), n: ((aovivo.jogo() || {}).ach || []).length };
       aovivo.olhar(idx);
@@ -18038,6 +18559,7 @@ function irPara(nome, opcoes) {
     };
     mapaNovo.aoComer = (tipo) => {
       if (idGatoMapa && mapaNovo.missao) mapaNovo.missao.comeu(idGatoMapa, tipo);
+      estatCaca(tipo);
       if (!idGatoMapa || semSalvarChar) return;
       const n = Save.somarComida(idGatoMapa, tipo, idMundoMapa, aovivo.ativo());
       if (n != null) atualizarHudComida(n);
@@ -18495,13 +19017,17 @@ function atualizarMissao(ms) {
   if (m.fim && festejada !== m.inicio) {
     festejada = m.inicio;
     mostrarFesta();
-    if (idGatoMapa && !semSalvarChar && !servidorMundo) Save.missaoCumprida(idGatoMapa, m.id);
+    if (idGatoMapa && !semSalvarChar && !servidorMundo) {
+      Save.missaoCumprida(idGatoMapa, m.id);
+      estatMais("missoes");
+    }
   }
 }
 function atualizarBrincadeira(ms) {
   const M = mapaAtual;
   if (!telaBrinc || !M) return;
   const eu = aovivo.meuUid(), jj = aovivo.ativo() ? aovivo.jogo() : null, jp = jj && jj.tipo === "pega" ? jj : null, j = jp ? null : jj;
+  estatBrincar(jj, eu);
   atualizarPega(ms, jp, eu);
   const ativo = !!j && !!eu && j.fila.includes(eu) && (j.fase === "contando" || j.fase === "procurando");
   const achado = ativo && j.ach.includes(eu), peg = ativo && j.peg === eu, sou = !!j && j.peg === eu;
@@ -18683,6 +19209,7 @@ function mostrarSobre() {
 function abrirMapaCompleto() {
   if (mapaCompleto || !mapaAtual) return;
   pausado = true;
+  descarregarEstat();
   salvarMundoAgora();
   mapaCompleto = criarMapaCompleto({ container: uiRoot, mapa: alvoAtivo(), aoFechar: fecharMapaCompleto });
 }
@@ -18694,6 +19221,7 @@ function fecharMapaCompleto() {
 }
 function abrirPausa() {
   pausado = true;
+  descarregarEstat();
   salvarMundoAgora();
   const div = document.createElement("div");
   div.className = "tela pausa";
@@ -18708,6 +19236,14 @@ function abrirPausa() {
     if (div.parentNode) div.parentNode.removeChild(div);
   });
   div.appendChild(continuar);
+  if (estatJoga()) {
+    const bEstat = document.createElement("button");
+    bEstat.className = "botao";
+    bEstat.id = "botao-estat";
+    bEstat.textContent = "\u{1F4CA} Estat\xEDsticas";
+    bEstat.addEventListener("click", () => abrirEstatisticas(idGatoMapa, idMundoMapa));
+    div.appendChild(bEstat);
+  }
   div.appendChild(Som.botao("botao"));
   const voltar = document.createElement("button");
   voltar.className = "botao";
@@ -18854,6 +19390,13 @@ if (renderer) {
         }
       }
       if (!servidorMundo) desenharMinimapa();
+      if (estatJoga()) {
+        estatQuadro(estatUlt ? Math.min((tempoMs - estatUlt) / 1e3, 1) : 0, alvo2);
+        estatUlt = tempoMs;
+      }
+    } else {
+      estatUlt = 0;
+      estatPos = null;
     }
     if (telaAtual === "mapa" && mapaAtual && !servidorMundo && !trocando) {
       const a = alvoAtivo(), gp = a && a.gatoGroup && a.gatoGroup.position;
@@ -18936,6 +19479,13 @@ window.GATINHO = {
     return trocando;
   },
   salvarMundo: salvarMundoAgora,
+  descarregarEstat,
+  abrirEstatisticas,
+  estatBrincar,
+  get estat() {
+    return estat;
+  },
+  // 0.9.10 (testes)
   get nuvem() {
     return nuvem;
   },
@@ -19027,6 +19577,7 @@ window.GATINHO = {
       if (mapaAtual.sub) mapaAtual.sub.atualizar(dt, ultimoInput, t);
       else atualizarMapa(mapaAtual, dt, ultimoInput, t);
       if (inputAtual) inputAtual.definirAcao(alvoAtivo().acaoContextual());
+      if (estatJoga()) estatQuadro(dt, alvoAtivo());
     } catch (e) {
     }
     return mapaAtual ? { x: mapaAtual.gatoGroup.position.x, z: mapaAtual.gatoGroup.position.z } : null;
