@@ -168,6 +168,9 @@ canvas,
   box-shadow: 0 0 0 #cdd6f0;
 }
 
+/* 0.11.5: botão desligado (ocupado) aparece apagado */
+.botao:disabled { opacity: 0.5; cursor: default; }
+
 /* estado selecionado (criador) */
 .botao-opcao.selecionado {
   background: #fff3c4;
@@ -2366,7 +2369,7 @@ if (typeof window !== "undefined") {
 import * as THREE14 from "three";
 
 // js/data.js
-var VERSION = "0.11.4";
+var VERSION = "0.11.5";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -3364,34 +3367,38 @@ async function procurarAtualizacao(versaoAtual, { sinal } = {}) {
   }
   return { estado: "igual", versao: versaoAtual };
 }
-async function aplicarAtualizacao(versaoNova) {
+async function aplicarAtualizacao(versaoNova, { limite = 12e4, semNada = 6e3 } = {}) {
   try {
-    if (!navigator.serviceWorker) return false;
-    const reg = await navigator.serviceWorker.getRegistration();
+    const sw = navigator.serviceWorker;
+    if (!sw) return false;
+    const reg = await sw.getRegistration();
     if (!reg) return false;
-    const espera2 = new Promise((resolve) => {
-      const t = setTimeout(() => resolve("tempo"), 3e4);
-      const fn = () => {
-        clearTimeout(t);
-        resolve("controllerchange");
-      };
-      navigator.serviceWorker.addEventListener("controllerchange", fn, { once: true });
-    });
+    let trocou = false;
+    const marcar = () => {
+      trocou = true;
+    };
+    sw.addEventListener("controllerchange", marcar);
     try {
-      await reg.update();
-    } catch {
+      try {
+        await reg.update();
+      } catch {
+      }
+      const nome = "gatinho-" + versaoNova;
+      const completa = async () => typeof caches !== "undefined" && await caches.has(nome) && !!await (await caches.open(nome)).match("./index.html");
+      const t0 = Date.now();
+      while (Date.now() - t0 < limite) {
+        const ocupado = !!(reg.installing || reg.waiting);
+        if (trocou || !ocupado && await completa()) {
+          location.reload();
+          return true;
+        }
+        if (!ocupado && Date.now() - t0 > semNada) return false;
+        await new Promise((r) => setTimeout(r, 500));
+      }
       return false;
+    } finally {
+      sw.removeEventListener("controllerchange", marcar);
     }
-    const resultado = await espera2;
-    if (resultado === "controllerchange") {
-      location.reload();
-      return true;
-    }
-    if (caches && await caches.has("gatinho-" + versaoNova)) {
-      location.reload();
-      return true;
-    }
-    return false;
   } catch {
     return false;
   }
