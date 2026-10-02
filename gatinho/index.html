@@ -2384,7 +2384,7 @@ if (typeof window !== "undefined") {
 import * as THREE14 from "three";
 
 // js/data.js
-var VERSION = "0.12.0";
+var VERSION = "0.12.1";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -5918,7 +5918,7 @@ function criarGatos({ container, aoJogar, aoEditar, aoNovo, aoVoltar, aoCopias, 
       info.className = "gato-info";
       const nomeEl = document.createElement("div");
       nomeEl.className = "gato-nome";
-      nomeEl.textContent = nome + (gato.dono ? " \xB7 do " + gato.dono : "");
+      nomeEl.textContent = nome + (gato.dono ? " \xB7 de " + gato.dono : "");
       info.appendChild(nomeEl);
       info.appendChild(criarBolinhas(look));
       const nComida = totalComida(gato.ficha);
@@ -12302,7 +12302,7 @@ var BRINCADEIRAS = {
     dica: "Um conta at\xE9 10 e os outros se escondem!"
   },
   // 0.9.8: a lógica fica em js/pega.js; aqui só o cartão do catálogo (diálogo, votação)
-  pega: { nome: "Pique-pega zumbi", icone: "\u{1F9DF}", dica: "Quem \xE9 pego vira zumbi e corre atr\xE1s dos outros!" }
+  pega: { nome: "Pique-ajuda", icone: "\u{1F91D}", dica: "Quem \xE9 pego vira ajudante e ajuda a pegar os outros!" }
 };
 function ehTexto(v) {
   return typeof v === "string";
@@ -12883,14 +12883,14 @@ function faixaPega(jogo, agora2, vivos) {
   if (jogo.fase === "jogando") {
     if (agora2 < jogo.ini) {
       const n = Math.ceil((jogo.ini - agora2) / 1e3);
-      return `\u{1F9DF} Pique-pega \u2014 corram! come\xE7a em ${n}`;
+      return `\u{1F91D} Pique-ajuda \u2014 corram! come\xE7a em ${n}`;
     }
     const c = contagemPega(jogo, vivos);
     const seg = Math.max(0, Math.ceil((jogo.fimFase - agora2) / 1e3));
-    return `\u{1F9DF} Pique-pega \u2014 pegos: ${c.pegos.length} \u2014 livres: ${c.livres.length} \u2014 ${tempoTexto(seg)}`;
+    return `\u{1F91D} Pique-ajuda \u2014 pegos: ${c.pegos.length} \u2014 livres: ${c.livres.length} \u2014 ${tempoTexto(seg)}`;
   }
   if (jogo.fase === "fim") {
-    return "\u{1F9DF} Pique-pega \u2014 acabou!";
+    return "\u{1F91D} Pique-ajuda \u2014 acabou!";
   }
   return "";
 }
@@ -14424,6 +14424,22 @@ function sair(mapa) {
 function restaurar(mapa, salvoSub) {
   const e = salvoSub && mapa.entradas.find((q) => q.tipo === salvoSub.tipo && q.id === salvoSub.id);
   return e ? entrar(mapa, e, salvoSub) : null;
+}
+
+// js/seguir-sub.js
+function passoSeguir({ meuSub, meuAndar, alvo: alvo2, andaresY }) {
+  if (!alvo2 || !alvo2.sub) return meuSub ? { sair: true } : null;
+  if (alvo2.sub !== meuSub) {
+    if (meuSub) return { sair: true };
+    const i = alvo2.sub.indexOf(":");
+    return { entrar: { tipo: alvo2.sub.slice(0, i), id: alvo2.sub.slice(i + 1) } };
+  }
+  if (!Array.isArray(andaresY) || !andaresY.length) return null;
+  let melhor = 0;
+  andaresY.forEach((y, i) => {
+    if (Math.abs(y - alvo2.y) < Math.abs(andaresY[melhor] - alvo2.y)) melhor = i;
+  });
+  return melhor === meuAndar ? null : { andar: melhor > meuAndar ? "subir" : "descer" };
 }
 
 // js/preso.js
@@ -21354,7 +21370,7 @@ function montarCartoes(e, aba) {
   grade.appendChild(criarCartao("\u{1F3AF}", "Miss\xF5es cumpridas", missoes));
   grade.appendChild(criarCartao("\u{1F9F8}", "Brinquedos entregues", brinquedos));
   grade.appendChild(criarCartao("\u{1F648}", "Pique-esconde", detalheEsconde));
-  grade.appendChild(criarCartao("\u{1F9DF}", "Pique-pega", detalhePega));
+  grade.appendChild(criarCartao("\u{1F91D}", "Pique-ajuda", detalhePega));
   grade.appendChild(criarCartao("\u{1F333}", "\xC1rvores", arvores));
   grade.appendChild(criarCartao("\u{1F573}\uFE0F", "Cavernas", cavernas));
   grade.appendChild(criarCartao("\u{1F998}", "Pulos", pulos));
@@ -21654,7 +21670,7 @@ function criarTelaPega() {
   aviso.className = "pega-aviso";
   aviso.hidden = true;
   const avisoTexto = document.createElement("p");
-  avisoTexto.textContent = "Voc\xEA virou zumbi! Pegue os outros!";
+  avisoTexto.textContent = "Voc\xEA foi pego! Agora ajude a pegar!";
   aviso.appendChild(avisoTexto);
   const rapido = document.createElement("p");
   rapido.className = "pega-rapido";
@@ -21665,7 +21681,7 @@ function criarTelaPega() {
   placar.hidden = true;
   const placarTitulo = document.createElement("h2");
   placarTitulo.className = "pega-placar-titulo";
-  placarTitulo.textContent = "\u{1F389} Acabou o pique-pega!";
+  placarTitulo.textContent = "\u{1F389} Acabou o pique-ajuda!";
   const placarLista = document.createElement("ol");
   placarLista.className = "pega-placar-lista";
   placar.appendChild(placarTitulo);
@@ -21742,9 +21758,9 @@ function criarTelaPega() {
       if (!euNaFila) {
         textoDica = "Voc\xEA est\xE1 assistindo a brincadeira.";
       } else if (euZumbi) {
-        textoDica = "Voc\xEA \xE9 zumbi! Encoste nos amigos para pegar!";
+        textoDica = "Voc\xEA \xE9 ajudante! Encoste nos amigos para pegar!";
       } else {
-        textoDica = "Corra! N\xE3o deixe os zumbis encostarem em voc\xEA!";
+        textoDica = "Corra! N\xE3o deixe os pegadores encostarem em voc\xEA!";
       }
     }
     if (textoDica) {
@@ -21791,7 +21807,7 @@ function criarTelaPega() {
         for (const l of linhas) {
           const li = document.createElement("li");
           const nome = nomeDe && nomeDe(l.uid) || "Algu\xE9m";
-          const sufixo = l.zumbi ? "virou zumbi" : "ficou livre";
+          const sufixo = l.zumbi ? "virou ajudante" : "ficou livre";
           const texto = nome + " \u2014 pegou " + l.pegou + " \xB7 " + sufixo;
           li.textContent = texto;
           placarLista.appendChild(li);
@@ -22611,7 +22627,7 @@ function irPara(nome, opcoes) {
       if (t - tCerca > 1500) {
         tCerca = t;
         const jg = aovivo.ativo() ? aovivo.jogo() : null;
-        avisar2("Volte para a brincadeira! " + (jg && jg.tipo === "esconde" ? "\u{1F648}" : "\u{1F9DF}"), 1500);
+        avisar2("Volte para a brincadeira! " + (jg && jg.tipo === "esconde" ? "\u{1F648}" : "\u{1F91D}"), 1500);
       }
     };
     mapaNovo.aoQuieto = () => {
@@ -23321,7 +23337,7 @@ function atualizarPega(ms, j, eu, ja) {
   if (!jogando) return;
   for (const u of Object.keys(j.pegos)) if (!pegaVistos.has(u)) {
     pegaVistos.add(u);
-    if (u !== eu) avisar2("\u{1F9DF} " + nomeDe(u) + " virou zumbi!", 2200);
+    if (u !== eu) avisar2("\u{1F91D} " + nomeDe(u) + " virou ajudante!", 2200);
   }
 }
 function atualizarVotacao(ms) {
@@ -23572,6 +23588,26 @@ function desenharMinimapa(yaw = 0) {
   desenharGato(ctx2, alvo2, W);
   ctx2.restore();
 }
+function seguirNoSub() {
+  const M2 = mapaAtual, sub = M2.sub;
+  const alvo2 = seguirChar ? aovivo.posicaoChar(seguirChar) : null;
+  const arv = sub && sub.tipo === "arvore";
+  const p = passoSeguir({ meuSub: sub ? sub.tipo + ":" + sub.id : "", meuAndar: arv ? sub.inst.andar : 0, alvo: alvo2, andaresY: arv ? sub.inst.planta.andares.map((a) => a.y) : null });
+  if (p && p.sair) trocarSub(() => sair(M2), "Saindo\u2026");
+  else if (p && p.entrar) {
+    const e = M2.entradas.find((q) => q.tipo === p.entrar.tipo && String(q.id) === p.entrar.id);
+    if (e) trocarSub(() => {
+      entrar(M2, e, { x: alvo2.x, z: alvo2.z, rot: alvo2.r });
+      M2.gatoGroup.visible = false;
+    }, "Indo junto\u2026");
+  } else if (p && p.andar) trocarSub(() => sub.inst.usar(p.andar), "Indo junto\u2026");
+  else if (sub && alvo2 && alvo2.sub) {
+    sub.fis.teleportar(alvo2.x, alvo2.z);
+    sub.gatoGroup.position.set(sub.fis.x, sub.fis.y, sub.fis.z);
+    sub.gatoGroup.rotation.y = alvo2.r;
+    sub.gatoGroup.visible = false;
+  }
+}
 function atualizarCameraEspectador(dt, estado) {
   const f = mapaAtual.focoMundo;
   let alvo2 = null;
@@ -23636,6 +23672,7 @@ if (renderer) {
       const estadoMapa = espectando ? { dx: 0, dy: 0, correndo: false } : estado;
       try {
         if (!trocando) {
+          if (espectando) seguirNoSub();
           if (mapaAtual.sub) mapaAtual.sub.atualizar(dt, estadoMapa, tempoSegundos);
           else atualizarMapa(mapaAtual, dt, estadoMapa, tempoSegundos);
           if (!espectando && !servidorMundo && alvo2.gatoGroup) {
@@ -23646,14 +23683,15 @@ if (renderer) {
             }
           }
         }
-        if (espectando) atualizarCameraEspectador(dt, estado);
+        if (espectando && !mapaAtual.sub) atualizarCameraEspectador(dt, estado);
       } catch (e) {
       }
       if (camera && alvo2.gatoGroup) {
-        const g = servidorMundo ? mapaAtual.focoMundo : alvo2.gatoGroup.position;
+        const livre = servidorMundo && !(espectando && mapaAtual.sub);
+        const g = livre ? mapaAtual.focoMundo : alvo2.gatoGroup.position;
         if (zoomAtual) distCam += (zoomAtual.get() - distCam) * Math.min(1, dt * 10);
         alvo2.ajustarZoom(distCam);
-        const cy = espectando ? camYEsp : servidorMundo ? 0 : alvo2.camY;
+        const cy = livre ? espectando ? camYEsp : 0 : alvo2.camY;
         const dc = deslocamentoCamera(yawCam);
         camera.position.set(g.x + 0.6 * distCam * dc.x, cy + 0.3 + 0.8 * distCam, g.z + 0.6 * distCam * dc.z);
         camera.lookAt(g.x, cy + 0.3, g.z);
