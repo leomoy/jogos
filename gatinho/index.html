@@ -283,21 +283,6 @@ canvas,
   pointer-events: none;
 }
 
-.hud-nome {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 8px 20px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #3a3a55;
-  background: rgba(255, 255, 255, 0.75);
-  border: 3px solid #cdd6f0;
-  border-radius: 16px;
-  pointer-events: auto;
-}
-
 #minimapa {
   position: absolute;
   top: 14px;
@@ -954,8 +939,6 @@ canvas,
 @media (max-height: 520px) { .familia-painel:has(.familia-bloco-codigo:not([style*="none"])) > p:first-of-type { display: none; } }
 
 /* 17. Mundo ao vivo (0.8.1) */
-.hud-aovivo { position:absolute; top:62px; left:50%; transform:translateX(-50%); padding:2px 8px; font-size:0.68rem; font-weight:700; color:#3a3a55; background:rgba(255,255,255,0.7); border-radius:10px; white-space:nowrap; pointer-events:none; }
-.hud-aovivo[hidden] { display:none; }
 .aviso { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:70; max-width:90vw; padding:10px 20px; font-size:1.1rem; font-weight:700; color:#3a3a55; background:#fff; border:3px solid #cdd6f0; border-radius:16px; box-shadow:0 4px 0 #cdd6f0; text-align:center; pointer-events:none; }
 .botao-visitar { background:#d7f2dd; border-color:#8fd3a0; box-shadow:0 5px 0 #8fd3a0; }
 
@@ -1348,10 +1331,6 @@ canvas,
   display: none;
 }
 
-.em-servidor .hud-nome {
-  white-space: nowrap;
-}
-
 .painel-servidor {
   position: absolute;
   left: 14px;
@@ -1706,7 +1685,6 @@ canvas,
 .estat-valor { font-size: 1.25rem; font-weight: 900; line-height: 1.15; }
 .estat-detalhe { font-size: 0.75rem; font-weight: 700; opacity: 0.7; line-height: 1.2; }
 .estat-vazio { grid-column: 1 / -1; margin: 24px 0; font-size: 1.2rem; font-weight: 700; color: #7a86b8; }
-.estat-fechar { flex: 0 0 auto; min-height: 48px; }
 .gato-estat { margin-left: auto; min-width: 0; min-height: 36px; padding: 2px 12px; font-size: 0.95rem; background: #eaf6ff; border-color: #a9d3f0; box-shadow: 0 3px 0 #a9d3f0; }
 @media (orientation: landscape) and (max-height: 520px) {
   .tela-estat { gap: 4px; padding: 6px 10px; }
@@ -1720,7 +1698,6 @@ canvas,
   .estat-rotulo { font-size: 0.7rem; }
   .estat-valor { font-size: 0.95rem; }
   .estat-detalhe { font-size: 0.62rem; }
-  .estat-fechar { min-height: 32px; padding: 2px 14px; font-size: 0.9rem; }
 }
 
 /* ===== 0.10 — fluxo da família: boas-vindas, menu com a família, código grande, atualização ===== */
@@ -1875,6 +1852,40 @@ canvas,
 
 /* 0.11.2: deitado, o painel da missão (2 linhas na toca) ia por cima do joystick: sobe para o alto, à direita do minimapa */
 @media (max-height: 520px) and (orientation: landscape) { .painel-missao { top: 64px; left: 156px; max-width: min(42vw, 320px); } }
+
+/* 0.12.0 — seletor de gráficos (Leve / Normal / Bonito) */
+.seletor-qualidade { display: flex; flex-direction: column; gap: 6px; pointer-events: auto; }
+.seletor-rotulo { font-weight: 700; color: #3a3a55; }
+.seletor-botoes { display: flex; gap: 8px; }
+.seletor-botoes .botao { flex: 1; min-width: 0; min-height: 48px; padding: 8px 6px; font-size: 1rem; }
+.seletor-botoes .botao.ativo { background: #ffe9b8; border-color: #f0b44c; box-shadow: 0 4px 0 #f0b44c; }
+.seletor-dica { font-size: 0.8rem; color: #7a86b8; }
+
+/* 0.12.0 — janela reutilizável (js/janela.js): fundo escuro, cartão central, ✕ no canto */
+.janela-fundo { position: absolute; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 12px; box-sizing: border-box; background: rgba(40, 45, 80, 0.55); pointer-events: auto; }
+.janela { position: relative; width: min(92vw, 360px); max-height: 92vh; overflow-y: auto; box-sizing: border-box; padding: 18px 16px 16px; display: flex; flex-direction: column; gap: 10px; background: #fff; border: 3px solid #cdd6f0; border-radius: 18px; box-shadow: 0 4px 0 #cdd6f0; color: #3a3a55; text-align: center; }
+.janela-titulo { margin: 0 44px 0 44px; font-size: 1.3rem; line-height: 44px; }
+.janela-subtitulo { margin: 6px 0 0; font-size: 1.05rem; }
+.janela-corpo { display: flex; flex-direction: column; gap: 10px; }
+.janela-corpo .botao { width: 100%; box-sizing: border-box; }
+.janela-aovivo { margin: 0; font-size: 0.9rem; font-weight: 700; }
+.janela-aovivo[hidden] { display: none; }
+.janela-rede { list-style: none; margin: 0; padding: 0; font-size: 0.9rem; }
+.janela-x { position: absolute; top: 8px; right: 8px; z-index: 5; width: 44px; height: 44px; min-width: 0; padding: 0; font-family: inherit; font-size: 1.3rem; font-weight: 700; line-height: 1; color: #3a3a55; background: #fff; border: 3px solid #cdd6f0; border-radius: 14px; cursor: pointer; pointer-events: auto; }
+.janela-x:active { background: #eef3fb; }
+.dialogo-missoes-caixa { position: relative; }
+.tela-estat .janela-x { top: 10px; right: 10px; }
+.tela-estat .estat-titulo { margin-right: 52px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  .janela { max-height: 96vh; padding: 10px 12px 10px; gap: 6px; }
+  .janela-titulo { font-size: 1.1rem; line-height: 36px; margin: 0 40px; }
+  .janela-x { width: 36px; height: 36px; top: 6px; right: 6px; font-size: 1.1rem; }
+  .janela-corpo { gap: 6px; }
+  .janela-corpo .botao { min-height: 38px; padding: 4px 12px; font-size: 0.95rem; }
+}
+.sobre-versao { margin: 0; font-weight: 700; }
+.sobre-creditos { margin: 0; padding: 0 0 0 18px; text-align: left; font-size: 0.85rem; opacity: 0.85; }
+.sobre-creditos li { margin-bottom: 4px; }
 </style>
 <script type="importmap">{
   "imports": {
@@ -2219,7 +2230,7 @@ ${(e.stack || "").split("\n").slice(1, 4).join("\n")}`);
     const abrirLista = async () => {
       G2.ir("menu");
       await wait(30);
-      click(btnLike("Jogar"));
+      click(btnLike("\u{1F431} Gatinhos"));
       await wait(30);
       assert(G2.tela === "gatos", "n\xE3o abriu Meus gatinhos: " + G2.tela);
     };
@@ -2373,7 +2384,7 @@ if (typeof window !== "undefined") {
 import * as THREE14 from "three";
 
 // js/data.js
-var VERSION = "0.11.8";
+var VERSION = "0.12.0";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -3388,6 +3399,11 @@ async function aplicarAtualizacao() {
 // js/menu.js
 var achada = null;
 var jaProcurou = false;
+var mostrarNovaAtual = null;
+function notificarNova(r) {
+  achada = r;
+  if (mostrarNovaAtual) mostrarNovaAtual(r);
+}
 function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, continuar, observarEmJogo: observarEmJogo2, conexao: conexao2, estado = "local", nomeFamilia = "" }) {
   let morto = false;
   const tela = document.createElement("div");
@@ -3495,6 +3511,7 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
       }
     };
   }
+  mostrarNovaAtual = mostrarNova;
   if (achada) mostrarNova(achada);
   else if (!jaProcurou) {
     jaProcurou = true;
@@ -3564,7 +3581,7 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
     return b;
   }
   if (continuar) criarBotao("\u25B6 Continuar: " + continuar.charNome + (continuar.mundoNome ? " \xB7 " + continuar.mundoNome : ""), "continuar").classList.add("botao-continuar");
-  criarBotao("Jogar", "gatos");
+  criarBotao("\u{1F431} Gatinhos", "gatos");
   criarBotao("\u{1F30D} Mundos", "mundos");
   criarBotao("\u{1F46A} Fam\xEDlia", "familia");
   const linhaMeia = document.createElement("div");
@@ -3584,28 +3601,6 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
   versao.className = "versao";
   versao.textContent = "v" + VERSION;
   rodape.appendChild(versao);
-  const statusAtualizacao = document.createElement("span");
-  statusAtualizacao.className = "atualizacao-status";
-  if (/^https?:$/.test(location.protocol) && navigator.serviceWorker) {
-    const btnProcurar = document.createElement("button");
-    btnProcurar.type = "button";
-    btnProcurar.className = "botao botao-procurar";
-    btnProcurar.textContent = "\u{1F504} Procurar atualiza\xE7\xE3o";
-    btnProcurar.addEventListener("click", async () => {
-      btnProcurar.disabled = true;
-      statusAtualizacao.textContent = "Procurando\u2026";
-      const r = await procurarAtualizacao(VERSION);
-      if (morto) return;
-      btnProcurar.disabled = false;
-      if (r.estado === "nova") {
-        achada = r;
-        statusAtualizacao.textContent = "";
-        mostrarNova(r);
-      } else statusAtualizacao.textContent = textoAtualizacao(r);
-    });
-    rodape.appendChild(btnProcurar);
-    rodape.appendChild(statusAtualizacao);
-  }
   async function atualizarPronto() {
     const pronto2 = await semInternetPronto(VERSION);
     versao.textContent = "v" + VERSION + (pronto2 ? " \xB7 \u2708\uFE0F sem internet \u2713" : "");
@@ -3617,6 +3612,7 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
   }
   function destruir() {
     morto = true;
+    if (mostrarNovaAtual === mostrarNova) mostrarNovaAtual = null;
     soltarInstalar();
     soltarControle();
     if (soltarEmJogo) soltarEmJogo();
@@ -15677,6 +15673,45 @@ function criarTelaFamilia({ container, nuvem: nuvem2, aoVoltar, saida: saida2, a
   };
 }
 
+// js/janela.js
+function criarJanela({ titulo, aoFechar, container } = {}) {
+  const fundo = document.createElement("div");
+  fundo.className = "janela-fundo";
+  const cartao = document.createElement("div");
+  cartao.className = "janela";
+  const h = document.createElement("h2");
+  h.className = "janela-titulo";
+  h.textContent = titulo || "";
+  const x = document.createElement("button");
+  x.type = "button";
+  x.className = "janela-x";
+  x.setAttribute("aria-label", "Fechar");
+  x.textContent = "\u2715";
+  const corpo2 = document.createElement("div");
+  corpo2.className = "janela-corpo";
+  cartao.append(x, h, corpo2);
+  fundo.appendChild(cartao);
+  let fechada = false;
+  function fechar() {
+    if (fechada) return;
+    fechada = true;
+    document.removeEventListener("keydown", aoTecla);
+    if (fundo.parentNode) fundo.parentNode.removeChild(fundo);
+    if (typeof aoFechar === "function") aoFechar();
+  }
+  function aoTecla(e) {
+    if (e.key !== "Escape") return;
+    const todas = document.querySelectorAll(".janela-fundo");
+    if (todas[todas.length - 1] === fundo) fechar();
+  }
+  x.addEventListener("click", fechar);
+  document.addEventListener("keydown", aoTecla);
+  (container || document.getElementById("ui") || document.body).appendChild(fundo);
+  return { fundo, corpo: corpo2, titulo: (t) => {
+    h.textContent = t;
+  }, fechar };
+}
+
 // js/dados.js
 function criarTelaDados({ container, nuvem: nuvem2, versoes: versoes2, aoVoltar }) {
   const raiz = document.createElement("div");
@@ -15764,29 +15799,22 @@ function criarTelaDados({ container, nuvem: nuvem2, versoes: versoes2, aoVoltar 
     }
   };
 }
-function criarTelaOpcoes({ container, botaoSom, aoDados, aoVoltar }) {
-  const raiz = document.createElement("div");
-  raiz.className = "tela tela-opcoes";
-  const h2 = document.createElement("h2");
-  h2.textContent = "Op\xE7\xF5es";
-  raiz.appendChild(h2);
-  if (botaoSom) raiz.appendChild(botaoSom);
+function criarTelaOpcoes({ container, botaoSom, seletorQualidade, aoDados, aoVoltar }) {
+  const j = criarJanela({ titulo: "Op\xE7\xF5es", aoFechar: () => aoVoltar(), container });
+  if (seletorQualidade) j.corpo.appendChild(seletorQualidade);
+  if (botaoSom) j.corpo.appendChild(botaoSom);
   const dados = document.createElement("button");
   dados.className = "botao opcoes-dados";
   dados.type = "button";
   dados.textContent = "\u{1F4BE} Dados e c\xF3pias";
-  dados.addEventListener("click", () => aoDados());
-  raiz.appendChild(dados);
-  const voltar = document.createElement("button");
-  voltar.className = "botao-grande";
-  voltar.type = "button";
-  voltar.textContent = "Voltar";
-  voltar.addEventListener("click", () => aoVoltar());
-  raiz.appendChild(voltar);
-  container.appendChild(raiz);
-  return { elemento: raiz, atualizar() {
+  dados.addEventListener("click", () => {
+    j.fundo.remove();
+    aoDados();
+  });
+  j.corpo.appendChild(dados);
+  return { elemento: j.fundo, atualizar() {
   }, destruir() {
-    raiz.parentNode?.removeChild(raiz);
+    j.fundo.parentNode?.removeChild(j.fundo);
   } };
 }
 
@@ -21143,9 +21171,10 @@ function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir, brincadeiras =
     caixa2.appendChild(listaB);
   }
   const btnFechar = document.createElement("button");
-  btnFechar.className = "botao-grande";
+  btnFechar.className = "janela-x";
   btnFechar.type = "button";
-  btnFechar.textContent = "Fechar";
+  btnFechar.setAttribute("aria-label", "Fechar");
+  btnFechar.textContent = "\u2715";
   btnFechar.addEventListener("click", fechar);
   caixa2.appendChild(btnFechar);
   dialogo.appendChild(caixa2);
@@ -21374,8 +21403,9 @@ function criarTelaEstatisticas({ container, nome, ficha, mundos: mundos2, mundoI
   elemento.appendChild(grade);
   const fechar = document.createElement("button");
   fechar.type = "button";
-  fechar.className = "botao estat-fechar";
-  fechar.textContent = "Voltar";
+  fechar.className = "janela-x";
+  fechar.setAttribute("aria-label", "Fechar");
+  fechar.textContent = "\u2715";
   fechar.addEventListener("click", () => {
     if (typeof aoFechar === "function") aoFechar();
   });
@@ -21779,6 +21809,143 @@ function criarTelaPega() {
   return { elemento: raiz, atualizar, destruir };
 }
 
+// js/sobre.js
+var CREDITOS = [
+  "Modelo do gato: Somali Cat Animated, por DreamNoms (CC-BY 4.0).",
+  "Anima\xE7\xF5es extras: Quaternius (CC0).",
+  "Raposa da Khronos: tomkranis (CC-BY 4.0).",
+  "Galope do gato: Lowpoly Cat Rig + Run Animation, por Daily Lowpoly (CC-BY 4.0).",
+  "Balan\xE7o da cauda: Tuxedo Cat Animated 2.0, por DreamNoms (CC-BY 4.0).",
+  "Bichos: rato, peixe e cervo por Quaternius (CC0); jacar\xE9 (Alligator) por Poly by Google (CC-BY 3.0)."
+];
+function abrirSobre({ aoNova } = {}) {
+  const j = criarJanela({ titulo: "Sobre" });
+  const bloco = (titulo) => {
+    const h = document.createElement("h3");
+    h.className = "janela-subtitulo";
+    h.textContent = titulo;
+    j.corpo.appendChild(h);
+  };
+  bloco("Vers\xE3o");
+  const versao = document.createElement("p");
+  versao.className = "sobre-versao";
+  versao.textContent = "v" + VERSION;
+  j.corpo.appendChild(versao);
+  semInternetPronto(VERSION).then((pronto2) => {
+    if (pronto2) versao.textContent = "v" + VERSION + " \xB7 \u2708\uFE0F sem internet \u2713";
+  });
+  if (/^https?:$/.test(location.protocol) && navigator.serviceWorker) {
+    const status = document.createElement("p");
+    status.className = "atualizacao-status";
+    const procurar = document.createElement("button");
+    procurar.type = "button";
+    procurar.className = "botao botao-procurar";
+    procurar.textContent = "\u{1F504} Procurar atualiza\xE7\xE3o";
+    const atualizar = document.createElement("button");
+    atualizar.type = "button";
+    atualizar.className = "botao botao-atualizar-sobre";
+    atualizar.textContent = "Atualizar";
+    atualizar.hidden = true;
+    atualizar.addEventListener("click", async () => {
+      atualizar.disabled = true;
+      status.textContent = "Atualizando\u2026";
+      const ok = await aplicarAtualizacao();
+      if (!ok) {
+        status.textContent = "N\xE3o deu certo. Tente de novo.";
+        atualizar.disabled = false;
+      }
+    });
+    procurar.addEventListener("click", async () => {
+      procurar.disabled = true;
+      status.textContent = "Procurando\u2026";
+      const r = await procurarAtualizacao(VERSION);
+      procurar.disabled = false;
+      status.textContent = textoAtualizacao(r);
+      atualizar.hidden = r.estado !== "nova";
+      if (r.estado === "nova" && aoNova) aoNova(r);
+    });
+    j.corpo.append(procurar, status, atualizar);
+  }
+  bloco("Feito pela Lu\xEDsa");
+  const p = document.createElement("p");
+  p.textContent = "Jogo criado pela Lu\xEDsa.";
+  j.corpo.appendChild(p);
+  bloco("Cr\xE9ditos");
+  const ul = document.createElement("ul");
+  ul.className = "sobre-creditos";
+  for (const c of CREDITOS) {
+    const li = document.createElement("li");
+    li.textContent = c;
+    ul.appendChild(li);
+  }
+  j.corpo.appendChild(ul);
+  return j;
+}
+
+// js/qualidade.js
+var NIVEIS = {
+  leve: { nome: "Leve", pixel: () => 1, sombras: false },
+  normal: { nome: "Normal", pixel: () => 1, sombras: true },
+  bonito: { nome: "Bonito", pixel: () => Math.min(window.devicePixelRatio || 1, 2), sombras: true }
+};
+var CHAVE2 = "gatinho-qualidade";
+function lerQualidade() {
+  try {
+    const v = localStorage.getItem(CHAVE2);
+    if (v && NIVEIS[v]) return v;
+  } catch (e) {
+  }
+  return "normal";
+}
+function aplicarQualidade(renderer2, scene2, nivel) {
+  const n = NIVEIS[nivel] || NIVEIS.normal;
+  try {
+    localStorage.setItem(CHAVE2, NIVEIS[nivel] ? nivel : "normal");
+  } catch (e) {
+  }
+  if (!renderer2) return;
+  renderer2.setPixelRatio(n.pixel());
+  renderer2.setSize(window.innerWidth, window.innerHeight);
+  if (renderer2.shadowMap.enabled !== n.sombras) {
+    renderer2.shadowMap.enabled = n.sombras;
+    if (scene2) scene2.traverse((o) => {
+      const m2 = o.material;
+      if (m2) (Array.isArray(m2) ? m2 : [m2]).forEach((x) => {
+        x.needsUpdate = true;
+      });
+    });
+  }
+}
+function criarSeletorQualidade({ atual, aoMudar: aoMudar2 }) {
+  const bloco = document.createElement("div");
+  bloco.className = "seletor-qualidade";
+  const rotulo = document.createElement("div");
+  rotulo.className = "seletor-rotulo";
+  rotulo.textContent = "\u{1F5BC}\uFE0F Gr\xE1ficos";
+  const linha = document.createElement("div");
+  linha.className = "seletor-botoes";
+  const botoes = {};
+  const marcar = (c) => Object.keys(botoes).forEach((k) => botoes[k].classList.toggle("ativo", k === c));
+  for (const k of Object.keys(NIVEIS)) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "botao";
+    b.textContent = NIVEIS[k].nome;
+    b.addEventListener("click", () => {
+      aoMudar2(k);
+      marcar(k);
+    });
+    botoes[k] = b;
+    linha.appendChild(b);
+  }
+  const dica = document.createElement("div");
+  dica.className = "seletor-dica";
+  dica.textContent = "Leve = mais r\xE1pido \xB7 Bonito = mais n\xEDtido";
+  bloco.append(rotulo, linha, dica);
+  marcar(atual);
+  return bloco;
+}
+
 // js/main.js
 document.title = "Avel\xE3, o gatinho sobrevivente \u2014 v" + VERSION;
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {
@@ -21803,6 +21970,8 @@ try {
 }
 scene = new THREE14.Scene();
 scene.background = CEU;
+aplicarQualidade(renderer, scene, lerQualidade());
+var mudarQualidade = (n) => aplicarQualidade(renderer, scene, n);
 var hemiEstudio = new THREE14.HemisphereLight(16773600, 13215114, 1.1);
 scene.add(hemiEstudio);
 var luzChave = new THREE14.DirectionalLight(16773341, 2.4);
@@ -22307,7 +22476,7 @@ function irPara(nome, opcoes) {
     telaAtual = "gatos";
     if (nuvem && Date.now() - tInicio > 1500) nuvem.sincronizar();
   } else if (nome === "opcoes") {
-    telaObj = criarTelaOpcoes({ container: uiRoot, botaoSom: Som.botao("botao"), aoDados: () => irPara("dados"), aoVoltar: () => irPara("menu") });
+    telaObj = criarTelaOpcoes({ container: uiRoot, botaoSom: Som.botao("botao"), seletorQualidade: criarSeletorQualidade({ atual: lerQualidade(), aoMudar: mudarQualidade }), aoDados: () => irPara("dados"), aoVoltar: () => irPara("menu") });
     telaAtual = "opcoes";
   } else if (nome === "dados") {
     telaObj = criarTelaDados({ container: uiRoot, nuvem, versoes, aoVoltar: () => irPara("opcoes") });
@@ -22468,10 +22637,6 @@ function irPara(nome, opcoes) {
     }
     const hud = document.createElement("div");
     hud.id = "hud";
-    const nomeEl = document.createElement("div");
-    nomeEl.className = "hud-nome";
-    nomeEl.textContent = espectando ? "Assistindo" : servidor ? "Servidor do mundo" : gato.nome || "Gatinho";
-    hud.appendChild(nomeEl);
     const minimapa = document.createElement("canvas");
     minimapa.id = "minimapa";
     minimapa.width = 180;
@@ -22561,11 +22726,6 @@ function irPara(nome, opcoes) {
     hud.appendChild(telaBrinc.elemento);
     telaPega = criarTelaPega();
     hud.appendChild(telaPega.elemento);
-    const aoVivoEl = document.createElement("div");
-    aoVivoEl.id = "hud-aovivo";
-    aoVivoEl.className = "hud-aovivo";
-    aoVivoEl.hidden = true;
-    hud.appendChild(aoVivoEl);
     if (espectando) {
       painelEspectador = criarPainelEspectador({ aoSeguir: (c) => {
         seguirChar = c || null;
@@ -23187,69 +23347,29 @@ function atualizarVotacao(ms) {
     avisoVotacao.mostrar({ texto: v.souQuem ? T2.pedido(v.valor) : T2.pergunta(v.nome, v.valor), restante: v.restante, podeVotar: v.podeVotar });
   } else avisoVotacao.esconder();
 }
-var tHudAoVivo = 0;
-function atualizarHudAoVivo(ms) {
-  if (ms - tHudAoVivo < 500) return;
-  tHudAoVivo = ms;
-  const el = document.getElementById("hud-aovivo");
-  if (!el) return;
-  atualizarBotaoHorario();
-  if (!aovivo.ativo()) {
-    el.hidden = true;
-    return;
-  }
+function textoAoVivo() {
+  if (!aovivo.ativo()) return null;
   const i = aovivo.info();
   const n = i.gatos + (servidorMundo ? 0 : 1);
   const sim = i.direto > 0 ? (i.direto > i.repasse ? "\u26A1" + (i.direto - i.repasse) + " " : "") + (i.repasse ? "\u{1F501}" + i.repasse + " " : "") : i.outros > 0 ? "\u2601\uFE0F " : "";
   const lat = (sim + (i.atrasoMs != null ? i.atrasoMs + " ms" : "")).trim();
-  el.textContent = "ao vivo \xB7 " + n + (n === 1 ? " gato" : " gatos") + (lat ? " \xB7 " + lat : "") + (i.papel === "gestor" ? " \xB7 \u{1F451}" : "");
-  el.hidden = false;
+  return "ao vivo \xB7 " + n + (n === 1 ? " gato" : " gatos") + (lat ? " \xB7 " + lat : "") + (i.papel === "gestor" ? " \xB7 \u{1F451}" : "");
+}
+var tHudAoVivo = 0;
+function atualizarHudAoVivo(ms) {
+  if (ms - tHudAoVivo < 500) return;
+  tHudAoVivo = ms;
+  atualizarBotaoHorario();
+  if (!aovivo.ativo()) return;
+  const i = aovivo.info();
   if (painelEspectador) painelEspectador.atualizar({ mundo: mundos.pegar(idMundoMapa)?.registro.nome || "", jogadores: aovivo.jogadores().map((j) => ({ char: j.char, nome: j.nome })), seguindo: seguirChar });
   if (painelServidor) {
     const p = aovivo.presentes(), g = p.find((x) => x.gestor);
     painelServidor.atualizar({ mundo: mundos.pegar(idMundoMapa)?.registro.nome || "", gestorNome: g ? g.gato ? g.nome : "servidor \xB7 " + g.nome : "", souGestor: i.papel === "gestor", gatos: p.filter((x) => x.gato).map((x) => ({ nome: x.nome, atrasoMs: x.eu ? null : x.atrasoMs, via: x.via })), assumido: aovivo.avocado() });
   }
 }
-function mostrarTelaSimples(div) {
-  bloquearToque();
-  if (telaObj && typeof telaObj.destruir === "function") {
-    try {
-      telaObj.destruir();
-    } catch (e) {
-    }
-  }
-  limparUI();
-  uiRoot.appendChild(div);
-  telaObj = {
-    elemento: div,
-    atualizar: () => {
-    },
-    destruir: () => {
-      if (div.parentNode) div.parentNode.removeChild(div);
-    }
-  };
-  telaAtual = "menu";
-}
 function mostrarSobre() {
-  const div = document.createElement("div");
-  div.className = "tela";
-  const h2 = document.createElement("h2");
-  h2.textContent = "Sobre";
-  div.appendChild(h2);
-  const p = document.createElement("p");
-  p.textContent = "Jogo criado pela Lu\xEDsa.";
-  div.appendChild(p);
-  const credito = document.createElement("p");
-  credito.style.fontSize = "0.85rem";
-  credito.style.opacity = "0.8";
-  credito.textContent = "Modelo do gato: Somali Cat Animated, por DreamNoms (CC-BY 4.0). Anima\xE7\xF5es extras: Quaternius (CC0). Raposa da Khronos: tomkranis (CC-BY 4.0). Galope do gato: Lowpoly Cat Rig + Run Animation, por Daily Lowpoly (CC-BY 4.0). Balan\xE7o da cauda: Tuxedo Cat Animated 2.0, por DreamNoms (CC-BY 4.0). Bichos: rato, peixe e cervo por Quaternius (CC0); jacar\xE9 (Alligator) por Poly by Google (CC-BY 3.0).";
-  div.appendChild(credito);
-  const voltar = document.createElement("button");
-  voltar.className = "botao-grande";
-  voltar.textContent = "Voltar";
-  voltar.addEventListener("click", () => irPara("menu"));
-  div.appendChild(voltar);
-  mostrarTelaSimples(div);
+  abrirSobre({ aoNova: notificarNova });
 }
 function abrirMapaCompleto() {
   if (mapaCompleto || !mapaAtual) return;
@@ -23268,46 +23388,106 @@ function abrirPausa() {
   pausado = true;
   descarregarEstat();
   salvarMundoAgora();
-  const div = document.createElement("div");
-  div.className = "tela pausa";
-  const h2 = document.createElement("h2");
-  h2.textContent = "Pausa";
-  div.appendChild(h2);
-  const continuar = document.createElement("button");
-  continuar.className = "botao-grande";
-  continuar.textContent = "Continuar";
-  continuar.addEventListener("click", () => {
+  const nomeGato = servidorMundo ? "Servidor do mundo" : espectando ? "Assistindo" : mapaAtual && opcoesMapaAtual && opcoesMapaAtual.gato && opcoesMapaAtual.gato.nome || "Gatinho";
+  let tic = 0;
+  const jp = criarJanela({ titulo: nomeGato, aoFechar: () => {
     pausado = false;
-    if (div.parentNode) div.parentNode.removeChild(div);
-  });
-  div.appendChild(continuar);
+    clearInterval(tic);
+  } });
+  const corpo2 = jp.corpo;
+  const aovivo1 = document.createElement("p");
+  aovivo1.className = "janela-aovivo";
+  const atualizarLinha = () => {
+    if (!jp.fundo.isConnected) {
+      clearInterval(tic);
+      return;
+    }
+    const t = textoAoVivo();
+    aovivo1.textContent = t || "";
+    aovivo1.hidden = !t;
+  };
+  atualizarLinha();
+  tic = setInterval(atualizarLinha, 1e3);
+  corpo2.appendChild(aovivo1);
+  const botao = (id, texto, aoClicar, classe = "botao") => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = classe;
+    b.id = id;
+    b.textContent = texto;
+    b.addEventListener("click", aoClicar);
+    return b;
+  };
+  corpo2.appendChild(botao("botao-ajuda", "\u2753 Ajuda e informa\xE7\xF5es", () => abrirAjudaPausa(jp)));
+  corpo2.appendChild(botao("botao-config", "\u2699\uFE0F Configura\xE7\xF5es", () => abrirConfigPausa()));
+  corpo2.appendChild(botao("botao-sair", "\u{1F6AA} Sair", () => {
+    jp.fechar();
+    irPara("menu");
+  }));
+}
+function abrirAjudaPausa(jp) {
+  const j = criarJanela({ titulo: "Ajuda e informa\xE7\xF5es" });
   if (estatJoga()) {
     const bEstat = document.createElement("button");
+    bEstat.type = "button";
     bEstat.className = "botao";
     bEstat.id = "botao-estat";
     bEstat.textContent = "\u{1F4CA} Estat\xEDsticas";
     bEstat.addEventListener("click", () => abrirEstatisticas(idGatoMapa, idMundoMapa));
-    div.appendChild(bEstat);
+    j.corpo.appendChild(bEstat);
   }
   if (!servidorMundo && !espectando) {
     const bDestravar = document.createElement("button");
+    bDestravar.type = "button";
     bDestravar.className = "botao botao-destravar-pausa";
     bDestravar.id = "botao-destravar";
     bDestravar.innerHTML = "<span>\u{1F198} Destravar</span><small>Meu gatinho ficou preso</small>";
     bDestravar.addEventListener("click", () => {
-      pausado = false;
-      if (div.parentNode) div.parentNode.removeChild(div);
+      j.fechar();
+      jp.fechar();
       destravar2();
     });
-    div.appendChild(bDestravar);
+    j.corpo.appendChild(bDestravar);
   }
-  div.appendChild(Som.botao("botao"));
-  const voltar = document.createElement("button");
-  voltar.className = "botao";
-  voltar.textContent = "Voltar ao menu";
-  voltar.addEventListener("click", () => irPara("menu"));
-  div.appendChild(voltar);
-  uiRoot.appendChild(div);
+}
+function abrirConfigPausa() {
+  const j = criarJanela({ titulo: "Configura\xE7\xF5es" });
+  j.corpo.appendChild(criarSeletorQualidade({ atual: lerQualidade(), aoMudar: mudarQualidade }));
+  j.corpo.appendChild(Som.botao("botao"));
+  const h = document.createElement("h3");
+  h.className = "janela-subtitulo";
+  h.textContent = "\u{1F4F6} Rede";
+  const linha = document.createElement("p");
+  linha.className = "janela-aovivo";
+  const lista = document.createElement("ul");
+  lista.className = "janela-rede";
+  j.corpo.append(h, linha, lista);
+  const atualizar = () => {
+    const t = textoAoVivo();
+    linha.textContent = t || "S\xF3 neste aparelho";
+    lista.replaceChildren();
+    if (aovivo.ativo()) for (const g of aovivo.presentes()) {
+      if (!g.gato) continue;
+      const li = document.createElement("li");
+      const ms = g.eu || g.atrasoMs == null ? "" : " \xB7 " + Math.round(g.atrasoMs) + " ms" + (g.via === "repasse" ? " \u{1F501}" : g.via === "direto" ? " \u26A1" : " \u2601\uFE0F");
+      li.textContent = g.nome + ms;
+      lista.appendChild(li);
+    }
+  };
+  atualizar();
+  const tic = setInterval(() => {
+    if (!j.fundo.isConnected) clearInterval(tic);
+    else atualizar();
+  }, 1e3);
+  if (conexao.modo() === "so-aqui") {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "botao";
+    b.id = "botao-entrar-nuvem";
+    b.textContent = "\u2601\uFE0F Entrar no mundo de todos";
+    b.addEventListener("click", tocarNuvem);
+    j.corpo.appendChild(b);
+  }
 }
 function configurarRenderCriador() {
   if (!renderer || !camera) return;
@@ -23565,6 +23745,8 @@ window.GATINHO = {
   get cena() {
     return scene;
   },
+  qualidade: () => ({ nivel: lerQualidade(), pixel: renderer.getPixelRatio(), sombras: renderer.shadowMap.enabled }),
+  mudarQualidade,
   save: Save,
   get gato() {
     return mapaAtual && opcoesMapaAtual && opcoesMapaAtual.gato || Save.atual()?.look || gatoPadrao();
@@ -23582,6 +23764,10 @@ window.GATINHO = {
   get trocando() {
     return trocando;
   },
+  get pausado() {
+    return pausado;
+  },
+  // 0.12.0 (testes)
   destravar: () => destravar2(),
   // 0.11.1 (testes)
   salvarMundo: salvarMundoAgora,
