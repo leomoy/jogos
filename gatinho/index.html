@@ -2373,7 +2373,7 @@ if (typeof window !== "undefined") {
 import * as THREE14 from "three";
 
 // js/data.js
-var VERSION = "0.11.7";
+var VERSION = "0.11.8";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -10355,7 +10355,7 @@ function podarPegos(pegos, agora2) {
   if (!ehObjeto3(pegos)) return false;
   let apagou = false;
   for (const k of Object.keys(pegos)) {
-    if (k === "missao") continue;
+    if (k === "missao" || k === "missaoFeita") continue;
     const v = pegos[k];
     if (!ehNumeroFinito(v) || ehNumeroFinito(agora2) && v <= agora2) {
       delete pegos[k];
@@ -13312,6 +13312,7 @@ function criarMapa(scene2, gato, salvo) {
     if (m2) mapa.pegos.missao = m2;
     else delete mapa.pegos.missao;
   }
+  if (mapa.pegos.missao && mapa.pegos.missao.inicio <= (mapa.pegos.missaoFeita || 0)) delete mapa.pegos.missao;
   mapa.missao = {
     atual: () => mapa.pegos.missao || null,
     /** `id` = id do catálogo ou pedido da toca ('t:x,z,espaço' | 'c:id', js/toca.js); `quem` = uid de quem pediu (só no gestor, para o nome da toca). */
@@ -13332,6 +13333,7 @@ function criarMapa(scene2, gato, salvo) {
     },
     cancelar() {
       if (espelhando() || !mapa.pegos.missao) return false;
+      mapa.pegos.missaoFeita = Math.max(mapa.pegos.missaoFeita || 0, mapa.pegos.missao.inicio || 0);
       delete mapa.pegos.missao;
       return true;
     },
@@ -13345,8 +13347,10 @@ function criarMapa(scene2, gato, salvo) {
     /** Gestor: a missão cumprida fica 6 s no estado (todos veem a festa) e depois sai. */
     tick() {
       const m2 = mapa.pegos.missao;
-      if (m2 && m2.fim && !espelhando() && Date.now() - m2.fim > 6e3) delete mapa.pegos.missao;
-      else if (m2 && m2.brinq && !m2.fim && !espelhando()) soltarAusentes(m2.brinq, /* @__PURE__ */ new Set([...mapa.charsPresentes ? mapa.charsPresentes() : [], mapa.meuChar]));
+      if (m2 && m2.fim && !espelhando() && Date.now() - m2.fim > 6e3) {
+        mapa.pegos.missaoFeita = Math.max(mapa.pegos.missaoFeita || 0, m2.inicio || 0);
+        delete mapa.pegos.missao;
+      } else if (m2 && m2.brinq && !m2.fim && !espelhando()) soltarAusentes(m2.brinq, /* @__PURE__ */ new Set([...mapa.charsPresentes ? mapa.charsPresentes() : [], mapa.meuChar]));
     },
     serializar: () => serializarMissao(mapa.pegos.missao),
     espelho(texto) {
@@ -16487,11 +16491,14 @@ function juntarEstado(a, b) {
     const va = (a.pegos || {})[k];
     const vb = (b.pegos || {})[k];
     if (va !== void 0 && vb !== void 0) {
-      peg[k] = horaMaisNova(va, vb);
+      if (k === "missaoFeita") peg[k] = Math.max(Number(va) || 0, Number(vb) || 0);
+      else if (k === "missao") peg[k] = copia3((vb.inicio || 0) > (va.inicio || 0) || (vb.inicio || 0) === (va.inicio || 0) && (vb.feitas || 0) > (va.feitas || 0) ? vb : va);
+      else peg[k] = horaMaisNova(va, vb);
     } else {
       peg[k] = va !== void 0 ? copia3(va) : copia3(vb);
     }
   }
+  if (peg.missao && peg.missao.inicio <= (peg.missaoFeita || 0)) delete peg.missao;
   r.pegos = peg;
   if (Object.keys(a.tocas || {}).length || Object.keys(b.tocas || {}).length) r.tocas = juntarTocas(a.tocas, b.tocas);
   const maisNovo = atualizadoMaisNovo(a.atualizado, b.atualizado);
