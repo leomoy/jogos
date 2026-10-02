@@ -2369,7 +2369,7 @@ if (typeof window !== "undefined") {
 import * as THREE14 from "three";
 
 // js/data.js
-var VERSION = "0.11.5";
+var VERSION = "0.11.6";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -18585,7 +18585,34 @@ function eleger(presencas, gestor, agora2) {
 
 // js/direto.js
 var ICE_PADRAO = [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }];
-function criarDireto({ eu, sinal, aoMensagem, ice = ICE_PADRAO, esperaIce = 1500, tentarDeNovo = 8e3, desistir = 15e3 }) {
+var TURN_URL = "https://gatinho-turn.leo-moy.workers.dev/";
+async function buscarIce(url = TURN_URL, ms = 4e3) {
+  try {
+    try {
+      const g = JSON.parse(localStorage.getItem("gatinho-ice"));
+      if (g && g.ate > Date.now() && Array.isArray(g.servidores)) return g.servidores;
+    } catch (_) {
+    }
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), ms);
+    try {
+      const r = await fetch(url, { signal: ac.signal });
+      if (!r.ok) return null;
+      const j = await r.json();
+      if (!j || !Array.isArray(j.iceServers)) return null;
+      try {
+        localStorage.setItem("gatinho-ice", JSON.stringify({ ate: Date.now() + 20 * 3600 * 1e3, servidores: j.iceServers }));
+      } catch (_) {
+      }
+      return j.iceServers;
+    } finally {
+      clearTimeout(t);
+    }
+  } catch (_) {
+    return null;
+  }
+}
+function criarDireto({ eu, sinal, aoMensagem, ice = ICE_PADRAO, soRepasse = false, esperaIce = 1500, tentarDeNovo = 8e3, desistir = 15e3 }) {
   if (typeof RTCPeerConnection !== "function") {
     return {
       pares() {
@@ -18607,6 +18634,22 @@ function criarDireto({ eu, sinal, aoMensagem, ice = ICE_PADRAO, esperaIce = 1500
     new RTCPeerConnection({ iceServers: [] }).close();
   } catch (_) {
   }
+  const iceAgora = () => {
+    try {
+      const v = typeof ice === "function" ? ice() : ice;
+      return Array.isArray(v) && v.length ? v : ICE_PADRAO;
+    } catch (_) {
+      return ICE_PADRAO;
+    }
+  };
+  const cfg = (iceServers) => soRepasse ? { iceServers, iceTransportPolicy: "relay" } : { iceServers };
+  const novoPc = () => {
+    try {
+      return new RTCPeerConnection(cfg(iceAgora()));
+    } catch (_) {
+      return new RTCPeerConnection(cfg(ICE_PADRAO));
+    }
+  };
   const mapa = /* @__PURE__ */ new Map();
   const proximaTentativa = /* @__PURE__ */ new Map();
   let desligarSinal = null;
@@ -18710,7 +18753,7 @@ function criarDireto({ eu, sinal, aoMensagem, ice = ICE_PADRAO, esperaIce = 1500
     let par = null;
     try {
       const s = Math.random().toString(36).slice(2);
-      const pc = new RTCPeerConnection({ iceServers: ice });
+      const pc = novoPc();
       const dc = pc.createDataChannel("g", { ordered: false, maxRetransmits: 0 });
       par = { pc, dc, s, aberto: false, rtt: null, desde: performance.now() };
       mapa.set(uid, par);
@@ -18735,7 +18778,7 @@ function criarDireto({ eu, sinal, aoMensagem, ice = ICE_PADRAO, esperaIce = 1500
     try {
       const antigo = mapa.get(de);
       if (antigo) fecharPar(de, antigo);
-      const pc = new RTCPeerConnection({ iceServers: ice });
+      const pc = novoPc();
       const par = { pc, dc: null, s: corpo2.s, aberto: false, rtt: null, desde: performance.now() };
       mapa.set(de, par);
       pc.onconnectionstatechange = () => {
@@ -18780,12 +18823,35 @@ function criarDireto({ eu, sinal, aoMensagem, ice = ICE_PADRAO, esperaIce = 1500
     desligarSinal = sinal.escutar((de, corpo2) => tratarSinal(de, corpo2));
   } catch (_) {
   }
+  function medirVia(uid, par) {
+    par.pc.getStats().then((rel) => {
+      try {
+        let cp = null;
+        rel.forEach((r) => {
+          if (r.type === "transport" && r.selectedCandidatePairId) cp = rel.get(r.selectedCandidatePairId);
+        });
+        if (!cp) rel.forEach((r) => {
+          if (!cp && r.type === "candidate-pair" && r.nominated && r.state === "succeeded") cp = r;
+        });
+        if (!cp) return;
+        const a = rel.get(cp.localCandidateId), b = rel.get(cp.remoteCandidateId);
+        if (mapa.get(uid) === par) par.via = a && a.candidateType === "relay" || b && b.candidateType === "relay" ? "repasse" : "direto";
+      } catch (_) {
+      }
+    }).catch(() => {
+    });
+  }
+  let voltas = 0;
   const intervalo = setInterval(() => {
     try {
       const msg = JSON.stringify({ k: "~p", t: performance.now() });
-      for (const par of mapa.values()) {
+      const medir = ++voltas % 3 === 0;
+      for (const [uid, par] of mapa) {
         try {
-          if (par.dc && par.dc.readyState === "open") par.dc.send(msg);
+          if (par.dc && par.dc.readyState === "open") {
+            par.dc.send(msg);
+            if (medir) medirVia(uid, par);
+          }
         } catch (_) {
         }
       }
@@ -18852,7 +18918,8 @@ function criarDireto({ eu, sinal, aoMensagem, ice = ICE_PADRAO, esperaIce = 1500
       for (const [uid, par] of mapa) {
         out[uid] = {
           aberto: !!par.aberto,
-          rtt: par.rtt == null ? null : Math.round(par.rtt)
+          rtt: par.rtt == null ? null : Math.round(par.rtt),
+          via: par.via || null
         };
       }
     } catch (_) {
@@ -19308,7 +19375,11 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       if (!l.length) return null;
       return { x: l.reduce((s, o) => s + o.x, 0) / l.length, z: l.reduce((s, o) => s + o.z, 0) / l.length };
     };
-    st.direto = comDireto ? criarDireto({ eu, sinal: sinalNuvem(st), aoMensagem: (de, m2) => {
+    st.ice = null;
+    buscarIce().then((x) => {
+      if (x) st.ice = x;
+    });
+    st.direto = comDireto ? criarDireto({ eu, sinal: sinalNuvem(st), ice: () => st.ice, aoMensagem: (de, m2) => {
       try {
         receberDireto(st, de, m2);
       } catch {
@@ -19911,23 +19982,27 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
   }
   function info() {
     const st = S;
-    let atrasoMs = null, direto = 0;
+    let atrasoMs = null, direto = 0, repasse = 0, outros = 0;
     if (st) {
       const e = canais(st);
       for (const u of quemLigar(st)) {
         const a = atrasoPara(st, u, e);
         if (a != null && (atrasoMs == null || a > atrasoMs)) atrasoMs = a;
       }
-      for (const x of Object.values(e)) if (x.aberto) direto++;
+      for (const x of Object.values(e)) if (x.aberto) {
+        direto++;
+        if (x.via === "repasse") repasse++;
+      }
+      outros = outrosUids(st).length;
     }
-    return { gatos: st ? st.remotos.size : 0, atrasoMs, direto, papel: st ? papelDe(st) : "gestor" };
+    return { gatos: st ? st.remotos.size : 0, atrasoMs, direto, repasse, outros, papel: st ? papelDe(st) : "gestor" };
   }
   function presentes() {
     const st = S;
     if (!st) return [];
     const agora2 = agoraServ(), e = canais(st);
     return [...st.presencas.values()].filter((p) => agora2 - p.t < VIVA).map((p) => {
-      return { uid: p.uid, nome: p.nome, gato: p.gato, nota: p.nota, avocado: p.avocado, papel: p.papel, char: p.char, gestor: !!(st.gestor && st.gestor.uid === p.uid), eu: p.uid === st.con.uid, atrasoMs: atrasoPara(st, p.uid, e), direto: !!(e[p.uid] && e[p.uid].aberto) };
+      return { uid: p.uid, nome: p.nome, gato: p.gato, nota: p.nota, avocado: p.avocado, papel: p.papel, char: p.char, gestor: !!(st.gestor && st.gestor.uid === p.uid), eu: p.uid === st.con.uid, atrasoMs: atrasoPara(st, p.uid, e), direto: !!(e[p.uid] && e[p.uid].aberto), via: e[p.uid] && e[p.uid].aberto && e[p.uid].via || null };
     }).sort((a, b) => a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : a.uid < b.uid ? -1 : 1);
   }
   function jogadores() {
@@ -20134,7 +20209,7 @@ function criarPainelServidor({ aoAssumir }) {
     for (const g of gatos) {
       const li = document.createElement("li");
       const atraso = g.atrasoMs;
-      li.textContent = g.nome + (atraso == null ? "" : " \xB7 " + Math.round(atraso) + " ms");
+      li.textContent = g.nome + (atraso == null ? "" : " \xB7 " + Math.round(atraso) + " ms" + (g.via === "repasse" ? " \u{1F501}" : g.via === "direto" ? " \u26A1" : " \u2601\uFE0F"));
       lista.appendChild(li);
     }
   }
@@ -20156,7 +20231,7 @@ function criarPainelServidor({ aoAssumir }) {
       gestor.textContent = novoGestor;
       ultimoGestor = novoGestor;
     }
-    const chaveLista = gatos ? gatos.map((g) => g.nome + "|" + (g.atrasoMs == null ? "null" : Math.round(g.atrasoMs))).join(";") : "";
+    const chaveLista = gatos ? gatos.map((g) => g.nome + "|" + (g.atrasoMs == null ? "null" : Math.round(g.atrasoMs)) + "|" + (g.via || "")).join(";") : "";
     if (chaveLista !== ultimoLista) {
       montarLista(gatos);
       ultimoLista = chaveLista;
@@ -23135,12 +23210,14 @@ function atualizarHudAoVivo(ms) {
   }
   const i = aovivo.info();
   const n = i.gatos + (servidorMundo ? 0 : 1);
-  el.textContent = "ao vivo \xB7 " + n + (n === 1 ? " gato" : " gatos") + (i.atrasoMs != null ? " \xB7 " + (i.direto ? "\u26A1" + i.direto + " " : "\u2601\uFE0F ") + i.atrasoMs + " ms" : "") + (i.papel === "gestor" ? " \xB7 \u{1F451}" : "");
+  const sim = i.direto > 0 ? (i.direto > i.repasse ? "\u26A1" + (i.direto - i.repasse) + " " : "") + (i.repasse ? "\u{1F501}" + i.repasse + " " : "") : i.outros > 0 ? "\u2601\uFE0F " : "";
+  const lat = (sim + (i.atrasoMs != null ? i.atrasoMs + " ms" : "")).trim();
+  el.textContent = "ao vivo \xB7 " + n + (n === 1 ? " gato" : " gatos") + (lat ? " \xB7 " + lat : "") + (i.papel === "gestor" ? " \xB7 \u{1F451}" : "");
   el.hidden = false;
   if (painelEspectador) painelEspectador.atualizar({ mundo: mundos.pegar(idMundoMapa)?.registro.nome || "", jogadores: aovivo.jogadores().map((j) => ({ char: j.char, nome: j.nome })), seguindo: seguirChar });
   if (painelServidor) {
     const p = aovivo.presentes(), g = p.find((x) => x.gestor);
-    painelServidor.atualizar({ mundo: mundos.pegar(idMundoMapa)?.registro.nome || "", gestorNome: g ? g.gato ? g.nome : "servidor \xB7 " + g.nome : "", souGestor: i.papel === "gestor", gatos: p.filter((x) => x.gato).map((x) => ({ nome: x.nome, atrasoMs: x.eu ? null : x.atrasoMs })), assumido: aovivo.avocado() });
+    painelServidor.atualizar({ mundo: mundos.pegar(idMundoMapa)?.registro.nome || "", gestorNome: g ? g.gato ? g.nome : "servidor \xB7 " + g.nome : "", souGestor: i.papel === "gestor", gatos: p.filter((x) => x.gato).map((x) => ({ nome: x.nome, atrasoMs: x.eu ? null : x.atrasoMs, via: x.via })), assumido: aovivo.avocado() });
   }
 }
 function mostrarTelaSimples(div) {
