@@ -1625,10 +1625,7 @@ canvas,
   box-shadow: 0 4px 0 #f2c94c;
 }
 
-/* 0.9.4 — comida do gato no HUD (🍖 n), discreta, embaixo dos botões de zoom; o cartão do char mostra o mesmo total */
-.hud-comida { position: absolute; top: 204px; right: 16px; padding: 2px 9px; font-size: 0.78rem; font-weight: 700; color: #3a3a55; background: rgba(255, 255, 255, 0.7); border: 2px solid #cdd6f0; border-radius: 10px; pointer-events: none; }
-.hud-comida[hidden] { display: none; }
-.em-servidor .hud-comida, .em-espectador .hud-comida { display: none; }
+/* 0.9.4 — o cartão do char mostra o total de comida (0.11.7: o contador 🍖 n do HUD saiu da tela) */
 .gato-comida { font-size: 0.78rem; font-weight: 700; color: #6a5a4a; }
 
 /* 0.9.6 — missões: botão 🎯 ao lado dos botões do horário, painel pequeno embaixo deles, lista (diálogo) e festa de "Missão cumprida!" */
@@ -2376,7 +2373,7 @@ if (typeof window !== "undefined") {
 import * as THREE14 from "three";
 
 // js/data.js
-var VERSION = "0.11.6";
+var VERSION = "0.11.7";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -3374,38 +3371,15 @@ async function procurarAtualizacao(versaoAtual, { sinal } = {}) {
   }
   return { estado: "igual", versao: versaoAtual };
 }
-async function aplicarAtualizacao(versaoNova, { limite = 12e4, semNada = 6e3 } = {}) {
+async function aplicarAtualizacao() {
   try {
-    const sw = navigator.serviceWorker;
-    if (!sw) return false;
-    const reg = await sw.getRegistration();
-    if (!reg) return false;
-    let trocou = false;
-    const marcar = () => {
-      trocou = true;
-    };
-    sw.addEventListener("controllerchange", marcar);
-    try {
-      try {
-        await reg.update();
-      } catch {
-      }
-      const nome = "gatinho-" + versaoNova;
-      const completa = async () => typeof caches !== "undefined" && await caches.has(nome) && !!await (await caches.open(nome)).match("./index.html");
-      const t0 = Date.now();
-      while (Date.now() - t0 < limite) {
-        const ocupado = !!(reg.installing || reg.waiting);
-        if (trocou || !ocupado && await completa()) {
-          location.reload();
-          return true;
-        }
-        if (!ocupado && Date.now() - t0 > semNada) return false;
-        await new Promise((r) => setTimeout(r, 500));
-      }
-      return false;
-    } finally {
-      sw.removeEventListener("controllerchange", marcar);
+    const sw = navigator.serviceWorker, reg = sw && await sw.getRegistration();
+    if (reg) await reg.unregister();
+    if (typeof caches !== "undefined") {
+      for (const k of await caches.keys()) if (k.startsWith("gatinho-")) await caches.delete(k);
     }
+    location.reload();
+    return true;
   } catch {
     return false;
   }
@@ -3514,7 +3488,7 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
     btnAtualizar.onclick = async () => {
       btnAtualizar.disabled = true;
       faixaNovaTexto.textContent = "Atualizando\u2026";
-      const ok = await aplicarAtualizacao(r.versao);
+      const ok = await aplicarAtualizacao();
       if (!ok && !morto) {
         faixaNovaTexto.textContent = "N\xE3o deu certo. Tente de novo.";
         btnAtualizar.disabled = false;
@@ -19112,9 +19086,9 @@ function concluirVotacao({ tipo, valor, quem, votos }, ctx2) {
 var ENVIO = 100;
 var PARADO = 1e3;
 var ATRASO_DESENHO = 150;
-var ENVIO_DIRETO = 50;
+var ENVIO_DIRETO = 33;
 var NUVEM_LENTA = 1e3;
-var ATRASO_DIRETO = 90;
+var ATRASO_DIRETO = 50;
 var AVISO_NUVEM = 3e3;
 var TEMPO_REDE = 5e3;
 var PRESENCA = 2e3;
@@ -21955,12 +21929,6 @@ function salvarMundoAgora() {
   } catch (e) {
   }
 }
-function atualizarHudComida(n) {
-  const el = document.getElementById("hud-comida");
-  if (!el) return;
-  el.textContent = "\u{1F356} " + n;
-  el.hidden = !n;
-}
 function gravarSalvo(idGato, idMundo, m2) {
   if (!idMundo) return;
   if (!semSalvarChar) Save.salvarPosicao(idGato, idMundo, { x: m2.x, z: m2.z, rot: m2.rot, agachado: m2.agachado, sub: m2.sub || null, zoom: m2.zoom });
@@ -22482,8 +22450,7 @@ function irPara(nome, opcoes) {
       if (idGatoMapa && mapaNovo.missao) mapaNovo.missao.comeu(idGatoMapa, tipo);
       estatCaca(tipo);
       if (!idGatoMapa || semSalvarChar) return;
-      const n = Save.somarComida(idGatoMapa, tipo, idMundoMapa, aovivo.ativo());
-      if (n != null) atualizarHudComida(n);
+      Save.somarComida(idGatoMapa, tipo, idMundoMapa, aovivo.ativo());
     };
     if (salvo && salvo.sub) {
       try {
@@ -22498,10 +22465,6 @@ function irPara(nome, opcoes) {
     nomeEl.className = "hud-nome";
     nomeEl.textContent = espectando ? "Assistindo" : servidor ? "Servidor do mundo" : gato.nome || "Gatinho";
     hud.appendChild(nomeEl);
-    const comidaEl = document.createElement("div");
-    comidaEl.id = "hud-comida";
-    comidaEl.className = "hud-comida";
-    hud.appendChild(comidaEl);
     const minimapa = document.createElement("canvas");
     minimapa.id = "minimapa";
     minimapa.width = 180;
@@ -22604,13 +22567,19 @@ function irPara(nome, opcoes) {
       } });
       hud.appendChild(painelEspectador.elemento);
     } else if (servidor) {
-      painelServidor = criarPainelServidor({ aoAssumir: () => aovivo.avocar() });
+      painelServidor = criarPainelServidor({ aoAssumir: () => {
+        const a = aovivo.avocar();
+        try {
+          localStorage.setItem(CHAVE_ASSUME, a ? "1" : "0");
+        } catch (e) {
+        }
+        return a;
+      } });
       hud.appendChild(painelServidor.elemento);
     }
     hudConexao = criarHudConexao({ conexao, aoTocarNuvem: tocarNuvem });
     hud.appendChild(hudConexao.elemento);
     uiRoot.appendChild(hud);
-    atualizarHudComida(idGatoMapa ? Save.totalComida(idGatoMapa) : 0);
     if (!servidor || espectando) {
       inputAtual = criarInput(uiRoot, { agachado: !!salvo?.agachado });
       inputAtual.onPular(() => {
@@ -22893,6 +22862,7 @@ async function assistir(mundoId, seguir) {
     entrando = false;
   }
 }
+var CHAVE_ASSUME = "gatinho-servidor-assume";
 var cargaEntrada = null;
 async function iniciarAoVivo(mapa, gato, servidor, espectador) {
   const c = cargaEntrada;
@@ -22904,6 +22874,12 @@ async function iniciarAoVivo(mapa, gato, servidor, espectador) {
     if (c) c.texto("Chamando a fam\xEDlia\u2026");
     const p = aovivo.iniciar({ mapa, gato, mundoId: id, semGato: !!servidor, char: idGatoMapa || "", papel: espectador ? "espectador" : servidor ? "servidor" : "jogador" }).then((ok) => {
       if (ok && mapaAtual !== mapa) aovivo.sair();
+      else if (ok && servidor) {
+        try {
+          if (localStorage.getItem(CHAVE_ASSUME) === "1") aovivo.avocar(true);
+        } catch (e) {
+        }
+      }
     });
     await (c ? Promise.race([p, c.pular]) : p);
   } catch (e) {
