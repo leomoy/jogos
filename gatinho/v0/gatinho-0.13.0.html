@@ -1663,6 +1663,16 @@ canvas,
 .pega-placar-lista { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 1.05rem; font-weight: 700; }
 .pega-placar-lista li { padding: 4px 8px; background: #f0faea; border-radius: 10px; }
 .pega-placar-lista li.pega-placar-1 { background: #ffe9a3; }
+/* 0.13: Imite o líder (js/imite-ui.js) */
+.imite[hidden], .imite [hidden] { display: none; }
+.imite-faixa { position: fixed; left: 0; right: 0; top: 0; z-index: 18; margin: 0; padding: 5px 10px; box-sizing: border-box; font-size: clamp(0.7rem, 3.1vw, 0.95rem); font-weight: 800; line-height: 1.2; text-align: center; color: #3a2a00; background: #ffe9a3; border-bottom: 3px solid #e0a800; pointer-events: none; }
+.imite-dica { position: fixed; left: 50%; top: 24%; transform: translateX(-50%); z-index: 18; width: max-content; max-width: min(calc(100vw - 150px), 420px); box-sizing: border-box; margin: 0; padding: 8px 18px; font-size: clamp(1.2rem, 5.4vw, 1.9rem); font-weight: 900; line-height: 1.2; text-align: center; color: #3a2a00; background: rgba(255, 255, 255, 0.92); border: 4px solid #ffc933; border-radius: 20px; pointer-events: none; }
+.imite-dica-certo { color: #fff; background: rgba(54, 140, 48, 0.92); border-color: #1f5a22; animation: brinc-pulso 0.5s ease-out 2; }
+.imite-placar { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 60; width: min(88vw, 500px); max-height: 80vh; overflow: hidden; box-sizing: border-box; padding: 12px 18px; background: #fff; border: 4px solid #ffc933; border-radius: 22px; box-shadow: 0 6px 0 #e0a800; color: #3a2a00; text-align: center; pointer-events: none; }
+.imite-placar-titulo { margin: 0 0 6px; font-size: 1.45rem; }
+.imite-placar-lista { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 1.05rem; font-weight: 700; }
+.imite-placar-lista li { padding: 4px 8px; background: #fff6d6; border-radius: 10px; }
+@media (max-height: 520px) { .imite-faixa { font-size: 0.85rem; padding: 3px 8px; } .imite-dica { top: 20%; padding: 3px 12px; font-size: 1.1rem; } .imite-placar { top: 48%; padding: 6px 12px; } .imite-placar-titulo { font-size: 1.15rem; margin-bottom: 3px; } .imite-placar-lista { font-size: 0.9rem; gap: 2px; } .imite-placar-lista li { padding: 2px 6px; } }
 @media (max-height: 520px) { .pega-faixa { font-size: 0.85rem; padding: 3px 8px; } .pega-dica { top: 56%; padding: 3px 10px; font-size: 0.9rem; } .pega-aviso { top: 14%; } .pega-aviso p { padding: 6px 14px; font-size: 1.2rem; } .pega-rapido { top: 10%; padding: 3px 10px; font-size: 1rem; } .pega-placar { top: 48%; padding: 6px 12px; } .pega-placar-titulo { font-size: 1.15rem; margin-bottom: 3px; } .pega-placar-lista { font-size: 0.9rem; gap: 2px; } .pega-placar-lista li { padding: 2px 6px; } }
 
 /* 0.9.10: estatísticas do gatinho (js/estatisticas-ui.js) — por cima da pausa e de "Meus gatinhos"; a grade rola por dentro */
@@ -1863,6 +1873,12 @@ canvas,
 .janela-subtitulo { margin: 6px 0 0; font-size: 1.05rem; }
 .janela-corpo { display: flex; flex-direction: column; gap: 10px; }
 .janela-corpo .botao { width: 100%; box-sizing: border-box; }
+.como-jogar-lista { margin: 0; padding: 0 0 0 4px; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 1.05rem; font-weight: 700; line-height: 1.3; }
+.como-jogar-lista strong { color: #d6336c; }
+.manual { display: flex; flex-direction: column; gap: 6px; }
+.manual-secao { background: #f3f6fd; border: 2px solid #d6def2; border-radius: 14px; padding: 4px 12px; }
+.manual-secao summary { cursor: pointer; padding: 6px 0; font-size: 1.05rem; font-weight: 800; }
+.manual-secao p { margin: 2px 0 8px; font-size: 0.95rem; line-height: 1.35; }
 .janela-aovivo { margin: 0; font-size: 0.9rem; font-weight: 700; }
 .janela-aovivo[hidden] { display: none; }
 .janela-rede { list-style: none; margin: 0; padding: 0; font-size: 0.9rem; }
@@ -1881,6 +1897,24 @@ canvas,
 .sobre-versao { margin: 0; font-weight: 700; }
 .sobre-creditos { margin: 0; padding: 0 0 0 18px; text-align: left; font-size: 0.85rem; opacity: 0.85; }
 .sobre-creditos li { margin-bottom: 4px; }
+
+/* ===== 0.13 — logo no menu inicial ===== */
+.menu-logo { flex: 0 0 auto; width: 96px; height: 96px; border-radius: 50%; overflow: hidden; margin: 0 auto; box-shadow: 0 3px 0 #cdd6f0; }
+.menu-logo svg { display: block; width: 100%; height: 100%; }
+@media (min-height: 700px) { .menu-logo { width: 120px; height: 120px; } }
+@media (max-height: 500px) { .menu-logo { width: 64px; height: 64px; } }
+@media (max-height: 420px) { .menu-logo { width: 48px; height: 48px; } }   /* 0.13: paisagem baixa: com o botão Como jogar o menu tem que caber em 360 px */
+
+/* ===== 0.13 — Atividades em abas; cronômetro do Desafio ===== */
+.missoes-abas { display: flex; gap: 6px; width: 100%; }
+.missoes-abas .aba { flex: 1 1 0; min-height: 44px; font-family: inherit; font-size: 1.05rem; font-weight: 700; color: #3a3a55; background: #ffffff; border: 3px solid #cdd6f0; border-radius: 14px; cursor: pointer; }
+.missoes-abas .aba.aba-ativa { background: #ffd9e8; border-color: #e58fb0; }
+.missoes-painel { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.missoes-painel[hidden] { display: none; }
+.missoes-item .botao-desafio { margin-left: 0; background: #fff3c4; }
+.painel-missao-tempo { margin: 0; font-weight: 800; }
+.painel-missao-tempo.pouco { color: #c0392b; }
+.painel-missao-bonus { color: #2e8b57; }
 </style>
 <script type="importmap">{
   "imports": {
@@ -2117,19 +2151,19 @@ ${(e.stack || "").split("\n").slice(1, 4).join("\n")}`);
     poe(...achou);
     assert(botaoA("acao").classList.contains("desligado"), "A\xE7\xE3o deveria estar apagada longe de arbustos");
   });
-  const tocar2 = (el) => {
+  const tocar3 = (el) => {
     toque(el);
     el.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, cancelable: true }));
   };
   await step("mapa: Postura troca em ciclo (sentado, andando, correndo, espreita) e a tecla C liga a espreita", async () => {
     assert(rotulo("postura") === "Sentado", "come\xE7a Sentado: " + rotulo("postura"));
     for (const r of ["Andando", "Correndo", "Espreita", "Sentado"]) {
-      tocar2(botaoA("postura"));
+      tocar3(botaoA("postura"));
       assert(rotulo("postura") === r, "ciclo esperava " + r + " e veio " + rotulo("postura"));
     }
-    tocar2(botaoA("postura"));
-    tocar2(botaoA("postura"));
-    tocar2(botaoA("postura"));
+    tocar3(botaoA("postura"));
+    tocar3(botaoA("postura"));
+    tocar3(botaoA("postura"));
     assert(rotulo("postura") === "Espreita" && botaoA("postura").classList.contains("ligado"), "Espreita n\xE3o ligou");
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "c" }));
     assert(rotulo("postura") === "Andando", "tecla C n\xE3o desligou a espreita: " + rotulo("postura"));
@@ -2377,7 +2411,7 @@ if (typeof window !== "undefined") {
 import * as THREE14 from "three";
 
 // js/data.js
-var VERSION = "0.12.1";
+var VERSION = "0.13.0";
 var TEMPO_VOTACAO = 30;
 var SAVE_KEY = "gatinho.save";
 var NOME_MAX = 16;
@@ -2694,7 +2728,7 @@ function totalComida(ficha) {
 // js/estatisticas.js
 var CAMPOS_NUM = ["tempo", "distancia", "nado", "corrida", "pulos", "botes", "missoes", "brinquedos", "arvores", "cavernas"];
 var TIPOS_CACA = ["rato", "peixe", "passaro", "ovo"];
-var TIPOS_BRINC = ["esconde", "pega"];
+var TIPOS_BRINC = ["esconde", "pega", "imite"];
 var CHAVES_PERIGOSAS2 = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
 function ehObjeto2(v) {
   return v !== null && typeof v === "object";
@@ -3304,6 +3338,90 @@ var Save = {
   }
 };
 
+// js/logo.js
+var LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="logo-fundo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd9a8"/>
+      <stop offset="1" stop-color="#c8e6b0"/>
+    </linearGradient>
+    <radialGradient id="logo-pelo" cx="0.45" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#ffb65c"/>
+      <stop offset="1" stop-color="#ec8a2c"/>
+    </radialGradient>
+    <radialGradient id="logo-olho" cx="0.5" cy="0.6" r="0.6">
+      <stop offset="0" stop-color="#9be36f"/>
+      <stop offset="1" stop-color="#3aa651"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#logo-fundo)"/>
+
+  <!-- orelhas -->
+  <g stroke="#b8621a" stroke-width="8" stroke-linejoin="round">
+    <path d="M118 262 C 108 190, 120 130, 146 100 C 182 118, 218 150, 240 182 Z" fill="url(#logo-pelo)"/>
+    <path d="M394 262 C 404 190, 392 130, 366 100 C 330 118, 294 150, 272 182 Z" fill="url(#logo-pelo)"/>
+  </g>
+  <path d="M142 228 C 138 184, 144 150, 154 132 C 176 146, 198 166, 212 186 Z" fill="#f9b6c4"/>
+  <path d="M370 228 C 374 184, 368 150, 358 132 C 336 146, 314 166, 300 186 Z" fill="#f9b6c4"/>
+
+  <!-- cabe\xE7a -->
+  <path d="M256 168 C 352 168, 412 222, 412 296 C 412 372, 344 420, 256 420 C 168 420, 100 372, 100 296 C 100 222, 160 168, 256 168 Z"
+        fill="url(#logo-pelo)" stroke="#b8621a" stroke-width="8"/>
+  <!-- tufos das bochechas -->
+  <path d="M104 318 l -22 6 l 20 10 l -14 14 l 26 -2" fill="url(#logo-pelo)" stroke="#b8621a" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M408 318 l 22 6 l -20 10 l 14 14 l -26 -2" fill="url(#logo-pelo)" stroke="#b8621a" stroke-width="7" stroke-linejoin="round"/>
+
+  <!-- listras da testa -->
+  <g fill="#c96a1c">
+    <path d="M256 176 c -9 0 -12 14 -10 34 c 2 12 18 12 20 0 c 2 -20 -1 -34 -10 -34 z"/>
+    <path d="M214 184 c -8 2 -8 14 -3 28 c 4 9 16 6 15 -4 c -1 -14 -5 -26 -12 -24 z"/>
+    <path d="M298 184 c 8 2 8 14 3 28 c -4 9 -16 6 -15 -4 c 1 -14 5 -26 12 -24 z"/>
+  </g>
+
+  <!-- focinho claro -->
+  <ellipse cx="226" cy="352" rx="44" ry="34" fill="#fff2df"/>
+  <ellipse cx="286" cy="352" rx="44" ry="34" fill="#fff2df"/>
+  <ellipse cx="256" cy="384" rx="34" ry="20" fill="#fff2df"/>
+
+  <!-- olhos -->
+  <g>
+    <ellipse cx="190" cy="290" rx="38" ry="42" fill="#fff" stroke="#6b3a12" stroke-width="5"/>
+    <ellipse cx="192" cy="294" rx="31" ry="35" fill="url(#logo-olho)"/>
+    <ellipse cx="194" cy="296" rx="13" ry="25" fill="#1f1a17"/>
+    <circle cx="204" cy="278" r="9" fill="#fff"/>
+    <circle cx="184" cy="312" r="4" fill="#fff"/>
+
+    <ellipse cx="322" cy="290" rx="38" ry="42" fill="#fff" stroke="#6b3a12" stroke-width="5"/>
+    <ellipse cx="320" cy="294" rx="31" ry="35" fill="url(#logo-olho)"/>
+    <ellipse cx="318" cy="296" rx="13" ry="25" fill="#1f1a17"/>
+    <circle cx="328" cy="278" r="9" fill="#fff"/>
+    <circle cx="308" cy="312" r="4" fill="#fff"/>
+  </g>
+
+  <!-- bochechas rosadas -->
+  <ellipse cx="150" cy="350" rx="22" ry="12" fill="#ff8fa8" opacity="0.45"/>
+  <ellipse cx="362" cy="350" rx="22" ry="12" fill="#ff8fa8" opacity="0.45"/>
+
+  <!-- nariz e boca -->
+  <path d="M240 338 C 240 330, 272 330, 272 338 C 272 346, 262 356, 256 358 C 250 356, 240 346, 240 338 Z" fill="#ff7f9e" stroke="#c4506d" stroke-width="3"/>
+  <path d="M256 358 L 256 370 M 256 370 C 250 384, 232 384, 228 372 M 256 370 C 262 384, 280 384, 284 372"
+        fill="none" stroke="#6b3a12" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- bigodes -->
+  <g stroke="#6b3a12" stroke-width="3.5" stroke-linecap="round" opacity="0.75">
+    <path d="M176 352 L 112 340"/><path d="M176 364 L 110 366"/><path d="M178 376 L 118 392"/>
+    <path d="M336 352 L 400 340"/><path d="M336 364 L 402 366"/><path d="M334 376 L 394 392"/>
+  </g>
+
+  <!-- la\xE7o rosa na orelha direita -->
+  <g transform="translate(318 168) rotate(-18)" stroke="#c43d78" stroke-width="5" stroke-linejoin="round">
+    <path d="M0 0 C -22 -30, -60 -26, -56 0 C -60 26, -22 30, 0 0 Z" fill="#ff86b7"/>
+    <path d="M0 0 C 22 -30, 60 -26, 56 0 C 60 26, 22 30, 0 0 Z" fill="#ff86b7"/>
+    <path d="M-6 6 L -18 40 L -2 32 Z M 6 6 L 18 40 L 2 32 Z" fill="#ff86b7"/>
+    <circle cx="0" cy="0" r="12" fill="#ff5fa0"/>
+  </g>
+</svg>`;
+
 // js/atualizacao.js
 function compararVersoes(a, b) {
   const pa = String(a).split(".").map((p) => {
@@ -3401,6 +3519,10 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
   let morto = false;
   const tela = document.createElement("div");
   tela.className = "tela tela-menu";
+  const logo = document.createElement("div");
+  logo.className = "menu-logo";
+  logo.innerHTML = LOGO_SVG;
+  tela.appendChild(logo);
   const titulo = document.createElement("h1");
   titulo.textContent = "Avel\xE3, o gatinho sobrevivente";
   tela.appendChild(titulo);
@@ -3577,6 +3699,7 @@ function criarMenu({ container, scene: scene2, aoEscolher, nuvem: nuvem2, contin
   criarBotao("\u{1F431} Gatinhos", "gatos");
   criarBotao("\u{1F30D} Mundos", "mundos");
   criarBotao("\u{1F46A} Fam\xEDlia", "familia");
+  criarBotao("\u2753 Como jogar", "como-jogar");
   const linhaMeia = document.createElement("div");
   linhaMeia.className = "botao-linha";
   botoes.appendChild(linhaMeia);
@@ -7255,19 +7378,119 @@ function lerTocas(texto) {
 // js/missoes.js
 var MISSOES = {
   cacar10: {
-    nome: "Ca\xE7ar 10 comidas",
+    nome: "Ca\xE7ar comidas",
     icone: "\u{1F356}",
-    dica: "Pegue 10 comidas!",
+    dica: "Peguem comidas, todo mundo junto!",
     alvo: 10,
+    escala: true,
+    desafio: [60, 15],
     conta: (evento2) => !!evento2 && evento2.tipo === "comida",
+    recompensa: null
+  },
+  // 0.13: missões de carga (pegar e levar) com desenho e ícones próprios: `visual` (js/brinquedos.js), `icones` = { pegar, entregar } das Ações. Entregar conta como 'brinquedo'.
+  flores: {
+    nome: "Colher flores",
+    icone: "\u{1F338}",
+    dica: "Colham flores e levem para a cesta!",
+    alvo: 5,
+    escala: true,
+    desafio: [60, 10],
+    conta: (evento2) => !!evento2 && evento2.tipo === "brinquedo",
+    recompensa: null,
+    carga: true,
+    visual: "flores",
+    icones: { pegar: "\u{1F338}", entregar: "\u{1F9FA}" }
+  },
+  ovos: {
+    nome: "Ovos de volta ao ninho",
+    icone: "\u{1FABA}",
+    dica: "Os ovos ca\xEDram! Levem de volta para o ninho!",
+    alvo: 5,
+    escala: true,
+    desafio: [60, 10],
+    conta: (evento2) => !!evento2 && evento2.tipo === "brinquedo",
+    recompensa: null,
+    carga: true,
+    visual: "ovos",
+    icones: { pegar: "\u{1F95A}", entregar: "\u{1FABA}" }
+  },
+  // 0.13: missões de TOQUE: carga em que encostar no ponto (≤ `raioToque`) já conta; o item vira 'cesta' sem ninguém carregar. `seq` = só o 1º item ainda no chão vale e aparece.
+  vagalumes: {
+    nome: "Vagalumes",
+    icone: "\u2728",
+    dica: "Encostem nos vagalumes! (\xC0 noite eles brilham mais.)",
+    alvo: 10,
+    escala: true,
+    desafio: [45, 8],
+    conta: (evento2) => !!evento2 && evento2.tipo === "brinquedo",
+    recompensa: null,
+    carga: true,
+    toque: true,
+    raioToque: 1.3,
+    visual: "vagalumes"
+  },
+  tesouro: {
+    nome: "Ca\xE7a ao tesouro",
+    icone: "\u{1F5FA}\uFE0F",
+    dica: "Sigam as pistas at\xE9 o tesouro!",
+    falta: (m2) => m2.feitas < m2.alvo ? "Pista " + (m2.feitas + 1) + " de " + m2.alvo : "",
+    alvo: 5,
+    escala: false,
+    desafio: [45, 20],
+    conta: (evento2) => !!evento2 && evento2.tipo === "brinquedo",
+    recompensa: null,
+    carga: true,
+    toque: true,
+    seq: true,
+    raioToque: 2,
+    visual: "tesouro"
+  },
+  explorador: {
+    nome: "Explorador",
+    icone: "\u{1F6A9}",
+    dica: "Visitem os lugares com bandeira!",
+    falta: (m2) => "Bandeiras: " + m2.feitas + "/" + m2.alvo,
+    alvo: 5,
+    escala: true,
+    desafio: [90, 25],
+    conta: (evento2) => !!evento2 && evento2.tipo === "brinquedo",
+    recompensa: null,
+    carga: true,
+    toque: true,
+    raioToque: 3,
+    visual: "explorador"
+  },
+  // 0.13: peixes do rio (conta só `peixe`).
+  pescaria: {
+    nome: "Pescaria",
+    icone: "\u{1F3A3}",
+    dica: "Peguem peixes no rio, juntos!",
+    alvo: 3,
+    escala: true,
+    desafio: [60, 20],
+    conta: (evento2) => !!evento2 && evento2.tipo === "comida" && evento2.comida === "peixe",
+    recompensa: null
+  },
+  // 0.13: o gestor soma 1 quando TODOS os gatos do mapa grande ficam pertinho de um cervo calmo por 3 s (passoObservar).
+  cervos: {
+    nome: "Observar os cervos",
+    icone: "\u{1F440}",
+    dica: "Fiquem todos pertinho de um cervo, sem ele ver voc\xEAs!",
+    falta: "Cheguem todos pertinho de um cervo \u{1F98C}",
+    alvo: 3,
+    escala: false,
+    desafio: [120, 40],
+    conta: (evento2) => !!evento2 && evento2.tipo === "cervo",
     recompensa: null
   },
   // 0.11.0: o pai pediu "achar itens no mapa e trazer para o ponto de encontro". `brinq` (missão.brinq = carga de js/carregar.js) vai como 6º trecho do texto.
   brinquedos: {
     nome: "Achar os brinquedos",
     icone: "\u{1F9F8}",
-    dica: "Ache 10 brinquedos e leve para a cesta!",
+    dica: "Achem os brinquedos e levem para a cesta!",
     alvo: 10,
+    escala: true,
+    desafio: [60, 10],
     conta: (evento2) => !!evento2 && evento2.tipo === "brinquedo",
     recompensa: null,
     carga: true
@@ -7295,24 +7518,44 @@ function charIdValido(id) {
 function inteiroPositivo(n) {
   return typeof n === "number" && Number.isFinite(n) && Number.isInteger(n) && n >= 0;
 }
-function novaMissao(id, agora2) {
+function alvoPara(id, n = 1, teto = Infinity) {
+  const D = Object.hasOwn(MISSOES, id) ? MISSOES[id] : null;
+  if (!D) return 0;
+  if (!D.escala) return D.alvo;
+  const extra = Math.ceil(D.alvo / 2) * Math.max(0, (n | 0) - 2);
+  return Math.max(1, Math.min(Math.floor(D.alvo * 2.5), D.alvo + extra, teto));
+}
+function novaMissao(id, agora2, { n = 1, desafio = false, agoraSrv = agora2, teto = Infinity } = {}) {
   if (!Object.hasOwn(MISSOES, id)) return null;
   if (typeof agora2 !== "number" || !Number.isFinite(agora2)) return null;
-  return {
+  const m2 = {
     id,
     inicio: agora2,
-    alvo: MISSOES[id].alvo,
+    alvo: alvoPara(id, n, teto),
     feitas: 0,
     por: {}
   };
+  const D = MISSOES[id].desafio;
+  if (desafio && D && Number.isFinite(agoraSrv)) m2.prazo = Math.round(agoraSrv + D[0] * 1e3);
+  return m2;
 }
 function concluida(missao) {
   if (!missao || typeof missao !== "object") return false;
   if (!Object.hasOwn(MISSOES, missao.id)) return false;
-  return missao.feitas >= (MISSOES[missao.id].alvoDin ? missao.alvo : MISSOES[missao.id].alvo);
+  return missao.feitas >= (Number.isFinite(missao.alvo) ? missao.alvo : MISSOES[missao.id].alvo);
+}
+function esgotou(m2, agoraSrv) {
+  return !!m2 && typeof m2 === "object" && !!m2.prazo && !m2.fim && agoraSrv >= m2.prazo;
+}
+function pedidoCatalogo(valor) {
+  if (typeof valor !== "string") return null;
+  const desafio = valor.endsWith("!"), id = desafio ? valor.slice(0, -1) : valor;
+  if (!Object.hasOwn(MISSOES, id) || desafio && !MISSOES[id].desafio) return null;
+  return { id, desafio };
 }
 function idDoPedido(valor) {
-  if (Object.hasOwn(MISSOES, valor)) return valor;
+  const c = pedidoCatalogo(valor);
+  if (c) return c.id;
   return lerPedido(valor) ? "toca" : null;
 }
 function progredir(missao, evento2, charId) {
@@ -7323,6 +7566,7 @@ function progredir(missao, evento2, charId) {
   if (!charIdValido(charId)) return false;
   if (!MISSOES[missao.id].conta(evento2)) return false;
   if (!missao.por || typeof missao.por !== "object") missao.por = {};
+  if (missao.prazo && MISSOES[missao.id].desafio) missao.prazo += MISSOES[missao.id].desafio[1] * 1e3;
   missao.feitas = (missao.feitas || 0) + 1;
   missao.por[charId] = (missao.por[charId] || 0) + 1;
   return true;
@@ -7343,7 +7587,11 @@ function serializarMissao(missao) {
     if (typeof v !== "number" || !Number.isFinite(v) || v < 1) continue;
     pares.push(chave + ":" + Math.round(v));
   }
-  const partesTxt = [id, inicio, feitas, fim, pares.join(";")];
+  const alvoOk = Number.isInteger(missao.alvo) && missao.alvo >= 1 && missao.alvo <= 100;
+  const prazo = missao.prazo && Number.isFinite(missao.prazo) ? Math.round(missao.prazo) : 0;
+  let cab = id;
+  if (!MISSOES[id].alvoDin && (prazo || alvoOk && missao.alvo !== MISSOES[id].alvo)) cab += "," + (alvoOk ? missao.alvo : MISSOES[id].alvo) + (prazo ? "," + prazo : "");
+  const partesTxt = [cab, inicio, feitas, fim, pares.join(";")];
   const extra = missao.brinq ? serializarCarga(missao.brinq) : "";
   if (extra) partesTxt.push(extra);
   if (extra && MISSOES[id].alvoDin) partesTxt.push(missao.toca || "", missao.tipos || "", missao.espaco || "");
@@ -7354,8 +7602,11 @@ function lerMissao(texto) {
   if (texto.length > 2200) return null;
   const partes = texto.split("~");
   if (partes.length !== 5 && partes.length !== 6 && partes.length !== 9) return null;
-  const [id, inicioStr, feitasStr, fimStr, porStr, extraStr, tocaStr, tiposStr, espacoStr] = partes;
-  if (!Object.hasOwn(MISSOES, id)) return null;
+  const [cab, inicioStr, feitasStr, fimStr, porStr, extraStr, tocaStr, tiposStr, espacoStr] = partes;
+  const [id, alvoStr, prazoStr, sobra] = cab.split(",");
+  if (sobra !== void 0 || !Object.hasOwn(MISSOES, id)) return null;
+  if (alvoStr !== void 0 && !/^[0-9]{1,3}$/.test(alvoStr)) return null;
+  if (prazoStr !== void 0 && !/^[0-9]{1,15}$/.test(prazoStr)) return null;
   if (partes.length === 9 !== !!MISSOES[id].alvoDin) return null;
   if (partes.length === 9 && (!/^[A-Za-z0-9_-]{1,20}$/.test(tocaStr) || tocaStr === "__proto__" || !/^[gfmop]{1,24}$/.test(tiposStr) || !/^(|caverna:[A-Za-z0-9_-]{1,12}|arvore:[A-Za-z0-9_-]{1,12}:[0-2])$/.test(espacoStr))) return null;
   const inicio = Number(inicioStr);
@@ -7364,7 +7615,12 @@ function lerMissao(texto) {
   if (!inteiroPositivo(inicio)) return null;
   if (!inteiroPositivo(feitas)) return null;
   if (!inteiroPositivo(fim)) return null;
-  const alvo2 = MISSOES[id].alvoDin ? tiposStr.length : MISSOES[id].alvo;
+  let alvo2 = MISSOES[id].alvoDin ? tiposStr.length : MISSOES[id].alvo;
+  if (alvoStr !== void 0 && !MISSOES[id].alvoDin) {
+    alvo2 = Number(alvoStr);
+    if (alvo2 < 1 || alvo2 > 100) return null;
+  }
+  const prazo = prazoStr !== void 0 ? Number(prazoStr) : 0;
   const feitasFinal = Math.min(feitas, alvo2);
   const por = {};
   if (porStr) {
@@ -7389,8 +7645,9 @@ function lerMissao(texto) {
     por
   };
   if (fim > 0) resultado.fim = fim;
+  if (prazo > 0 && MISSOES[id].desafio) resultado.prazo = prazo;
   if (extraStr) {
-    const brinq = MISSOES[id].carga ? lerCarga(extraStr, MISSOES[id].maxItens || 12) : null;
+    const brinq = MISSOES[id].carga ? lerCarga(extraStr, MISSOES[id].maxItens || 30) : null;
     if (!brinq) return null;
     resultado.brinq = brinq;
     if (partes.length === 9) {
@@ -7399,6 +7656,43 @@ function lerMissao(texto) {
     }
   } else if (MISSOES[id].carga) return null;
   return resultado;
+}
+function itemTocavel(m2, i) {
+  if (!m2 || !m2.brinq || !MISSOES[m2.id] || !MISSOES[m2.id].toque) return false;
+  const it = m2.brinq.itens[i];
+  if (!it || it.est !== "chao") return false;
+  return !MISSOES[m2.id].seq || m2.brinq.itens.findIndex((x) => x.est === "chao") === i;
+}
+function tocar2(m2, i, charId, x, z, folga = 0) {
+  if (!itemTocavel(m2, i) || m2.fim) return false;
+  const it = m2.brinq.itens[i];
+  if (Math.hypot(it.x - x, it.z - z) > MISSOES[m2.id].raioToque + folga) return false;
+  if (!progredir(m2, { tipo: "brinquedo" }, charId)) return false;
+  it.est = "cesta";
+  it.char = "";
+  return true;
+}
+var OBSERVAR = { raio: 10, segundos: 3, espera: 30 };
+function passoObservar(estado, cervos, gatos, dt) {
+  for (const i of Object.keys(estado.espera)) {
+    estado.espera[i] -= dt;
+    if (estado.espera[i] <= 0) delete estado.espera[i];
+  }
+  const feitos = [];
+  for (const c of cervos) {
+    const perto = c.calmo && !estado.espera[c.i] && gatos.length > 0 && gatos.every((g) => Math.hypot(g.x - c.x, g.z - c.z) <= OBSERVAR.raio);
+    if (!perto) {
+      delete estado.t[c.i];
+      continue;
+    }
+    estado.t[c.i] = (estado.t[c.i] || 0) + dt;
+    if (estado.t[c.i] >= OBSERVAR.segundos) {
+      feitos.push(c.i);
+      delete estado.t[c.i];
+      estado.espera[c.i] = OBSERVAR.espera;
+    }
+  }
+  return feitos;
 }
 
 // js/encontro.js
@@ -7558,6 +7852,7 @@ function precisaTrazer(pos, area) {
 
 // js/brinquedos.js
 import * as THREE3 from "three";
+var TOQUE = /* @__PURE__ */ new Set(["vagalumes", "tesouro", "explorador"]);
 var COR = { bolinha: 16734815, novelo: 13073919, ratinho: 12169896, pena: 3065014, sininho: 16763187 };
 function mat(cor, extra) {
   return new THREE3.MeshLambertMaterial({ color: cor, ...extra });
@@ -7609,6 +7904,85 @@ function modelo(tipo) {
   }
   return g;
 }
+var COR_FLOR = [16765503, 16748472, 10906879, 15087942, 16777215];
+function modeloFlor(i) {
+  const g = new THREE3.Group(), cor = COR_FLOR[i % COR_FLOR.length];
+  g.add(malha(new THREE3.CylinderGeometry(0.015, 0.02, 0.3, 6), mat(4168511), 0, 0.15, 0));
+  for (const s of [-1, 1]) {
+    const folha = malha(new THREE3.SphereGeometry(0.05, 8, 6), mat(5025868), 0.06 * s, 0.1, 0);
+    folha.scale.set(1.5, 0.35, 0.8);
+    folha.rotation.z = 0.5 * s;
+    g.add(folha);
+  }
+  for (let k = 0; k < 5; k++) {
+    const a = k / 5 * Math.PI * 2;
+    const petala = malha(new THREE3.SphereGeometry(0.06, 8, 6), mat(cor), Math.cos(a) * 0.085, 0.33, Math.sin(a) * 0.085);
+    petala.scale.set(1, 0.5, 1);
+    g.add(petala);
+  }
+  g.add(malha(new THREE3.SphereGeometry(0.045, 8, 6), mat(cor === 16765503 ? 16752412 : 16765503), 0, 0.345, 0));
+  return g;
+}
+function modeloOvo() {
+  const g = new THREE3.Group();
+  const ovo = malha(new THREE3.SphereGeometry(0.14, 14, 10), mat(16773584), 0, 0.11, 0);
+  ovo.scale.set(0.82, 1, 0.82);
+  g.add(ovo);
+  for (const [x, y, z] of [[0.08, 0.15, 0.07], [-0.07, 0.07, 0.09], [0.02, 0.2, -0.08], [-0.09, 0.14, -0.05], [0.07, 0.05, -0.08]]) g.add(malha(new THREE3.SphereGeometry(0.017, 5, 4), mat(11569512), x, y, z));
+  return g;
+}
+function modeloVagalume() {
+  const g = new THREE3.Group();
+  g.add(new THREE3.Mesh(new THREE3.SphereGeometry(0.07, 10, 8), new THREE3.MeshBasicMaterial({ color: 16773754, toneMapped: false })));
+  const asa = new THREE3.MeshBasicMaterial({ color: 16777215, transparent: true, opacity: 0.55, side: THREE3.DoubleSide });
+  for (const s of [-1, 1]) {
+    const a = new THREE3.Mesh(new THREE3.CircleGeometry(0.07, 8), asa);
+    a.position.set(0.06 * s, 0.05, 0);
+    a.rotation.set(0, 0, 0.7 * s);
+    g.add(a);
+  }
+  return g;
+}
+function colunaDeLuz() {
+  const c = new THREE3.Mesh(new THREE3.CylinderGeometry(0.12, 0.12, 14, 12, 1, true), new THREE3.MeshBasicMaterial({ color: 16769162, transparent: true, opacity: 0.11, depthWrite: false, blending: THREE3.AdditiveBlending, side: THREE3.DoubleSide }));
+  c.position.y = 7;
+  return c;
+}
+function modeloPista() {
+  const g = new THREE3.Group();
+  const rolo = malha(new THREE3.CylinderGeometry(0.07, 0.07, 0.42, 10), mat(15983283), 0, 0.12, 0);
+  rolo.rotation.z = Math.PI / 2;
+  g.add(rolo);
+  for (const [x, cor, w, r] of [[-0.215, 9132587, 0.03, 0.085], [0.215, 9132587, 0.03, 0.085], [0, 15087942, 0.05, 0.077]]) {
+    const t = malha(new THREE3.CylinderGeometry(r, r, w, 10), mat(cor), x, 0.12, 0);
+    t.rotation.z = Math.PI / 2;
+    g.add(t);
+  }
+  const estrela = malha(new THREE3.OctahedronGeometry(0.15), mat(16765503), 0, 0.7, 0);
+  estrela.scale.set(1, 1.4, 0.6);
+  g.add(estrela, colunaDeLuz());
+  return g;
+}
+function modeloBau() {
+  const g = new THREE3.Group(), madeira = mat(9132587), ouro = mat(16765503);
+  g.add(malha(new THREE3.BoxGeometry(0.8, 0.38, 0.5), madeira, 0, 0.19, 0));
+  const tampa = malha(new THREE3.CylinderGeometry(0.25, 0.25, 0.8, 14, 1, false, 0, Math.PI), madeira, 0, 0.38, 0);
+  tampa.rotation.z = Math.PI / 2;
+  g.add(tampa);
+  for (const x of [-0.3, 0.3]) g.add(malha(new THREE3.BoxGeometry(0.06, 0.4, 0.54), ouro, x, 0.2, 0));
+  g.add(malha(new THREE3.BoxGeometry(0.1, 0.12, 0.04), ouro, 0, 0.36, 0.26));
+  for (const [x, z] of [[-0.15, 0.05], [0.1, -0.05], [0, 0.1]]) g.add(malha(new THREE3.SphereGeometry(0.06, 8, 6), ouro, x, 0.62 + z * 0.3, z));
+  g.add(colunaDeLuz());
+  return g;
+}
+function modeloBandeira() {
+  const g = new THREE3.Group();
+  g.add(malha(new THREE3.CylinderGeometry(0.03, 0.04, 1.9, 6), mat(16052702), 0, 0.95, 0));
+  g.add(malha(new THREE3.BoxGeometry(0.62, 0.4, 0.02), mat(15087942, { side: THREE3.DoubleSide }), 0.33, 1.65, 0));
+  g.add(malha(new THREE3.SphereGeometry(0.06, 8, 6), mat(16765503), 0, 1.93, 0));
+  for (const [x, z] of [[0.1, 0.06], [-0.08, 0.1], [0.02, -0.11]]) g.add(malha(new THREE3.SphereGeometry(0.09, 6, 5), mat(10132122), x, 0.04, z));
+  return g;
+}
 function texturaBrilho() {
   const c = document.createElement("canvas");
   c.width = c.height = 64;
@@ -7640,6 +8014,24 @@ function criarCesta() {
   g.add(bandeira);
   return g;
 }
+function criarNinho() {
+  const g = new THREE3.Group();
+  const aro = malha(new THREE3.TorusGeometry(0.5, 0.17, 8, 24), mat(9132587), 0, 0.12, 0).rotateX(Math.PI / 2);
+  aro.scale.z = 0.8;
+  g.add(aro);
+  g.add(malha(new THREE3.CylinderGeometry(0.46, 0.4, 0.1, 18), mat(14268522), 0, 0.08, 0));
+  for (let k = 0; k < 9; k++) {
+    const a = k / 9 * Math.PI * 2;
+    const g1 = malha(new THREE3.CylinderGeometry(0.012, 0.012, 0.55, 4), mat(k % 2 ? 13214287 : 11041333), Math.cos(a) * 0.5, 0.2, Math.sin(a) * 0.5);
+    g1.rotation.set(Math.sin(a) * 0.6, 0, -Math.cos(a) * 0.6);
+    g.add(g1);
+  }
+  const mastro = malha(new THREE3.CylinderGeometry(0.02, 0.02, 1.4, 5), mat(9132587), 0, 0.7, 0);
+  mastro.castShadow = false;
+  g.add(mastro);
+  g.add(malha(new THREE3.SphereGeometry(0.1, 8, 6), mat(16773584), 0, 1.45, 0));
+  return g;
+}
 function criarBrinquedos(mapa) {
   const grupo = new THREE3.Group();
   grupo.name = "brinquedos";
@@ -7651,7 +8043,13 @@ function criarBrinquedos(mapa) {
     s.scale.set(tam, tam, 1);
     return s;
   }
+  let plims = [];
   function limpar3() {
+    for (const p of plims) {
+      if (p.s.parent) p.s.parent.remove(p.s);
+      p.s.material.dispose();
+    }
+    plims = [];
     if (!atual) return;
     for (const it of atual.itens) {
       if (it.obj.parent) it.obj.parent.remove(it.obj);
@@ -7659,50 +8057,92 @@ function criarBrinquedos(mapa) {
     if (atual.cesta.parent) atual.cesta.parent.remove(atual.cesta);
     atual = null;
   }
-  function montar(carga) {
+  function montar(carga, visual) {
     limpar3();
-    const cesta = criarCesta();
+    const cesta = TOQUE.has(visual) ? new THREE3.Group() : visual === "ovos" ? criarNinho() : criarCesta();
     const h = mapa.mundo.altura(carga.cesta.x, carga.cesta.z);
     cesta.position.set(carga.cesta.x, h, carga.cesta.z);
-    cesta.add(brilho(16769162, 3.2, 0.55).translateY(1));
-    grupo.add(cesta);
+    if (!TOQUE.has(visual)) {
+      cesta.add(brilho(16769162, 3.2, 0.55).translateY(1));
+      grupo.add(cesta);
+    }
     const itens = carga.itens.map((_, i) => {
       const tipo = TIPOS_BRINQ[i % TIPOS_BRINQ.length];
       const obj = new THREE3.Group();
-      obj.add(modelo(tipo));
-      const luz = brilho(COR[tipo], 1.5, 0.6);
-      luz.position.y = 0.3;
+      const ultimo = i === carga.itens.length - 1;
+      obj.add(visual === "flores" ? modeloFlor(i) : visual === "ovos" ? modeloOvo() : visual === "vagalumes" ? modeloVagalume() : visual === "tesouro" ? ultimo ? modeloBau() : modeloPista() : visual === "explorador" ? modeloBandeira() : modelo(tipo));
+      const luz = brilho(visual === "flores" ? COR_FLOR[i % COR_FLOR.length] : visual === "ovos" ? 16773584 : visual === "vagalumes" ? 16773754 : visual === "tesouro" ? 16769162 : visual === "explorador" ? 16747146 : COR[tipo], visual === "tesouro" ? 2.2 : 1.5, 0.6);
+      luz.position.y = visual === "vagalumes" ? 0 : 0.3;
       obj.add(luz);
       const orbe = brilho(16777215, 0.35, 0.9);
       orbe.position.y = 1.15;
       obj.add(orbe);
       return { obj, luz, orbe, est: "", char: "", tipo, fase: i * 1.7 };
     });
-    atual = { chave: carga.seed + ":" + carga.itens.length, cesta, itens };
+    atual = { chave: carga.seed + ":" + carga.itens.length + ":" + visual, cesta, itens };
   }
-  function sincronizar(carga, gatos, t) {
+  function sincronizar(carga, gatos, t, visual = "") {
     if (!carga) {
       limpar3();
       return;
     }
-    const chave = carga.seed + ":" + carga.itens.length;
-    if (!atual || atual.chave !== chave) montar(carga);
+    const chave = carga.seed + ":" + carga.itens.length + ":" + visual;
+    if (!atual || atual.chave !== chave) montar(carga, visual);
+    const toque = TOQUE.has(visual), primeiro = visual === "tesouro" ? carga.itens.findIndex((d) => d.est === "chao") : -1;
+    const noite = mapa.ciclo === "noite" ? 1 : mapa.ciclo === "anoitecer" ? 0.5 : 0;
+    plims = plims.filter((p) => {
+      const u = (t - p.t0) / 0.7;
+      if (u >= 1 || u < 0) {
+        if (p.s.parent) p.s.parent.remove(p.s);
+        p.s.material.dispose();
+        return false;
+      }
+      p.s.scale.setScalar(0.6 + 2.2 * u);
+      p.s.material.opacity = 0.9 * (1 - u);
+      return true;
+    });
     let nCesta = 0;
     carga.itens.forEach((d, i) => {
       const it = atual.itens[i];
+      if (visual === "tesouro" && d.est === "chao" && i !== primeiro) {
+        if (it.obj.parent) it.obj.parent.remove(it.obj);
+        it.est = "oculto";
+        return;
+      }
+      if (toque && d.est === "cesta") {
+        if (it.est === "chao") {
+          const s = brilho(16775088, 1, 0.9);
+          s.position.copy(it.obj.position);
+          grupo.add(s);
+          plims.push({ s, t0: t });
+        }
+        if (it.obj.parent) it.obj.parent.remove(it.obj);
+        it.est = "cesta";
+        return;
+      }
       if (d.est === "chao") {
         if (it.est !== "chao") {
           grupo.add(it.obj);
           it.obj.scale.setScalar(1);
           it.obj.rotation.set(0, 0, 0);
-          it.luz.visible = it.orbe.visible = true;
+          it.luz.visible = true;
+          it.orbe.visible = !toque;
           it.est = "chao";
           it.char = "";
         }
         const y = mapa.mundo.altura(d.x, d.z);
-        it.obj.position.set(d.x, y + 0.06 + 0.04 * Math.sin(t * 2 + it.fase), d.z);
-        it.obj.rotation.y = t * 0.8 + it.fase;
-        it.orbe.position.y = 1.15 + 0.12 * Math.sin(t * 2.4 + it.fase);
+        if (visual === "vagalumes") {
+          it.obj.position.set(d.x + 0.8 * Math.sin(t * 0.7 + it.fase), y + 1 + 0.4 * Math.sin(t * 1.3 + it.fase * 2), d.z + 0.8 * Math.cos(t * 0.9 + it.fase));
+          it.luz.scale.setScalar(1.1 + noite);
+          it.luz.material.opacity = 0.55 + 0.4 * noite;
+        } else if (toque) {
+          it.obj.position.set(d.x, y, d.z);
+          it.obj.rotation.y = visual === "tesouro" && i < carga.itens.length - 1 ? t * 0.8 + it.fase : it.fase;
+        } else {
+          it.obj.position.set(d.x, y + 0.06 + 0.04 * Math.sin(t * 2 + it.fase), d.z);
+          it.obj.rotation.y = t * 0.8 + it.fase;
+          it.orbe.position.y = 1.15 + 0.12 * Math.sin(t * 2.4 + it.fase);
+        }
       } else if (d.est === "cesta") {
         if (it.est !== "cesta") {
           atual.cesta.add(it.obj);
@@ -11769,12 +12209,12 @@ function criarAnimais(mapa, salvos) {
       m2.mixer = new THREE11.AnimationMixer(mod);
       m2.acoes = {};
       for (const c of gltf.animations) m2.acoes[c.name] = m2.mixer.clipAction(c);
-      tocar2(m2, esp.pausa || "Idle");
+      tocar3(m2, esp.pausa || "Idle");
     }
     obj.visible = false;
     mapa.grupo.add(obj);
   }
-  function tocar2(m2, nome) {
+  function tocar3(m2, nome) {
     if (!m2.acoes || m2.animAtual === nome) return;
     const nova = m2.acoes[nome];
     if (!nova) return;
@@ -11928,7 +12368,7 @@ function criarAnimais(mapa, salvos) {
     o.rotation.y = m2.rot;
     if (m2.mixer && m2.dist < LONGE) {
       const foge = m2.estado === "foge", anda = m2.vMov > 0.05;
-      tocar2(m2, foge ? esp.foge : anda ? esp.anda : esp.pausa);
+      tocar3(m2, foge ? esp.foge : anda ? esp.anda : esp.pausa);
       m2.mixer.update(dt);
     }
     if (m2.tipo === "jacare" && m2.mod) {
@@ -12184,7 +12624,8 @@ function criarAnimais(mapa, salvos) {
       balaoSprite = null;
     }
   }
-  const api2 = { mobs, info, atualizar, comeu, tick: (dt) => {
+  const cervos = () => mobs.map((m2, i) => ({ i, m: m2 })).filter(({ m: m2 }) => m2.tipo === "cervo").map(({ i, m: m2 }) => ({ i, x: m2.x, z: m2.z, calmo: m2.tFuga <= 0 && m2.estado !== "foge" && !m2.veGato && !(m2.sumido > 0) }));
+  const api2 = { mobs, info, atualizar, comeu, cervos, tick: (dt) => {
     atualizarBalao(dt);
     tickComida(dt);
   }, poleiros, presas, bote, estado, descartar, visao, mover, posRio, definirObservadores, serializar, espelho, modoEspelho, boteRemoto, emEspelho: () => espelhoModo, aoBote: null };
@@ -12295,7 +12736,9 @@ var BRINCADEIRAS = {
     dica: "Um conta at\xE9 10 e os outros se escondem!"
   },
   // 0.9.8: a lógica fica em js/pega.js; aqui só o cartão do catálogo (diálogo, votação)
-  pega: { nome: "Pique-ajuda", icone: "\u{1F91D}", dica: "Quem \xE9 pego vira ajudante e ajuda a pegar os outros!" }
+  pega: { nome: "Pique-ajuda", icone: "\u{1F91D}", dica: "Quem \xE9 pego vira ajudante e ajuda a pegar os outros!" },
+  // 0.13: Imite o líder (js/imite.js): um faz um gesto da roda e os outros imitam; sem ganhar nem perder
+  imite: { nome: "Imite o l\xEDder", icone: "\u{1F43E}", dica: "Um faz um gesto e todo mundo imita!" }
 };
 function ehTexto(v) {
   return typeof v === "string";
@@ -13302,21 +13745,43 @@ function criarMapa(scene2, gato, salvo) {
     else delete mapa.pegos.missao;
   }
   if (mapa.pegos.missao && mapa.pegos.missao.inicio <= (mapa.pegos.missaoFeita || 0)) delete mapa.pegos.missao;
+  mapa.agora = () => Date.now();
+  let obsCervos = { inicio: 0, t: {}, espera: {} }, tObs = 0;
+  function observarCervos(m2) {
+    if (!m2 || m2.id !== "cervos" || m2.fim || espelhando() || !mapa.animais) return;
+    const agora2 = performance.now(), dt = Math.min(1, (agora2 - tObs) / 1e3);
+    if (agora2 - tObs < 500) return;
+    tObs = agora2;
+    if (obsCervos.inicio !== m2.inicio) {
+      obsCervos = { inicio: m2.inicio, t: {}, espera: {} };
+      return;
+    }
+    const gp = mapa.gatoGroup.position;
+    const gatos = mapa.observadores ? mapa.observadores() : mapa.sub ? [] : [{ x: gp.x, z: gp.z }];
+    const quem = mapa.meuChar || (mapa.charsPresentes ? mapa.charsPresentes()[0] : "") || "";
+    for (const i of passoObservar(obsCervos, mapa.animais.cervos(), gatos, dt)) {
+      if (quem && progredir(m2, { tipo: "cervo" }, quem) && concluida(m2)) m2.fim = Date.now();
+    }
+  }
+  mapa.observadores = null;
   mapa.missao = {
     atual: () => mapa.pegos.missao || null,
     /** `id` = id do catálogo ou pedido da toca ('t:x,z,espaço' | 'c:id', js/toca.js); `quem` = uid de quem pediu (só no gestor, para o nome da toca). */
-    iniciar(id, quem) {
+    iniciar(pedido, quem) {
       if (espelhando() || mapa.pegos.missao) return false;
-      if (!Object.hasOwn(MISSOES, id)) {
+      const ped = pedidoCatalogo(pedido), id = ped ? ped.id : pedido;
+      if (!ped) {
         const j = quem && mapa.jogadorDe && mapa.jogadorDe(quem) || { char: mapa.meuChar, nome: mapa.meuNome };
-        const m3 = mapa.tocas.iniciarMissao(id, j);
+        const m3 = mapa.tocas.iniciarMissao(pedido, j);
         if (!m3) return false;
         mapa.pegos.missao = m3;
         return true;
       }
-      const m2 = novaMissao(id, Date.now());
+      const n = Math.max(1, new Set([...mapa.charsPresentes ? mapa.charsPresentes() : [], mapa.meuChar].filter(Boolean)).size);
+      const lugares = id === "explorador" ? lugaresExplorador() : null;
+      const m2 = novaMissao(id, Date.now(), { n, desafio: ped.desafio, agoraSrv: mapa.agora(), teto: lugares ? lugares.length : Infinity });
       if (!m2) return false;
-      if (MISSOES[id].carga && !(m2.brinq = montarCarga())) return false;
+      if (MISSOES[id].carga && !(m2.brinq = id === "tesouro" ? montarTesouro(m2.alvo) : lugares ? montarBandeiras(lugares, m2.alvo) : montarCarga(m2.alvo))) return false;
       mapa.pegos.missao = m2;
       return true;
     },
@@ -13336,6 +13801,8 @@ function criarMapa(scene2, gato, salvo) {
     /** Gestor: a missão cumprida fica 6 s no estado (todos veem a festa) e depois sai. */
     tick() {
       const m2 = mapa.pegos.missao;
+      observarCervos(m2);
+      if (m2 && !espelhando() && esgotou(m2, mapa.agora())) m2.fim = Date.now();
       if (m2 && m2.fim && !espelhando() && Date.now() - m2.fim > 6e3) {
         mapa.pegos.missaoFeita = Math.max(mapa.pegos.missaoFeita || 0, m2.inicio || 0);
         delete mapa.pegos.missao;
@@ -13355,13 +13822,44 @@ function criarMapa(scene2, gato, salvo) {
   mapa.gatosPorChar = null;
   mapa.aoPedirCarga = null;
   mapa.brinquedos = criarBrinquedos(mapa);
-  function montarCarga() {
-    const g2 = mapa.centroGrupo && mapa.centroGrupo() || mapa.gatoGroup.position, lim = mundo.LIMITE - 5;
-    const c = centroEncontro({ x: g2.x, z: g2.z }, 12, lim, (x, z) => mapa.pontoLivre(x, z));
+  const centroDoGrupo = () => {
+    const g2 = mapa.centroGrupo && mapa.centroGrupo() || mapa.gatoGroup.position;
+    return centroEncontro({ x: g2.x, z: g2.z }, 12, mundo.LIMITE - 5, (x, z) => mapa.pontoLivre(x, z));
+  };
+  function montarTesouro(n) {
+    const c = centroDoGrupo(), lim = mundo.LIMITE - 5;
+    for (let k = 0; k < 6; k++) {
+      const seed2 = Math.floor(Math.random() * 1e9), rng = mulberry32(seed2), pontos = [];
+      let a = c;
+      for (let i = 0; i < n; i++) {
+        let p2 = null;
+        for (let t = 0; t < 60 && !p2; t++) {
+          const ang = rng() * Math.PI * 2, d = 15 + rng() * 15, x = Math.round((a.x + Math.cos(ang) * d) * 100) / 100, z = Math.round((a.z + Math.sin(ang) * d) * 100) / 100;
+          if (Math.abs(x) < lim && Math.abs(z) < lim && mapa.pontoLivre(x, z)) p2 = { x, z };
+        }
+        if (!p2) break;
+        pontos.push(p2);
+        a = p2;
+      }
+      if (pontos.length === n) return novaCarga({ seed: seed2, cx: c.x, cz: c.z, cesta: c, pontos });
+    }
+    return null;
+  }
+  const lugaresExplorador = () => [...mapa.entradas.map((e) => e.fora), ...mundo.travessias.map((t) => ({ x: t.ax, z: t.az }))].map((q2) => ({ x: Math.round(q2.x * 100) / 100, z: Math.round(q2.z * 100) / 100 }));
+  function montarBandeiras(lugares, n) {
+    const c = centroDoGrupo(), seed2 = Math.floor(Math.random() * 1e9), rng = mulberry32(seed2), L = lugares.slice();
+    for (let i = L.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [L[i], L[j]] = [L[j], L[i]];
+    }
+    return novaCarga({ seed: seed2, cx: c.x, cz: c.z, cesta: c, pontos: L.slice(0, n) });
+  }
+  function montarCarga(n = 10) {
+    const c = centroDoGrupo();
     for (let k = 0; k < 6; k++) {
       const seed2 = Math.floor(Math.random() * 1e9);
-      const pontos = espalhar({ seed: seed2, cx: c.x, cz: c.z, n: 10, raio: 35, minCentro: 8, sep: 4, livre: (x, z) => mapa.pontoLivre(x, z) });
-      if (pontos.length >= 10) return novaCarga({ seed: seed2, cx: c.x, cz: c.z, cesta: c, pontos });
+      const pontos = espalhar({ seed: seed2, cx: c.x, cz: c.z, n, raio: 35, minCentro: 8, sep: 4, livre: (x, z) => mapa.pontoLivre(x, z) });
+      if (pontos.length >= n) return novaCarga({ seed: seed2, cx: c.x, cz: c.z, cesta: c, pontos });
     }
     return null;
   }
@@ -13374,6 +13872,11 @@ function criarMapa(scene2, gato, salvo) {
   function aplicarCarga(tipo, char, valor, pos2, folga) {
     const m2 = missaoCarga();
     if (!m2 || espelhando() || !char || !pos2 || (pos2.sub || "") !== subDaMissao(m2)) return false;
+    if (tipo === "pegar" && MISSOES[m2.id].toque) {
+      if (!tocar2(m2, Number(valor), char, pos2.x, pos2.z, folga)) return false;
+      if (concluida(m2)) m2.fim = Date.now();
+      return true;
+    }
     if (tipo === "pegar") return pegar(m2.brinq, char, Number(valor), pos2, folga);
     if (tipo === "soltar") return soltar2(m2.brinq, char, pos2) >= 0;
     if (tipo === "entregar") {
@@ -13418,7 +13921,7 @@ function criarMapa(scene2, gato, salvo) {
     /** índice do brinquedo no chão mais perto de (x, z) dentro do alcance, ou -1 */
     proximo(x, z) {
       const m2 = missaoCarga();
-      if (!m2 || !mapa.meuChar || !espacoOk(m2)) return -1;
+      if (!m2 || !mapa.meuChar || !espacoOk(m2) || MISSOES[m2.id].toque) return -1;
       let melhor = -1, menor = RAIO_PEGAR;
       m2.brinq.itens.forEach((it, i) => {
         const d = it.est === "chao" ? Math.hypot(it.x - x, it.z - z) : Infinity;
@@ -13432,7 +13935,14 @@ function criarMapa(scene2, gato, salvo) {
     /** ícones das Ações: o brinquedo e a cesta, ou o galho e a toca */
     ico() {
       const m2 = missaoCarga();
-      return m2 && m2.toca ? { pegar: "\u{1FAB5}", entregar: "\u{1F3E0}" } : { pegar: "\u{1F9F8}", entregar: "\u{1F9FA}" };
+      return m2 && m2.toca ? { pegar: "\u{1FAB5}", entregar: "\u{1F3E0}" } : m2 && MISSOES[m2.id].icones || { pegar: "\u{1F9F8}", entregar: "\u{1F9FA}" };
+    },
+    /** 0.13: missão de toque — a cada quadro: se o meu gato encostou num ponto que vale, pede (sem botão). */
+    tocar(x, z) {
+      const m2 = missaoCarga();
+      if (!m2 || !mapa.meuChar || !MISSOES[m2.id].toque || !espacoOk(m2)) return false;
+      const r = MISSOES[m2.id].raioToque, i = m2.brinq.itens.findIndex((it, k) => itemTocavel(m2, k) && Math.hypot(it.x - x, it.z - z) <= r);
+      return i >= 0 && pedirCarga("pegar", i);
     },
     podeSoltar() {
       const m2 = missaoCarga();
@@ -13707,6 +14217,7 @@ function atualizarMapa(mapa, dt, input, tempoSegundos) {
     mapa.sol.target.position.copy(_p);
     mapa.sol.position.copy(_p).add(mapa.solOffset);
     if (mapa.animais) mapa.animais.atualizar(dt, tempoSegundos);
+    if (!mapa.sub && mapa.carregar) mapa.carregar.tocar(gp.x, gp.z);
     if (mapa.brinquedos) {
       const car = mapa.pegos.missao && !mapa.pegos.missao.toca && mapa.pegos.missao.brinq;
       let gatos = null;
@@ -13714,7 +14225,7 @@ function atualizarMapa(mapa, dt, input, tempoSegundos) {
         gatos = new Map(mapa.gatosPorChar ? mapa.gatosPorChar() : []);
         if (mapa.meuChar && mapa.cat) gatos.set(mapa.meuChar, mapa.cat);
       }
-      mapa.brinquedos.sincronizar(car || null, gatos, tempoSegundos);
+      mapa.brinquedos.sincronizar(car || null, gatos, tempoSegundos, car ? MISSOES[mapa.pegos.missao.id].visual : "");
     }
     mapa.sincronizarTocas(tempoSegundos);
     const t = tempoSegundos;
@@ -18985,7 +19496,7 @@ var tocaServe = (valor, T2) => {
 var nomeBrinc = (valor) => Object.hasOwn(BRINCADEIRAS, valor) ? BRINCADEIRAS[valor].nome : "nova";
 var nomeMissao = (valor) => {
   const id = idDoPedido(valor);
-  return id ? MISSOES[id].nome : "nova";
+  return id ? MISSOES[id].nome + (valor.endsWith("!") ? " \u23F1\uFE0F" : "") : "nova";
 };
 function textoHorario(valor) {
   return TEXTOS_HORARIO[valor] || TEXTOS_HORARIO.dia;
@@ -19029,7 +19540,7 @@ var TIPOS_VOTACAO = {
       const m2 = ctx2 && ctx2.mapa && ctx2.mapa.missao ? ctx2.mapa.missao.atual() : null;
       if (valor === "cancelar") return !ctx2 || !ctx2.mapa ? true : !!m2 && !m2.fim;
       if (m2 || !idDoPedido(valor)) return false;
-      if (!Object.hasOwn(MISSOES, valor)) {
+      if (!pedidoCatalogo(valor)) {
         const T2 = ctx2 && ctx2.mapa && ctx2.mapa.tocas;
         return !T2 || tocaServe(valor, T2);
       }
@@ -19124,6 +19635,141 @@ function concluirVotacao({ tipo, valor, quem, votos }, ctx2) {
   }
   const texto = tipoDef.resultado(aprovada, valor, ctx2);
   return { aprovada, sim, nao, texto };
+}
+
+// js/imite.js
+var IMITE = { gestos: 3, intro: 3, lider: 10, imitar: 6, depois: 1.5, fimTela: 10 };
+var GESTO_ICONE = Object.fromEntries(GESTOS.map((g) => [g.id, g.icone]));
+var num4 = (v) => typeof v === "number" && Number.isFinite(v);
+function novoImite({ uids, agora: agora2 }) {
+  if (!Array.isArray(uids) || uids.length < 2 || uids.length > 12 || new Set(uids).size !== uids.length || !num4(agora2)) return null;
+  const ini = agora2 + IMITE.intro * 1e3, ok = {};
+  for (const u of uids) ok[u] = 0;
+  return {
+    tipo: "imite",
+    fila: uids.slice(),
+    fase: "jogando",
+    ini,
+    fimFase: ini + uids.length * IMITE.gestos * (IMITE.lider + IMITE.imitar) * 1e3 + IMITE.fimTela * 1e3,
+    // teto: cada gesto usa no máximo 10 + 6 s
+    lider: 0,
+    g: 1,
+    alvo: "",
+    ate: ini + IMITE.lider * 1e3,
+    ja: [],
+    ok
+  };
+}
+function terminar(jogo, agora2) {
+  jogo.fase = "fim";
+  jogo.fimFase = agora2 + IMITE.fimTela * 1e3;
+  jogo.alvo = "";
+  jogo.ja = [];
+}
+function avancar2(jogo, agora2, vivos) {
+  jogo.g++;
+  if (jogo.g > IMITE.gestos) {
+    jogo.g = 1;
+    jogo.lider++;
+  }
+  while (jogo.lider < jogo.fila.length && !vivos.includes(jogo.fila[jogo.lider])) {
+    jogo.lider++;
+    jogo.g = 1;
+  }
+  if (jogo.lider >= jogo.fila.length) {
+    terminar(jogo, agora2);
+    return;
+  }
+  jogo.alvo = "";
+  jogo.ja = [];
+  jogo.ate = agora2 + IMITE.lider * 1e3;
+}
+function passoImite(jogo, agora2, vivos, gestos = []) {
+  if (!jogo || jogo.tipo !== "imite" || !num4(agora2)) return "";
+  if (jogo.fase === "fim") return agora2 >= jogo.fimFase ? "acabou" : "";
+  const na = (jogo.fila || []).filter((u) => vivos.includes(u));
+  if (na.length < 2) {
+    terminar(jogo, agora2);
+    return "mudou";
+  }
+  if (agora2 < jogo.ini) return "";
+  let mudou2 = false;
+  const lider = jogo.fila[jogo.lider];
+  for (const { uid, id } of gestos) {
+    if (!Object.hasOwn(GESTO_ICONE, id)) continue;
+    if (!jogo.alvo) {
+      if (uid === lider && agora2 <= jogo.ate) {
+        jogo.alvo = id;
+        jogo.ate = agora2 + IMITE.imitar * 1e3;
+        jogo.ja = [];
+        mudou2 = true;
+      }
+    } else if (uid !== lider && id === jogo.alvo && agora2 <= jogo.ate && !jogo.ja.includes(uid) && Object.hasOwn(jogo.ok, uid)) {
+      jogo.ja.push(uid);
+      jogo.ok[uid]++;
+      mudou2 = true;
+      if (na.every((u) => u === lider || jogo.ja.includes(u))) jogo.ate = Math.min(jogo.ate, agora2 + IMITE.depois * 1e3);
+    }
+  }
+  if (agora2 >= jogo.ate) {
+    avancar2(jogo, agora2, vivos);
+    mudou2 = true;
+  }
+  return mudou2 ? "mudou" : "";
+}
+function faixaImite(jogo, agora2, nomeDe) {
+  if (!jogo || jogo.tipo !== "imite") return "";
+  if (jogo.fase === "fim") return "\u{1F43E} Imite o l\xEDder \u2014 acabou!";
+  if (agora2 < jogo.ini) return "\u{1F43E} Imite o l\xEDder \u2014 come\xE7a em " + Math.ceil((jogo.ini - agora2) / 1e3);
+  return "\u{1F43E} Imite o l\xEDder \u2014 " + nomeDe(jogo.fila[jogo.lider]) + " \xE9 o l\xEDder!";
+}
+function dicaImite(jogo, agora2, eu) {
+  if (!jogo || jogo.tipo !== "imite" || jogo.fase !== "jogando" || agora2 < jogo.ini || !(jogo.fila || []).includes(eu)) return "";
+  if (jogo.fila[jogo.lider] === eu) return jogo.alvo ? "Muito bem! " + (GESTO_ICONE[jogo.alvo] || "") : "Fa\xE7a um gesto!";
+  if (!jogo.alvo) return "Espere o l\xEDder fazer um gesto\u2026";
+  return jogo.ja.includes(eu) ? "\u2713 Isso!" : "Imite: " + (GESTO_ICONE[jogo.alvo] || "?") + "!";
+}
+function placarImite(jogo) {
+  if (!jogo || !Array.isArray(jogo.fila)) return [];
+  return jogo.fila.map((uid) => ({ uid, imitou: jogo.ok && jogo.ok[uid] || 0 }));
+}
+function serializarImite(jogo) {
+  if (!jogo || typeof jogo !== "object") return "";
+  try {
+    const s = JSON.stringify(jogo);
+    return typeof s === "string" && s.length <= 3e3 ? s : "";
+  } catch {
+    return "";
+  }
+}
+var RE_UID2 = /^[A-Za-z0-9_-]{1,40}$/;
+function lerImite(texto) {
+  if (typeof texto !== "string" || texto.length > 3e3) return null;
+  let o;
+  try {
+    o = JSON.parse(texto);
+  } catch {
+    return null;
+  }
+  if (!o || typeof o !== "object" || Array.isArray(o) || o.tipo !== "imite") return null;
+  if (!Array.isArray(o.fila) || o.fila.length < 2 || o.fila.length > 12) return null;
+  const fila = [];
+  for (const u of o.fila) {
+    if (typeof u !== "string" || !RE_UID2.test(u) || u === "__proto__" || fila.includes(u)) return null;
+    fila.push(u);
+  }
+  if (o.fase !== "jogando" && o.fase !== "fim") return null;
+  if (!num4(o.ini) || !num4(o.fimFase) || !num4(o.ate)) return null;
+  if (!Number.isInteger(o.lider) || o.lider < 0 || o.lider > fila.length) return null;
+  if (!Number.isInteger(o.g) || o.g < 1 || o.g > IMITE.gestos) return null;
+  if (typeof o.alvo !== "string" || o.alvo !== "" && !Object.hasOwn(GESTO_ICONE, o.alvo)) return null;
+  const ja = Array.isArray(o.ja) ? o.ja.filter((u) => fila.includes(u)).filter((u, i, a) => a.indexOf(u) === i) : [];
+  const ok = {};
+  for (const u of fila) {
+    const v = o.ok && typeof o.ok === "object" && Object.hasOwn(o.ok, u) ? o.ok[u] : 0;
+    ok[u] = Number.isInteger(v) && v >= 0 && v <= 99 ? v : 0;
+  }
+  return { tipo: "imite", fila, fase: o.fase, ini: o.ini, fimFase: o.fimFase, lider: o.lider, g: o.g, alvo: o.alvo, ate: o.ate, ja, ok };
 }
 
 // js/aovivo.js
@@ -19248,6 +19894,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
         antPega: {},
         jogoTexto: "",
         jogoLido: null,
+        imiteN: {},
         // 0.9.7 brincadeiras: jogoH = cópia de trabalho do host
         votos: /* @__PURE__ */ new Map(),
         recusadoAte: /* @__PURE__ */ new Map(),
@@ -19395,6 +20042,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       }
       return o;
     };
+    st.mapa.observadores = () => listarObservadores(st);
     st.mapa.centroGrupo = () => {
       const l = listarObservadores(st);
       if (!l.length) return null;
@@ -19590,7 +20238,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       if (typeof t !== "string") return null;
       if (t !== st.jogoTexto) {
         st.jogoTexto = t;
-        st.jogoLido = lerPega(t) || lerJogo(t);
+        st.jogoLido = lerPega(t) || lerImite(t) || lerJogo(t);
       }
       j = st.jogoLido;
     }
@@ -19598,7 +20246,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
   }
   function gravarJogo(st) {
     const j = st.jogoH;
-    st.D.update(ref(st, "dinamico"), { jogo: (j && j.tipo === "pega" ? serializarPega(j) : serializarJogo(j)) || null }).catch(nada2);
+    st.D.update(ref(st, "dinamico"), { jogo: (j && j.tipo === "pega" ? serializarPega(j) : j && j.tipo === "imite" ? serializarImite(j) : serializarJogo(j)) || null }).catch(nada2);
   }
   function ondeEstaQuem(st, quem) {
     const M2 = st.mapa, fora = (sub) => {
@@ -19623,8 +20271,8 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
   }
   function iniciarJogo(st, valor, quem) {
     if (!souGestorGravado(st) || jogoDe(st)) return false;
-    const vivos = jogadoresVivos(st).map((p) => p.uid), area = areaEncontro(st, valor, quem || st.con.uid, vivos.length);
-    const j = valor === "pega" ? novoPegaHost(st, area) : novoJogo(valor, vivos, Math.round(agoraServ()), Math.random, area);
+    const vivos = jogadoresVivos(st).map((p) => p.uid), area = valor === "imite" ? null : areaEncontro(st, valor, quem || st.con.uid, vivos.length);
+    const j = valor === "imite" ? novoImiteHost(st, vivos) : valor === "pega" ? novoPegaHost(st, area) : novoJogo(valor, vivos, Math.round(agoraServ()), Math.random, area);
     if (!j) return false;
     st.jogoH = j;
     st.jogoFim = false;
@@ -19652,6 +20300,39 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
       st.antPega = {};
     }
     return j;
+  }
+  function gestoAtual(st, uid) {
+    if (uid === st.con.uid) return { a: st.a, n: st.n };
+    const r = st.remotos.get(uid);
+    return r && r.buf.length ? r.buf[r.buf.length - 1] : null;
+  }
+  function lerGestosNovos(st, fila) {
+    const novos = [];
+    for (const u of fila) {
+      const s = gestoAtual(st, u);
+      if (!s) continue;
+      const antes = st.imiteN[u];
+      st.imiteN[u] = s.n;
+      if (antes !== void 0 && s.n !== antes && s.a) novos.push({ uid: u, id: s.a });
+    }
+    return novos;
+  }
+  function novoImiteHost(st, vivos) {
+    const j = novoImite({ uids: vivos, agora: Math.round(agoraServ()) });
+    st.imiteN = {};
+    if (j) lerGestosNovos(st, j.fila);
+    return j;
+  }
+  function tocarImite(st, j) {
+    const r = passoImite(j, Math.round(agoraServ()), jogadoresVivos(st).map((p) => p.uid), lerGestosNovos(st, j.fila));
+    if (r === "acabou") {
+      st.jogoH = null;
+      st.jogoFim = true;
+      st.imiteN = {};
+      st.D.update(ref(st, "dinamico"), { jogo: null }).catch(nada2);
+      return;
+    }
+    if (r === "mudou") gravarJogo(st);
   }
   function tocarPega(st, j) {
     const agora2 = Math.round(agoraServ()), vivos = jogadoresVivos(st).map((p) => p.uid);
@@ -19700,6 +20381,10 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
     }
     if (st.jogoH.tipo === "pega") {
       tocarPega(st, st.jogoH);
+      return;
+    }
+    if (st.jogoH.tipo === "imite") {
+      tocarImite(st, st.jogoH);
       return;
     }
     const j = st.jogoH, vivos = jogadoresVivos(st).map((p) => p.uid);
@@ -20139,6 +20824,7 @@ function criarAoVivo({ nuvem: nuvem2, THREE: THREE15, loadCat: loadCat2, conexao
         st.mapa.charsPresentes = null;
         st.mapa.gatosPorChar = null;
         st.mapa.centroGrupo = null;
+        st.mapa.observadores = null;
       }
       if (a) {
         try {
@@ -20994,12 +21680,23 @@ function criarPainelMissao() {
   const falta2 = document.createElement("p");
   falta2.className = "painel-missao-falta";
   falta2.hidden = true;
+  const tempo = document.createElement("p");
+  tempo.className = "painel-missao-tempo";
+  tempo.hidden = true;
+  const bonusEl = document.createElement("span");
+  bonusEl.className = "painel-missao-bonus";
+  bonusEl.hidden = true;
+  const tempoTxt = document.createElement("span");
+  tempo.appendChild(tempoTxt);
+  tempo.appendChild(bonusEl);
   elemento.appendChild(titulo);
+  elemento.appendChild(tempo);
   elemento.appendChild(falta2);
   elemento.appendChild(quem);
   let ultimoTitulo = "";
   let ultimoQuem = "";
   let ultimaFalta = "";
+  let ultimoPrazo = 0, ateBonus = 0, ultimoTempo2 = "";
   function atualizar(vista) {
     if (vista === null || vista === void 0) {
       elemento.hidden = true;
@@ -21012,6 +21709,26 @@ function criarPainelMissao() {
       ultimoTitulo = novoTitulo;
     }
     elemento.classList.toggle("cumprida", !!vista.fim);
+    const comTempo6 = !!vista.prazo && !vista.fim;
+    if (comTempo6) {
+      const falt = Math.max(0, Math.ceil((vista.prazo - vista.agora) / 1e3));
+      const txt = "\u23F1\uFE0F " + Math.floor(falt / 60) + ":" + String(falt % 60).padStart(2, "0");
+      if (txt !== ultimoTempo2) {
+        tempoTxt.textContent = txt;
+        ultimoTempo2 = txt;
+      }
+      if (ultimoPrazo && vista.prazo > ultimoPrazo) {
+        bonusEl.textContent = " +" + Math.round((vista.prazo - ultimoPrazo) / 1e3) + "s!";
+        ateBonus = Date.now() + 1200;
+      }
+      ultimoPrazo = vista.prazo;
+      tempo.classList.toggle("pouco", falt <= 10);
+      bonusEl.hidden = Date.now() > ateBonus;
+    } else {
+      ultimoPrazo = 0;
+      ultimoTempo2 = "";
+    }
+    tempo.hidden = !comTempo6;
     const novaFalta = vista.falta || "";
     if (novaFalta !== ultimaFalta) {
       falta2.textContent = novaFalta;
@@ -21071,10 +21788,35 @@ function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir, brincadeiras =
     });
     caixa2.appendChild(btnDesistir);
   }
+  const abas = document.createElement("div");
+  abas.className = "missoes-abas";
+  const painelM = document.createElement("div"), painelB = document.createElement("div");
+  painelM.className = painelB.className = "missoes-painel";
+  const mostrarAba = (qual) => {
+    painelM.hidden = qual !== "missoes";
+    painelB.hidden = qual !== "brinc";
+    for (const b of abas.children) b.classList.toggle("aba-ativa", b.dataset.aba === qual);
+    try {
+      localStorage.setItem("gatinho-aba-atividades", qual);
+    } catch (e) {
+    }
+  };
+  for (const [qual, rotulo] of [["missoes", "\u{1F3AF} Miss\xF5es"], ["brinc", "\u{1F3B2} Brincadeiras"]]) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "aba";
+    b.dataset.aba = qual;
+    b.textContent = rotulo;
+    b.addEventListener("click", () => mostrarAba(qual));
+    abas.appendChild(b);
+  }
+  caixa2.appendChild(abas);
+  caixa2.appendChild(painelM);
+  caixa2.appendChild(painelB);
   const subM = document.createElement("h3");
   subM.className = "missoes-subtitulo";
   subM.textContent = "Miss\xF5es (todo mundo junto!)";
-  caixa2.appendChild(subM);
+  painelM.appendChild(subM);
   const lista = document.createElement("ul");
   lista.className = "missoes-lista";
   (itens || []).forEach((item) => {
@@ -21104,14 +21846,30 @@ function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir, brincadeiras =
       }
     });
     li.appendChild(btn);
+    if (item.desafio) {
+      const bd = document.createElement("button");
+      bd.className = "botao botao-desafio";
+      bd.type = "button";
+      bd.textContent = "\u23F1\uFE0F Desafio";
+      bd.setAttribute("data-desafio", String(item.id));
+      if (ativa) bd.disabled = true;
+      bd.addEventListener("click", () => {
+        fechar();
+        try {
+          if (typeof aoComecar === "function") aoComecar(item.id + "!");
+        } catch (e) {
+        }
+      });
+      li.appendChild(bd);
+    }
     lista.appendChild(li);
   });
-  caixa2.appendChild(lista);
+  painelM.appendChild(lista);
   if (tocas.length) {
     const subT = document.createElement("h3");
     subT.className = "missoes-subtitulo";
     subT.textContent = "Tocas come\xE7adas";
-    caixa2.appendChild(subT);
+    painelM.appendChild(subT);
     const listaT = document.createElement("ul");
     listaT.className = "missoes-lista";
     tocas.forEach((t) => {
@@ -21141,13 +21899,13 @@ function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir, brincadeiras =
       li.appendChild(btn);
       listaT.appendChild(li);
     });
-    caixa2.appendChild(listaT);
+    painelM.appendChild(listaT);
   }
   if (brincadeiras.length) {
     const sub = document.createElement("h3");
     sub.className = "missoes-subtitulo";
     sub.textContent = "Brincadeiras (sem ganhar nem perder)";
-    caixa2.appendChild(sub);
+    painelB.appendChild(sub);
     const listaB = document.createElement("ul");
     listaB.className = "missoes-lista";
     brincadeiras.forEach((b) => {
@@ -21177,8 +21935,14 @@ function abrirListaMissoes({ itens, ativa, aoComecar, aoDesistir, brincadeiras =
       li.appendChild(btn);
       listaB.appendChild(li);
     });
-    caixa2.appendChild(listaB);
+    painelB.appendChild(listaB);
   }
+  let aba = "missoes";
+  try {
+    aba = localStorage.getItem("gatinho-aba-atividades") === "brinc" ? "brinc" : "missoes";
+  } catch (e) {
+  }
+  mostrarAba(aba);
   const btnFechar = document.createElement("button");
   btnFechar.className = "janela-x";
   btnFechar.type = "button";
@@ -21252,7 +22016,7 @@ function criarFaixaToca({ aoCancelar }) {
 }
 
 // js/estatisticas-ui.js
-function num4(v) {
+function num5(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 }
@@ -21269,21 +22033,22 @@ function pluralMundo(n) {
   return n === 1 ? "1 mundo" : `${n} mundos`;
 }
 function temJogo(e) {
-  if (num4(e.tempo) > 0) return true;
-  if (num4(e.distancia) > 0) return true;
-  if (num4(e.nado) > 0) return true;
-  if (num4(e.corrida) > 0) return true;
-  if (num4(e.pulos) > 0) return true;
-  if (num4(e.botes) > 0) return true;
-  if (num4(e.missoes) > 0) return true;
-  if (num4(e.brinquedos) > 0) return true;
-  if (num4(e.arvores) > 0) return true;
-  if (num4(e.cavernas) > 0) return true;
+  if (num5(e.tempo) > 0) return true;
+  if (num5(e.distancia) > 0) return true;
+  if (num5(e.nado) > 0) return true;
+  if (num5(e.corrida) > 0) return true;
+  if (num5(e.pulos) > 0) return true;
+  if (num5(e.botes) > 0) return true;
+  if (num5(e.missoes) > 0) return true;
+  if (num5(e.brinquedos) > 0) return true;
+  if (num5(e.arvores) > 0) return true;
+  if (num5(e.cavernas) > 0) return true;
   const c = e.cacas || {};
-  if (num4(c.rato) > 0 || num4(c.peixe) > 0 || num4(c.passaro) > 0 || num4(c.ovo) > 0) return true;
+  if (num5(c.rato) > 0 || num5(c.peixe) > 0 || num5(c.passaro) > 0 || num5(c.ovo) > 0) return true;
   const b = e.brincadeiras || {};
-  if (b.esconde && num4(b.esconde.jogou) > 0) return true;
-  if (b.pega && num4(b.pega.jogou) > 0) return true;
+  if (b.esconde && num5(b.esconde.jogou) > 0) return true;
+  if (b.pega && num5(b.pega.jogou) > 0) return true;
+  if (b.imite && num5(b.imite.jogou) > 0) return true;
   return false;
 }
 function criarCartao(icone, rotulo, valor, detalhe) {
@@ -21319,31 +22084,33 @@ function montarCartoes(e, aba) {
     grade.appendChild(p);
     return grade;
   }
-  const tempo = num4(e.tempo);
-  const distancia = num4(e.distancia);
-  const nado = num4(e.nado);
-  const corrida = num4(e.corrida);
-  const pulos = num4(e.pulos);
-  const missoes = num4(e.missoes);
-  const brinquedos = num4(e.brinquedos);
-  const arvores = num4(e.arvores);
-  const cavernas = num4(e.cavernas);
+  const tempo = num5(e.tempo);
+  const distancia = num5(e.distancia);
+  const nado = num5(e.nado);
+  const corrida = num5(e.corrida);
+  const pulos = num5(e.pulos);
+  const missoes = num5(e.missoes);
+  const brinquedos = num5(e.brinquedos);
+  const arvores = num5(e.arvores);
+  const cavernas = num5(e.cavernas);
   const cacas = e.cacas || {};
-  const rato = num4(cacas.rato);
-  const peixe = num4(cacas.peixe);
-  const passaro = num4(cacas.passaro);
-  const ovo = num4(cacas.ovo);
+  const rato = num5(cacas.rato);
+  const peixe = num5(cacas.peixe);
+  const passaro = num5(cacas.passaro);
+  const ovo = num5(cacas.ovo);
   const somaCacas = rato + peixe + passaro + ovo;
   const b = e.brincadeiras || {};
   const esconde = b.esconde || {};
   const pega = b.pega || {};
-  const escondeJogou = num4(esconde.jogou);
-  const pegaJogou = num4(pega.jogou);
+  const escondeJogou = num5(esconde.jogou);
+  const pegaJogou = num5(pega.jogou);
+  const imiteJogou = num5((b.imite || {}).jogou);
   const andando = Math.max(0, distancia - corrida - nado);
   const detalheCaminhada = "\u{1F6B6} " + formatarDistancia(andando) + " \xB7 \u{1F3C3} " + formatarDistancia(corrida) + " \xB7 \u{1F3CA} " + formatarDistancia(nado);
   const detalheCacas = "\u{1F42D} " + rato + "  \u{1F41F} " + peixe + "  \u{1F426} " + passaro + "  \u{1F95A} " + ovo;
   const detalheEsconde = "brincou " + escondeJogou + (escondeJogou === 1 ? " vez" : " vezes");
   const detalhePega = "brincou " + pegaJogou + (pegaJogou === 1 ? " vez" : " vezes");
+  const detalheImite = "brincou " + imiteJogou + (imiteJogou === 1 ? " vez" : " vezes");
   const primeiro = e.primeiro || "";
   const ultimo = e.ultimo || "";
   const valorDesde = dataBR(primeiro);
@@ -21352,7 +22119,7 @@ function montarCartoes(e, aba) {
     detalheDesde = "\xFAltima vez: " + dataBR(ultimo);
   }
   if (aba === "todos") {
-    const nMundos = num4(e.mundos);
+    const nMundos = num5(e.mundos);
     if (nMundos > 0) {
       detalheDesde = detalheDesde ? detalheDesde + " \xB7 " + pluralMundo(nMundos) : pluralMundo(nMundos);
     }
@@ -21364,6 +22131,7 @@ function montarCartoes(e, aba) {
   grade.appendChild(criarCartao("\u{1F9F8}", "Brinquedos entregues", brinquedos));
   grade.appendChild(criarCartao("\u{1F648}", "Pique-esconde", detalheEsconde));
   grade.appendChild(criarCartao("\u{1F91D}", "Pique-ajuda", detalhePega));
+  grade.appendChild(criarCartao("\u{1F43E}", "Imite o l\xEDder", detalheImite));
   grade.appendChild(criarCartao("\u{1F333}", "\xC1rvores", arvores));
   grade.appendChild(criarCartao("\u{1F573}\uFE0F", "Cavernas", cavernas));
   grade.appendChild(criarCartao("\u{1F998}", "Pulos", pulos));
@@ -21818,6 +22586,127 @@ function criarTelaPega() {
   return { elemento: raiz, atualizar, destruir };
 }
 
+// js/imite-ui.js
+function criarTelaImite() {
+  const raiz = document.createElement("div");
+  raiz.className = "imite";
+  raiz.hidden = true;
+  const faixa = document.createElement("p");
+  faixa.className = "imite-faixa";
+  const dica = document.createElement("p");
+  dica.className = "imite-dica";
+  dica.hidden = true;
+  const placar = document.createElement("div");
+  placar.className = "imite-placar";
+  placar.hidden = true;
+  const placarTitulo = document.createElement("h2");
+  placarTitulo.className = "imite-placar-titulo";
+  placarTitulo.textContent = "\u{1F389} Acabou o Imite o l\xEDder!";
+  const placarLista = document.createElement("ol");
+  placarLista.className = "imite-placar-lista";
+  placar.append(placarTitulo, placarLista);
+  raiz.append(faixa, dica, placar);
+  let ultimoPlacar = "";
+  const setTexto = (el, t) => {
+    if (el.textContent !== t) el.textContent = t;
+  };
+  function atualizar({ jogo, agora: agora2, eu, nomeDe }) {
+    if (!jogo || jogo.tipo !== "imite") {
+      raiz.hidden = true;
+      ultimoPlacar = "";
+      return;
+    }
+    raiz.hidden = false;
+    setTexto(faixa, faixaImite(jogo, agora2, nomeDe));
+    const d = dicaImite(jogo, agora2, eu);
+    dica.hidden = !d;
+    setTexto(dica, d);
+    dica.classList.toggle("imite-dica-certo", d.startsWith("\u2713"));
+    if (jogo.fase === "fim") {
+      placar.hidden = false;
+      const linhas = placarImite(jogo);
+      const chave = linhas.map((l) => l.uid + "|" + l.imitou).join(";");
+      if (chave !== ultimoPlacar) {
+        ultimoPlacar = chave;
+        while (placarLista.firstChild) placarLista.removeChild(placarLista.firstChild);
+        for (const l of linhas) {
+          const li = document.createElement("li");
+          li.textContent = (nomeDe && nomeDe(l.uid) || "Algu\xE9m") + " \u2014 imitou " + l.imitou + (l.imitou === 1 ? " gesto" : " gestos");
+          placarLista.appendChild(li);
+        }
+      }
+    } else {
+      placar.hidden = true;
+      ultimoPlacar = "";
+    }
+  }
+  function destruir() {
+    if (raiz.parentNode) raiz.parentNode.removeChild(raiz);
+  }
+  return { elemento: raiz, atualizar, destruir };
+}
+
+// js/ajuda.js
+var LINHAS_COMO_JOGAR = [
+  "\u{1F431} Toque em **Gatinhos** e escolha ou crie o seu gatinho.",
+  "\u{1F30D} Escolha um **mundo**. Quem \xE9 da fam\xEDlia pode entrar junto!",
+  "\u{1F3AF} No jogo, ande com o dedo e abra as **Atividades** para brincar com todo mundo."
+];
+var SECOES_MANUAL = [
+  ["\u{1F431} Gatinhos", "Cada pessoa cria o seu gatinho: cor, olhos, la\xE7o e nome. Em Meus gatinhos voc\xEA escolhe com qual vai brincar. Um gatinho pode ter dono: aparece como 'Fa\xEDsca \xB7 de Ana'."],
+  ["\u{1F30D} Mundos", "O mundo \xE9 onde os gatinhos moram: tem floresta, rio, cavernas, \xE1rvores, bichos e as tocas que voc\xEAs constroem. Tudo o que acontece fica guardado no mundo."],
+  ["\u{1F46A} Fam\xEDlia", "A fam\xEDlia junta os aparelhos da casa e das amigas: com o c\xF3digo da fam\xEDlia, todos veem os mesmos gatinhos e mundos e podem brincar juntos no mesmo mundo, ao mesmo tempo."],
+  ["\u2708\uFE0F Sem internet", "O jogo funciona sem internet: voc\xEA brinca sozinho e tudo fica guardado no aparelho. Quando a internet volta, ele junta com a fam\xEDlia."],
+  ["\u{1F579}\uFE0F Movimentos", "Arraste o dedo para andar. O bot\xE3o de postura troca entre sentado, andando, correndo e espreita. O bot\xE3o de A\xE7\xE3o muda conforme o lugar: esconder, dar o bote, entrar na caverna, subir na \xE1rvore, pegar e entregar. Tamb\xE9m d\xE1 para pular e nadar."],
+  ["\u{1F4AC} Gestos", "A roda de gestos \xE9 o jeito dos gatinhos conversarem: lamber, rolar, deitar, dormir, alerta, miar e mais. Os amigos veem o seu gesto."],
+  ["\u{1F3AF} Atividades", "Miss\xF5es s\xE3o para fazer todos juntos, como achar brinquedos ou construir uma toca. Com \u23F1\uFE0F Desafio tem cron\xF4metro: cada acerto d\xE1 mais tempo. Brincadeiras (pique-esconde, pique-ajuda, imite o l\xEDder) n\xE3o t\xEAm ganhador: \xE9 s\xF3 brincar. Quando tem mais gente, todo mundo vota."],
+  ["\u{1F440} Assistir e cuidar do mundo", "Um aparelho pode s\xF3 assistir, seguindo um gatinho, ou cuidar do mundo (servidor), como um computador ligado que deixa tudo mais r\xE1pido para todos."]
+];
+function marcar(el, texto) {
+  texto.split("**").forEach((parte2, i) => {
+    if (!parte2) return;
+    if (i % 2) {
+      const b = document.createElement("strong");
+      b.textContent = parte2;
+      el.appendChild(b);
+    } else el.appendChild(document.createTextNode(parte2));
+  });
+}
+function abrirComoJogar() {
+  const j = criarJanela({ titulo: "\u2753 Como jogar" });
+  const lista = document.createElement("ol");
+  lista.className = "como-jogar-lista";
+  for (const t of LINHAS_COMO_JOGAR) {
+    const li = document.createElement("li");
+    marcar(li, t);
+    lista.appendChild(li);
+  }
+  const manual = document.createElement("button");
+  manual.type = "button";
+  manual.className = "botao botao-manual";
+  manual.textContent = "\u{1F4D6} Manual";
+  manual.addEventListener("click", () => abrirManual());
+  j.corpo.append(lista, manual);
+  return j;
+}
+function abrirManual() {
+  const j = criarJanela({ titulo: "\u{1F4D6} Manual" });
+  const caixa2 = document.createElement("div");
+  caixa2.className = "manual";
+  for (const [titulo, texto] of SECOES_MANUAL) {
+    const d = document.createElement("details");
+    d.className = "manual-secao";
+    const s = document.createElement("summary");
+    s.textContent = titulo;
+    const p = document.createElement("p");
+    p.textContent = texto;
+    d.append(s, p);
+    caixa2.appendChild(d);
+  }
+  j.corpo.appendChild(caixa2);
+  return j;
+}
+
 // js/sobre.js
 var CREDITOS = [
   "Modelo do gato: Somali Cat Animated, por DreamNoms (CC-BY 4.0).",
@@ -21934,7 +22823,7 @@ function criarSeletorQualidade({ atual, aoMudar: aoMudar2 }) {
   const linha = document.createElement("div");
   linha.className = "seletor-botoes";
   const botoes = {};
-  const marcar = (c) => Object.keys(botoes).forEach((k) => botoes[k].classList.toggle("ativo", k === c));
+  const marcar2 = (c) => Object.keys(botoes).forEach((k) => botoes[k].classList.toggle("ativo", k === c));
   for (const k of Object.keys(NIVEIS)) {
     const b = document.createElement("button");
     b.type = "button";
@@ -21942,7 +22831,7 @@ function criarSeletorQualidade({ atual, aoMudar: aoMudar2 }) {
     b.textContent = NIVEIS[k].nome;
     b.addEventListener("click", () => {
       aoMudar2(k);
-      marcar(k);
+      marcar2(k);
     });
     botoes[k] = b;
     linha.appendChild(b);
@@ -21951,7 +22840,7 @@ function criarSeletorQualidade({ atual, aoMudar: aoMudar2 }) {
   dica.className = "seletor-dica";
   dica.textContent = "Leve = mais r\xE1pido \xB7 Bonito = mais n\xEDtido";
   bloco.append(rotulo, linha, dica);
-  marcar(atual);
+  marcar2(atual);
   return bloco;
 }
 
@@ -22042,6 +22931,8 @@ var painelMissao = null;
 var tMissao = 0;
 var festejada = 0;
 var brinqVisto = { inicio: 0, n: 0 };
+var telaImite = null;
+var tImite = 0;
 var telaPega = null;
 var tPega = 0;
 var tCerca = 0;
@@ -22173,7 +23064,7 @@ function estatBrincar(jj, eu) {
     return;
   }
   if (!estatJoga() || !eu || !(jj.fila || []).includes(eu)) return;
-  const k = jj.tipo === "pega" ? "pega" : "esconde", chave = k + ":" + jj.fila.join(",");
+  const k = jj.tipo === "pega" || jj.tipo === "imite" ? jj.tipo : "esconde", chave = k + ":" + jj.fila.join(",");
   const e = estat.brincadeiras[k] = estat.brincadeiras[k] || { jogou: 0 };
   if (!estatBr || estatBr.chave !== chave || estatBr.fim && jj.fase !== "fim") {
     estatBr = { chave, fim: false };
@@ -22324,6 +23215,10 @@ function desmontarMapa() {
     telaPega.destruir();
     telaPega = null;
   }
+  if (telaImite) {
+    telaImite.destruir();
+    telaImite = null;
+  }
   pegaMontada = null;
   chegadaChave = "";
   festejada = 0;
@@ -22445,6 +23340,8 @@ function irPara(nome, opcoes) {
         irPara("opcoes");
       } else if (acao === "sobre") {
         mostrarSobre();
+      } else if (acao === "como-jogar") {
+        abrirComoJogar();
       } else if (acao === "familia") {
         irPara("familia");
       } else if (acao === "conexao") {
@@ -22630,6 +23527,7 @@ function irPara(nome, opcoes) {
         avisar2(mapaNovo.congelado ? "Conte at\xE9 10 sem se mexer! \u{1F648}" : "Fique quietinho! \u{1F92B}", 1300);
       }
     };
+    mapaNovo.agora = () => aovivo.ativo() ? aovivo.agora() : Date.now();
     mapaNovo.meuChar = !servidor && !espectando ? idGatoMapa : null;
     mapaNovo.aoComer = (tipo) => {
       if (idGatoMapa && mapaNovo.missao) mapaNovo.missao.comeu(idGatoMapa, tipo);
@@ -22735,6 +23633,8 @@ function irPara(nome, opcoes) {
     hud.appendChild(telaBrinc.elemento);
     telaPega = criarTelaPega();
     hud.appendChild(telaPega.elemento);
+    telaImite = criarTelaImite();
+    hud.appendChild(telaImite.elemento);
     if (espectando) {
       painelEspectador = criarPainelEspectador({ aoSeguir: (c) => {
         seguirChar = c || null;
@@ -23117,7 +24017,7 @@ function abrirMissoes() {
   if (!mapaAtual || !mapaAtual.missao) return;
   const m2 = mapaAtual.missao.atual(), D = m2 && !m2.fim && MISSOES[m2.id];
   abrirListaMissoes({
-    itens: Object.entries(MISSOES).map(([id, d]) => ({ id, nome: d.nome, icone: d.icone, dica: d.dica, alvo: d.alvo, vezes: idGatoMapa ? Save.vezesMissao(idGatoMapa, id) : 0 })),
+    itens: Object.entries(MISSOES).map(([id, d]) => ({ id, nome: d.nome, icone: d.icone, dica: d.dica, alvo: d.alvo, desafio: !!d.desafio, vezes: idGatoMapa ? Save.vezesMissao(idGatoMapa, id) : 0 })),
     ativa: D ? { nome: D.nome, icone: D.icone } : null,
     aoComecar: (id) => {
       if (id === "toca") {
@@ -23217,8 +24117,8 @@ function atualizarMissao(ms) {
   const meuNome = idGatoMapa && Save.pegar(idGatoMapa)?.look?.nome || "Eu";
   const por = Object.entries(m2.por || {}).map(([c, n]) => ({ nome: c === idGatoMapa ? meuNome : nomes.get(c) || "Algu\xE9m", n })).sort((a, b) => b.n - a.n);
   const R = m2.toca ? mapaAtual.tocas.resumo(m2) : null;
-  const falta2 = R ? [R.falta, R.espaco !== mapaAtual.tocas.espacoAtual() ? "A toca est\xE1 " + R.onde : ""].filter(Boolean).join(" \xB7 ") : "";
-  painelMissao.atualizar({ icone: D.icone, nome: D.nome, feitas: m2.feitas, alvo: m2.alvo, fim: !!m2.fim, por, falta: falta2 });
+  const falta2 = R ? [R.falta, R.espaco !== mapaAtual.tocas.espacoAtual() ? "A toca est\xE1 " + R.onde : ""].filter(Boolean).join(" \xB7 ") : !m2.fim && (typeof D.falta === "function" ? D.falta(m2) : D.falta) || "";
+  painelMissao.atualizar({ icone: D.icone, nome: D.nome, feitas: m2.feitas, alvo: m2.alvo, fim: !!m2.fim, por, falta: falta2, prazo: m2.prazo || 0, agora: mapaAtual.agora() });
   if (m2.brinq && idGatoMapa) {
     const n = m2.por && m2.por[idGatoMapa] || 0;
     if (brinqVisto.inicio !== m2.inicio) {
@@ -23231,6 +24131,10 @@ function atualizarMissao(ms) {
   }
   if (m2.fim && festejada !== m2.inicio) {
     festejada = m2.inicio;
+    if (m2.prazo && m2.feitas < m2.alvo) {
+      avisar2("\u23F1\uFE0F Acabou o tempo! Voc\xEAs fizeram " + m2.feitas + " de " + m2.alvo + ". Quase!", 5e3);
+      return;
+    }
     mostrarFesta(m2.toca && mapaAtual.tocas.dados[m2.toca] && mapaAtual.tocas.dados[m2.toca].estagio >= 4 ? "Toca pronta! \u{1F3E0}\u{1F389}" : void 0);
     if (m2.toca) salvarMundoAgora();
     if (idGatoMapa && !semSalvarChar && !servidorMundo) {
@@ -23242,11 +24146,12 @@ function atualizarMissao(ms) {
 function atualizarBrincadeira(ms) {
   const M2 = mapaAtual;
   if (!telaBrinc || !M2) return;
-  const eu = aovivo.meuUid(), jj = aovivo.ativo() ? aovivo.jogo() : null, jp = jj && jj.tipo === "pega" ? jj : null, j = jp ? null : jj;
+  const eu = aovivo.meuUid(), jj = aovivo.ativo() ? aovivo.jogo() : null, jp = jj && jj.tipo === "pega" ? jj : null, ji = jj && jj.tipo === "imite" ? jj : null, j = jp || ji ? null : jj;
   estatBrincar(jj, eu);
   const ja = jj && Number.isFinite(jj.cx) && jj.fase !== "fim" ? jj : null;
   chegarNaArea(ja, eu);
   atualizarPega(ms, jp, eu, ja);
+  atualizarImite(ms, ji, eu);
   const ativo = !!j && !!eu && j.fila.includes(eu) && (j.fase === "contando" || j.fase === "procurando");
   const achado = ativo && j.ach.includes(eu), peg = ativo && j.peg === eu, sou = !!j && j.peg === eu;
   M2.congelado = peg && j.fase === "contando";
@@ -23332,6 +24237,12 @@ function atualizarPega(ms, j, eu, ja) {
     pegaVistos.add(u);
     if (u !== eu) avisar2("\u{1F91D} " + nomeDe(u) + " virou ajudante!", 2200);
   }
+}
+function atualizarImite(ms, j, eu) {
+  if (!telaImite || ms - tImite < 100) return;
+  tImite = ms;
+  const nomes = new Map(aovivo.presentes().map((p) => [p.uid, p.nome]));
+  telaImite.atualizar({ jogo: j, agora: aovivo.agora(), eu, nomeDe: (u) => nomes.get(u) || "Algu\xE9m" });
 }
 function atualizarVotacao(ms) {
   if (!avisoVotacao || ms - tVotacao < 250) return;
@@ -23436,6 +24347,13 @@ function abrirPausa() {
 }
 function abrirAjudaPausa(jp) {
   const j = criarJanela({ titulo: "Ajuda e informa\xE7\xF5es" });
+  const bComo = document.createElement("button");
+  bComo.type = "button";
+  bComo.className = "botao";
+  bComo.id = "botao-como-jogar";
+  bComo.textContent = "\u{1F4D6} Como jogar";
+  bComo.addEventListener("click", () => abrirComoJogar());
+  j.corpo.appendChild(bComo);
   if (estatJoga()) {
     const bEstat = document.createElement("button");
     bEstat.type = "button";

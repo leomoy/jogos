@@ -15,6 +15,7 @@
   .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 16px; align-items: start; }
   .jogo { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
   .capa { height: 96px; display: flex; align-items: center; justify-content: center; font-size: 56px; }
+  .capa img { height: 100%; width: auto; display: block; }
   .corpo { padding: 16px 18px 14px; }
   .topo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .jogo h2 { margin: 0; font-size: 1.25rem; }
@@ -48,18 +49,19 @@
   <div class="grade">
   <!-- CARTAO:gatinho — no cartão só selo, descrição e ▶ Jogar; ao publicar: trocar o selo e, na cortina, novidades e arquivo único; a novidade anterior desce para "Versões anteriores" (contagem +1) -->
   <article class="jogo">
-    <div class="capa" style="background:linear-gradient(135deg,#ffd9a8,#c8e6b0)">🐱</div>
+    <div class="capa" style="background:linear-gradient(135deg,#ffd9a8,#c8e6b0)"><img src="gatinho/icon-512.png" alt=""></div>
     <div class="corpo">
-      <div class="topo"><h2>Avelã, o gatinho sobrevivente</h2><span class="versao">v0.12.1</span></div>
+      <div class="topo"><h2>Avelã, o gatinho sobrevivente</h2><span class="versao">v0.13.0</span></div>
       <p class="desc">O jogo da Luísa: um gatinho explora a floresta, caça, sobe em árvores e brinca com os amigos.</p>
       <a class="btn" href="gatinho/">▶ Jogar</a>
       <details class="cortina">
-        <summary>Novidades e versões anteriores <span class="n">11</span></summary>
-        <h3>Novidades da 0.12</h3>
-        <p class="novidades">quem assiste entra na caverna e sobe na árvore junto com quem está seguindo; o pique-pega virou 🤝 Pique-ajuda; o nome do dono aparece com 'de' (Gatinho · de Fulana); o menu do jogo virou janelas, com o nome do gatinho e quem está brincando lá dentro; gráficos Leve, Normal ou Bonito; o botão Jogar virou Gatinhos; o Sobre mostra a versão e os créditos em lista.</p>
-        <a class="link" href="gatinho/v0/gatinho-0.12.1.html">arquivo único (abre com internet)</a>
+        <summary>Novidades e versões anteriores <span class="n">12</span></summary>
+        <h3>Novidades da 0.13</h3>
+        <p class="novidades">ícone novo (o rosto da Avelã, escolhido pela Luísa); missões novas: 🎣 Pescaria, 👀 Observar os cervos, 🌸 Colher flores, 🪺 Ovos de volta ao ninho, ✨ Vagalumes, 🗺️ Caça ao tesouro e 🚩 Explorador; ⏱️ Desafio: missão com cronômetro, cada acerto dá tempo a mais (se o tempo acabar não é perder); as missões ficam maiores quando tem mais gatos; brincadeira nova 🐾 Imite o líder; Atividades em duas abas (Missões e Brincadeiras); ❓ Como jogar com um mini manual.</p>
+        <a class="link" href="gatinho/v0/gatinho-0.13.0.html">arquivo único (abre com internet)</a>
         <h3>Versões anteriores</h3>
         <ul class="versoes">
+          <li><b>0.12 — Janelas, gráficos e quem assiste</b><br><span>quem assiste entra na caverna e sobe na árvore junto com quem está seguindo; o pique-pega virou 🤝 Pique-ajuda; o nome do dono aparece com 'de' (Gatinho · de Fulana); o menu do jogo virou janelas, com o nome do gatinho e quem está brincando lá dentro; gráficos Leve, Normal ou Bonito; o botão Jogar virou Gatinhos; o Sobre mostra a versão e os créditos em lista.</span></li>
           <li><b>0.11 — Atividades, toca e conexão direta</b><br><span>a missão terminada não volta mais quando o mundo é aberto de novo; os gatinhos dos amigos aparecem quase sem atraso; o botão Atualizar não trava mais; o PC que cuida do mundo continua cuidando depois de fechar e abrir; quando a conexão direta entre os aparelhos não dá, um repasse aqui no Brasil (🔁) entra no lugar da internet lá longe; o botão Atualizar não fica mais parado em "Atualizando…"; brincar junto ficou bem mais rápido: o aparelho de quem cuida do mundo (👑) conversa direto com os outros, sem dar a volta pela internet lá longe (⚡ no canto mostra a conexão direta); missão nova "Construir toca": escolher o lugar (no mapa, na árvore ou na caverna), buscar galhos, folhas, musgo, osso e pena; a toca cresce e fica no mundo para sempre, e os amigos ajudam; 🆘 Destravar na pausa (o gatinho preso volta para a porta da caverna, a placa do andar da árvore ou a grama); a pedra da caverna não deixa mais entrar dentro dela; 🎯 Atividades: missões e brincadeiras num lugar só; o gatinho pega coisas com a boca e leva (Pegar, Entregar, Soltar); missão nova "Achar os brinquedos": 10 brinquedos espalhados para levar até a cesta, todo mundo junto.</span></li>
           <li><b>0.10 — Família, câmera e carregando</b><br><span>tela de carregamento (e o aviso quando a internet está devagar); estradas lisas, sem traços por cima; a câmera gira com dois dedos e a bússola volta para o norte; mapa em tela cheia com pinça; botões de Ação e Pular maiores e o horário num botão só; os amigos aparecem como setinhas no mapa (somem só na procura do pique-esconde); ao começar uma brincadeira todos vêm para perto de quem chamou; a votação acaba assim que todos votam; Opções com o som e os dados e cópias; entrar na família ficou simples: no aparelho novo, "Já tenho família" (com o código) ou "Criar família nova" (com um nome); o código da família aparece grande na tela 👪 Família, com botão Copiar; Jogar pergunta quem vai brincar e onde; botão 🔄 Procurar atualização e o aviso de versão nova (e o app não fica mais preso numa versão velha).</span></li>
           <li><b>0.9 — Caçar, nadar, missões e brincadeiras</b><br><span>estatísticas do gatinho em cada mundo e no total (📊 na pausa e em Meus gatinhos): tempo jogando, distância, caças, missões, quantas vezes brincou, árvores, cavernas e pulos; bichos mais calmos: ficam parados bastante tempo e viram devagar, dá para dar a volta e chegar; o leque de visão desenhado no chão, acompanhando o relevo; o gato nada com o corpo dentro da água e ondinhas em volta; a árvore ficou bem mais alta, com a floresta lá embaixo; pique-esconde e pique-pega zumbi com os amigos (sem ganhar nem perder: é só brincar); missões (a primeira: caçar 10 comidas, juntos); sons da floresta, do rio, miados e ronronar (botão 🔊 para desligar); caçar ratos, pássaros, peixes (o gato nada!) e ovos nos ninhos — cada um vira comida; cauda de volta à original, bem mais fina; o pulo acompanha o movimento; correr bem mais rápido, com galope de verdade; a cauda balança quando o gato está parado; botão de postura (sentado, andando, correndo, espreita) e roda de gestos para conversar (lamber, rolar, dormir, alerta, miar…).</span></li>
