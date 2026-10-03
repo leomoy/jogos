@@ -1139,7 +1139,7 @@ function resolverTipo(t2, ato) {
 var VERSION, DT, T, TERRENO, CUSTO, PASS, CUSTOC, A0, UNIDADES, ARM_F, BAI, fuzil, cav, peca, navio, P67, P5, CORPO_A_CORPO, HEROIS, Ah, ARM_EU, ARM_TP, leve, guerreiro, religioso, FUZ, oficial, civilH, FACAO, ESP, rep, FUZ7, oficial7, ARM_8, ARM_V, BAI8, inf8, mg8, mort8, snp8, veic, FUZ8, sold8, VERSOES, UDEF, baseHeroi, ATRIBUTOS, HABILIDADES, TRACOS, ITENS, TROCA, VALOR, CONSTRUCOES, CULTURAS, EUROPA, P9, RECURSOS_MAPA, COLETA, DIFICULDADE, CORES;
 var init_data = __esm({
   "js/core/data.js"() {
-    VERSION = "8.1.0";
+    VERSION = "8.1.1";
     DT = 0.05;
     T = { CAMPO: 0, MATA: 1, AREIA: 2, RASO: 3, FUNDA: 4, ROCHA: 5, MANGUE: 6, CORREDEIRA: 7, PEDRA: 8 };
     TERRENO = [
@@ -28645,7 +28645,7 @@ var Fx = class {
 // js/ui/input.js
 init_core();
 var EDGE = 24;
-var PAN_SPEED = 14;
+var PAN_TELAS = 1.1;
 var DRAG_MIN = 5;
 var ALERTA_RECENTE_MS = 2e4;
 var ehBarco4 = (u) => !!u && (u.classe === "barco" || u.tripMax != null);
@@ -29016,7 +29016,10 @@ function setupInput(game) {
       if (mouse.y - r.top < EDGE) dy -= 1;
       else if (r.bottom - mouse.y < EDGE) dy += 1;
     }
-    if (dx || dy) world2.pan(dx * PAN_SPEED * dtReal, dy * PAN_SPEED * dtReal);
+    if (dx || dy) {
+      const px = PAN_TELAS * (canvas.clientHeight || 720) * dtReal;
+      world2.pan(dx * px, dy * px);
+    }
   }
   game._panTick = panTick;
   const origUpdate = game.update.bind(game);
