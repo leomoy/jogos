@@ -849,6 +849,13 @@ h1.logo .l2 { display: block; font-size: clamp(76px, 11vw, 132px); font-variant:
 .card-cab .stars { font-size: 13px; }
 .card-nome { font: bold 16px var(--serif); margin: 1px 0 3px; }
 .momento-linha.jogado span:first-child { font-weight: bold; }
+/* 8.1.3: Momento liberado é clicável (jogar/rejogar) */
+.momento-linha { flex-wrap: wrap; border-radius: 3px; padding: 1px 4px; margin: 0 -4px; }
+.momento-linha.liberado { cursor: pointer; }
+.momento-linha.liberado:hover, .momento-linha.liberado:focus { background: rgba(122, 46, 22, .12); outline: none; }
+.momento-linha .msit { flex-basis: 100%; font-size: 11px; font-style: italic; color: #6a4a28; }
+.momento-linha.perdido .msit { color: var(--vermelho); }
+.camp-hier { text-align: center; font-size: 13px; margin: 0 0 8px; }
 .card-selo { position: absolute; top: -9px; right: 10px; font: bold 10px var(--serif); letter-spacing: 2px; text-transform: uppercase; color: #f3e7c9; background: var(--vermelho); padding: 2px 8px; border-radius: 2px; }
 .camp-botoes { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .moldura-P1 .camp-botoes > .btn.primary { margin: 0; }
@@ -1144,7 +1151,7 @@ function resolverTipo(t2, ato) {
 var VERSION, DT, T, TERRENO, CUSTO, PASS, CUSTOC, A0, UNIDADES, ARM_F, BAI, fuzil, cav, peca, navio, P67, P5, CORPO_A_CORPO, HEROIS, Ah, ARM_EU, ARM_TP, leve, guerreiro, religioso, FUZ, oficial, civilH, FACAO, ESP, rep, FUZ7, oficial7, ARM_8, ARM_V, BAI8, inf8, mg8, mort8, snp8, veic, FUZ8, sold8, VERSOES, UDEF, baseHeroi, ATRIBUTOS, HABILIDADES, TRACOS, ITENS, TROCA, VALOR, CONSTRUCOES, CULTURAS, EUROPA, P9, RECURSOS_MAPA, COLETA, DIFICULDADE, CORES;
 var init_data = __esm({
   "js/core/data.js"() {
-    VERSION = "8.1.2";
+    VERSION = "8.1.4";
     DT = 0.05;
     T = { CAMPO: 0, MATA: 1, AREIA: 2, RASO: 3, FUNDA: 4, ROCHA: 5, MANGUE: 6, CORREDEIRA: 7, PEDRA: 8 };
     TERRENO = [
@@ -24752,7 +24759,7 @@ init_loader();
 // js/ui/opcoes.js
 init_core();
 var KEY = "rtsbr.v8.opcoes";
-var PADRAO = { qualidade: "media", volMusica: 0.6, volEfeitos: 0.8, volVoz: 1, legendas: true, velJogo: 1, panMapa: true };
+var PADRAO = { qualidade: "media", volMusica: 0.6, volEfeitos: 0.8, volVoz: 1, legendas: true, velJogo: 1, panMapa: false };
 function ler() {
   try {
     return { ...PADRAO, ...JSON.parse(Save.store.getItem(KEY) || "{}") };
@@ -24792,7 +24799,7 @@ function formOpcoes(t2) {
       <label class="row"><span>Narra\xE7\xE3o em voz alta</span><input type="checkbox" id="voz"${Voz.ligado ? " checked" : ""}${Voz.disponivel ? "" : ' disabled title="Sem voz pt-BR neste navegador"'}></label></div>
     <div class="op-grupo"><div class="rotulo">Partida</div>
       <label class="row"><span>${t2("ui.legendas")}</span><input type="checkbox" data-k="legendas"${o.legendas ? " checked" : ""}></label>
-      <label class="row" title="Marcado: a seta (ou o mouse na borda) puxa o mapa nesse sentido. Desmarcado: a c\xE2mera anda nesse sentido, como nos RTS cl\xE1ssicos."><span>Setas e bordas movem o mapa</span><input type="checkbox" data-k="panMapa"${o.panMapa !== false ? " checked" : ""}></label>
+      <label class="row" title="Marcado: a seta (ou o mouse na borda) puxa o mapa nesse sentido. Desmarcado: a c\xE2mera anda nesse sentido, como nos RTS cl\xE1ssicos."><span>Inverter setas e bordas (puxar o mapa)</span><input type="checkbox" data-k="panMapa"${o.panMapa === true ? " checked" : ""}></label>
       <div class="row"><span>${t2("ui.velJogo")}</span>${seg("velJogo", [[1, "1\xD7"], [2, "2\xD7"], [4, "4\xD7"]])}</div></div>`;
   d.querySelectorAll(".seg").forEach((s) => s.addEventListener("click", (e) => {
     const b = e.target.closest("button");
@@ -26632,6 +26639,7 @@ function svgMapaVivo(def2, estado, ultimoAto) {
 function legendaMapaVivo() {
   return `<div class="mvivo-legenda">${Object.entries(NOME_ESTADO).map(([id, nome]) => `<span class="mvivo-item"><i style="background:${COR_ESTADO[id]}"></i>${esc(nome)}</span>`).join("")}</div>`;
 }
+var TUDO_LIBERADO = true;
 var Screens = {
   async menu(App2) {
     const campSalva = Save.carregar();
@@ -26698,11 +26706,18 @@ var Screens = {
     const estrelas = cjson.atos.reduce((s, a) => s + a.momentos.reduce((x, m) => x + estrelasDe(m), 0), 0);
     const painel = el(`<div class="panel moldura-P1 col campanha"><div class="sobre">Volume I \xB7 ${esc(DIF[camp.dificuldade] || camp.dificuldade || "")}</div><h2 class="grande">Campanha</h2>${ORNATO}
       <div class="camp-resumo"><span>${jogados}/${total} Momentos</span><div class="camp-barra"><i style="width:${total ? 100 * jogados / total : 0}%"></i></div><span class="stars">\u2605 ${estrelas}/${total * 3}</span></div>
+      <div class="camp-hier muted">Per\xEDodo \u2192 Ato \u2192 Momento: cada Per\xEDodo re\xFAne Atos e cada Ato, seus Momentos (as partidas). Clique num Momento liberado para jogar ou rejogar \u2014 o melhor resultado fica.</div>
       <div class="periodos" id="atos"></div>
       <div class="camp-botoes"><button class="btn primary" data-a="jogar">Jogar</button> <button class="btn" data-a="linhagem">Linhagens</button> <button class="btn" data-a="mapa_vivo">Mapa vivo</button> <button class="btn" data-a="menu">Menu</button></div></div>`);
     const box = painel.querySelector("#atos");
     const estrelasHTML = (r) => r ? "\u2605".repeat(r.estrelas) + "\u2606".repeat(3 - r.estrelas) : "\u2606\u2606\u2606";
     const atual2 = cjson.atos.find((a) => a.momentos.some((m) => !camp.jogados[m]));
+    const fronteira = atual2 && atual2.momentos.find((m) => !camp.jogados[m]);
+    const jogarMomento = (ato, m) => {
+      Sfx.play("clique");
+      if (!ato.momentos.some((x) => camp.jogados[x])) App2.go("abertura", { ato, camp, momentoId: m, cjson, cartela: ato.cartela });
+      else App2.go("briefing", { ato, camp, momentoId: m, cjson });
+    };
     let passouAtual = false;
     const porPeriodo = /* @__PURE__ */ new Map();
     for (const ato of cjson.atos) {
@@ -26711,20 +26726,33 @@ var Screens = {
     }
     for (const [per, atos] of porPeriodo) {
       const pdef = cjson.periodos && cjson.periodos[per] || {};
-      const sec = el(`<div class="periodo"><div class="periodo-cab"><b>${esc(per)}</b> ${esc(pdef.nome || "")}</div><div class="cards"></div></div>`);
+      const sec = el(`<div class="periodo"><div class="periodo-cab"><b>Per\xEDodo ${esc(per.replace(/^P/, ""))}</b> ${esc(pdef.nome || "")}</div><div class="cards"></div></div>`);
       for (const ato of atos) {
         const est = ato.momentos.reduce((s, m) => s + estrelasDe(m), 0), max = ato.momentos.length * 3;
         const feito = ato.momentos.every((m) => camp.jogados[m]);
-        const estado = feito ? "feito" : ato === atual2 ? "atual" : passouAtual || atual2 && cjson.atos.indexOf(ato) > cjson.atos.indexOf(atual2) ? "locked" : "";
+        const estado = feito ? "feito" : ato === atual2 ? "atual" : TUDO_LIBERADO ? "" : passouAtual || atual2 && cjson.atos.indexOf(ato) > cjson.atos.indexOf(atual2) ? "locked" : "";
         if (ato === atual2) passouAtual = true;
-        const card = el(`<div class="card ${estado}"><div class="card-cab"><span class="sobre">${esc(ato.id)}</span><span class="stars">${est}/${max} \u2605</span></div><div class="card-nome">${esc(ato.nome || ato.id)}</div></div>`);
+        const card = el(`<div class="card ${estado}"><div class="card-cab"><span class="sobre">Ato ${esc(ato.id)}</span><span class="stars">${est}/${max} \u2605</span></div><div class="card-nome">${esc(ato.nome || ato.id)}</div></div>`);
         const grupo = el('<div class="col momentos"></div>');
         for (const m of ato.momentos) {
-          let linhas = `<div class="momento-linha${camp.jogados[m] ? " jogado" : ""}"><span>${esc(m)}</span><span class="stars">${estrelasHTML(camp.jogados[m])}</span></div>`;
-          for (const k of Object.keys(camp.jogados).filter((x) => x.startsWith(m + "@"))) {
-            linhas += `<div class="momento-linha rejogar"><span>rejogar \xB7 ${esc(k.slice(m.length + 1))}</span><span class="stars">${estrelasHTML(camp.jogados[k])}</span></div>`;
+          const r = camp.jogados[m], liberado = TUDO_LIBERADO || !!r || m === fronteira;
+          const sit = !r ? liberado ? "pr\xF3ximo" : "" : r.vitoria ? "vencido \xB7 rejogar" : "perdido \xB7 rejogar";
+          const linha = el(`<div class="momento-linha${r ? " jogado" : ""}${r && !r.vitoria ? " perdido" : ""}${liberado ? " liberado" : ""}"${liberado ? ' role="button" tabindex="0"' : ""} data-m="${esc(m)}"><span class="mnome">${esc(m)}</span><span class="stars">${estrelasHTML(r)}</span>${sit ? `<span class="msit">${sit}</span>` : ""}</div>`);
+          const grupoM = el("<div></div>");
+          grupoM.appendChild(linha);
+          if (liberado) {
+            linha.addEventListener("click", () => jogarMomento(ato, m));
+            carregarMomento(m, loaderPadrao).then((mm) => {
+              if (mm && mm.nome) linha.querySelector(".mnome").textContent = `${m} \xB7 ${mm.nome}`;
+            }).catch(() => {
+            });
           }
-          grupo.appendChild(el(`<div>${linhas}</div>`));
+          for (const k of Object.keys(camp.jogados).filter((x) => x.startsWith(m + "@"))) {
+            const lr = el(`<div class="momento-linha rejogar liberado" role="button" tabindex="0"><span>rejogar \xB7 ${esc(k.slice(m.length + 1))}</span><span class="stars">${estrelasHTML(camp.jogados[k])}</span></div>`);
+            lr.addEventListener("click", () => jogarMomento(ato, m));
+            grupoM.appendChild(lr);
+          }
+          grupo.appendChild(grupoM);
         }
         card.appendChild(grupo);
         if (estado === "atual") card.appendChild(el('<div class="card-selo">pr\xF3ximo</div>'));
@@ -26756,6 +26784,12 @@ var Screens = {
     painel.querySelector(".sobre").textContent = (ato && ato.nome ? ato.nome + " \xB7 " : "") + momentoId;
     painel.querySelector("h2").textContent = momento.nome || momentoId;
     const seq = painel.querySelector("#falas");
+    const voltar2 = el('<button class="btn small" data-a="campanha" title="Escolher outro Momento">\u2190 Campanha</button>');
+    voltar2.addEventListener("click", () => {
+      Voz.parar();
+      App2.go("campanha", { camp });
+    });
+    painel.appendChild(voltar2);
     const seguir2 = () => {
       seq.innerHTML = "";
       const objetivos2 = el('<div class="col objetivos" id="objs"></div>');
@@ -27117,7 +27151,9 @@ var Screens = {
     const seq = painel.querySelector("#falas");
     const mostrarEscolha = () => {
       seq.innerHTML = "";
-      if (ac.escolha) {
+      const jaEscolheu = camp.escolhas && camp.escolhas[momento.id] != null && ac.escolha;
+      if (jaEscolheu) seq.appendChild(el(`<div class="muted">Escolha deste acampamento j\xE1 feita na primeira vez (${esc(camp.escolhas[momento.id])}).</div>`));
+      if (ac.escolha && !jaEscolheu) {
         const e = escolhas[ac.escolha] || {};
         const f = (falas || {})[ac.escolha];
         const quem = e.quem || f && f.quem || "";
@@ -28706,6 +28742,14 @@ function setupInput(game) {
       const b = id && S.ents.find((e) => e.id === id && e.k === "b");
       return b && ve(b) ? b : null;
     };
+    const alturaB = (b, x, z) => {
+      const d2 = CONSTRUCOES[b.tipo] || {}, tam = d2.tam || [2, 2];
+      if (d2.bloqueia === false) return 0.4;
+      const rc = b.rc || [b.x - tam[0] / 2, b.y - tam[1] / 2, b.x + tam[0] / 2, b.y + tam[1] / 2];
+      const hw = (rc[2] - rc[0]) / 2 || 1, hh = (rc[3] - rc[1]) / 2 || 1;
+      const r2 = Math.max(((x - (rc[0] + hw)) / hw) ** 2, ((z - (rc[1] + hh)) / hh) ** 2);
+      return Math.min(4, 1 + 0.7 * Math.max(...tam)) * (1 - 0.6 * Math.min(1, r2));
+    };
     const perto3 = [];
     for (const e of S.ents) {
       if (e.k === "b" || !ve(e) || Math.hypot(e.x - p2.x, e.y - p2.y) > 6) continue;
@@ -28728,10 +28772,7 @@ function setupInput(game) {
       }
       if (!best) {
         const b = bAt(x, z);
-        if (b) {
-          const tam = CONSTRUCOES[b.tipo] && CONSTRUCOES[b.tipo].tam || [2, 2];
-          if (h < Math.min(4, 1 + 0.7 * Math.max(...tam))) best = b;
-        }
+        if (b && h < alturaB(b, x, z)) best = b;
       }
     }
     if (!best) {
@@ -28759,7 +28800,10 @@ function setupInput(game) {
       const m = game.modo;
       const ids3 = game.idsSelecionados(), J = game._facJogador();
       if (m.tipo === "construir_tipo") {
-        if (!game.pos.confirmar(clientX, clientY, shift)) game.cancelarModo();
+        if (!game.pos.confirmar(clientX, clientY, shift)) {
+          game.cancelarModo();
+          game.abrirPagina("principal");
+        }
         return;
       }
       game.cancelarModo();
@@ -28856,7 +28900,13 @@ function setupInput(game) {
       return;
     }
     const a = acaoDireita(clientX, clientY);
-    if (a) a.fazer();
+    if (!a) return;
+    if (a.fazer() === false) {
+      game.avisar("Ordem inv\xE1lida aqui");
+      return;
+    }
+    const p2 = world2.pick(clientX, clientY);
+    if (p2) game.fx.marcarOrdem(p2.x, p2.y);
   }
   function atualizarCursor(clientX, clientY) {
     let c = "padrao";
@@ -29071,7 +29121,7 @@ function setupInput(game) {
     }
     if (dx || dy) {
       const px = PAN_TELAS * (canvas.clientHeight || 720) * dtReal;
-      const k = Save.opcoes && Save.opcoes.panMapa === false ? 1 : -1;
+      const k = Save.opcoes && Save.opcoes.panMapa === true ? -1 : 1;
       world2.pan(k * dx * px, k * dy * px);
     }
   }
@@ -30573,6 +30623,18 @@ var Game = class {
     this._gradeKey = key;
     this._elGradeTit.textContent = titulo || "";
     const g = this._elGrade;
+    const estrut = this.pagina.nome + (this.pagina.off || 0) + "|" + itens.map((it) => it ? it.id + ":" + (it.tecla || "") : "-").join(",");
+    if (estrut === this._gradeEstrut && g.children.length === SLOTS) {
+      itens.forEach((it, i) => {
+        const b = g.children[i];
+        if (!it || !b._it) return;
+        b._it = it;
+        b.classList.toggle("desab", !!it.motivo);
+        b.classList.toggle("active", !!it.ativo);
+      });
+      return;
+    }
+    this._gradeEstrut = estrut;
     g.innerHTML = "";
     for (let i = 0; i < SLOTS; i++) {
       const it = itens[i];
@@ -30580,15 +30642,20 @@ var Game = class {
         g.appendChild(el2('<div class="cmd vazio"></div>'));
         continue;
       }
-      const b = el2(`<button class="cmd${it.motivo ? " desab" : ""}${it.ativo ? " active" : ""}${it.ret ? " com-ret" : ""}" data-id="${esc2(it.id)}">${it.ret || icone(it.ico)}${it.tecla ? `<span class="k">${esc2(it.tecla)}</span>` : ""}${it.custo && !it.motivo ? "" : ""}</button>`);
+      const b = el2(`<button class="cmd${it.motivo ? " desab" : ""}${it.ativo ? " active" : ""}${it.ret ? " com-ret" : ""}" data-id="${esc2(it.id)}">${it.ret || icone(it.ico)}${it.tecla ? `<span class="k">${esc2(it.tecla)}</span>` : ""}</button>`);
       if (it.cor) b.style.setProperty("--cor", it.cor), b.classList.add("com-cor");
-      b._dica = () => `<div class="dc-cab"><b>${esc2(it.rot)}</b>${it.tecla ? `<span class="tecla">${esc2(it.tecla)}</span>` : ""}</div>${it.custo ? `<div class="custo">${custoHTML(it.custo)}</div>` : ""}${it.dica ? `<div class="dc-txt">${esc2(it.dica)}</div>` : ""}${it.motivo ? `<div class="erro">${esc2(it.motivo)}</div>` : ""}`;
+      b._it = it;
+      b._dica = () => {
+        const it2 = b._it;
+        return `<div class="dc-cab"><b>${esc2(it2.rot)}</b>${it2.tecla ? `<span class="tecla">${esc2(it2.tecla)}</span>` : ""}</div>${it2.custo ? `<div class="custo">${custoHTML(it2.custo)}</div>` : ""}${it2.dica ? `<div class="dc-txt">${esc2(it2.dica)}</div>` : ""}${it2.motivo ? `<div class="erro">${esc2(it2.motivo)}</div>` : ""}`;
+      };
       b.addEventListener("click", () => {
-        if (it.motivo) {
-          this.avisar(it.motivo);
+        const it2 = b._it;
+        if (it2.motivo) {
+          this.avisar(it2.motivo);
           return;
         }
-        it.fn();
+        it2.fn();
         this.somClique();
         this._gradeKey = null;
         this._gradeT = 0;
