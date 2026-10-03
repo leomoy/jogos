@@ -640,6 +640,7 @@ body:has(#selpanel.vazio) #speech { bottom: 84px; } /* sem seleção o painel é
 #speech .quem { color: var(--hud-ouro); font: bold 13px var(--serif); letter-spacing: 1.5px; }
 #speech .texto { font: 16px/1.4 var(--serif); color: var(--hud-tinta); }
 #speech .fila { font-size: 11px; color: var(--muted); }
+#speech { cursor: pointer; } #speech .fila:hover { color: var(--hud-ouro); text-decoration: underline; }
 
 /* ---------- painel inferior ---------- */
 #bottombar { position: absolute; left: 0; right: 0; bottom: 0; height: 0; pointer-events: none; }
@@ -1151,7 +1152,7 @@ function resolverTipo(t2, ato) {
 var VERSION, DT, T, TERRENO, CUSTO, PASS, CUSTOC, A0, UNIDADES, ARM_F, BAI, fuzil, cav, peca, navio, P67, P5, CORPO_A_CORPO, HEROIS, Ah, ARM_EU, ARM_TP, leve, guerreiro, religioso, FUZ, oficial, civilH, FACAO, ESP, rep, FUZ7, oficial7, ARM_8, ARM_V, BAI8, inf8, mg8, mort8, snp8, veic, FUZ8, sold8, VERSOES, UDEF, baseHeroi, ATRIBUTOS, HABILIDADES, TRACOS, ITENS, TROCA, VALOR, CONSTRUCOES, CULTURAS, EUROPA, P9, RECURSOS_MAPA, COLETA, DIFICULDADE, CORES;
 var init_data = __esm({
   "js/core/data.js"() {
-    VERSION = "8.1.4";
+    VERSION = "8.1.5";
     DT = 0.05;
     T = { CAMPO: 0, MATA: 1, AREIA: 2, RASO: 3, FUNDA: 4, ROCHA: 5, MANGUE: 6, CORREDEIRA: 7, PEDRA: 8 };
     TERRENO = [
@@ -5996,7 +5997,21 @@ function coletar(S, u, o) {
             R8[r2] = (R8[r2] || 0) + f.taxa * DT;
             if (u.fac === S.jog) inc(S.st.coletado, r2, f.taxa * DT);
           }
-        } else u.est = "parado";
+        } else {
+          let outra = null, bd = 16;
+          for (const e of S.ents) if (e.k === "b" && !e.del && e !== fonte && e.fac === u.fac && e.tipo === fonte.tipo && e.prog >= 1 && e.trab < f.max) {
+            const dd = Math.hypot(e.x - u.x, e.y - u.y);
+            if (dd < bd) {
+              bd = dd;
+              outra = e;
+            }
+          }
+          if (outra) o.alvo = outra.id;
+          else {
+            u.ord = null;
+            u.est = "parado";
+          }
+        }
       }
       return;
     }
@@ -6054,6 +6069,13 @@ function construir(S, u, o) {
   let b = ent(S, o.alvo);
   const pronto = (e) => e.prog >= 1 && e.hp >= e.hpMax;
   if (!vivo(b) || pronto(b)) {
+    while (o.prox && o.prox.length) {
+      const n = ent(S, o.prox.shift());
+      if (vivo(n) && !pronto(n)) {
+        o.alvo = n.id;
+        return;
+      }
+    }
     const ref = b || u;
     let best = null, bd = Infinity;
     for (const e of S.ents) {
@@ -6066,8 +6088,10 @@ function construir(S, u, o) {
       }
     }
     if (!best) {
-      u.ord = null;
-      u.est = "parado";
+      if (!(o.ergueu && vivo(b) && trabalharEm(S, u, b))) {
+        u.ord = null;
+        u.est = "parado";
+      }
       return;
     }
     b = best;
@@ -6077,6 +6101,7 @@ function construir(S, u, o) {
   u.est = "construindo";
   const d = CONSTRUCOES[b.tipo];
   if (b.prog < 1) {
+    o.ergueu = 1;
     const k = engenhoPerto(S, b);
     b.prog = Math.min(1, b.prog + k * DT / d.tempo);
     b.hp = Math.min(b.hpMax, b.hp + b.hpMax * 0.9 * k * DT / d.tempo);
@@ -6090,6 +6115,19 @@ function construir(S, u, o) {
     b.hp = Math.min(b.hpMax, b.hp + b.hpMax * DT / (d.tempo * 2));
     if (b.brecha && b.hp >= 0.3 * b.hpMax) brecha(S, b, false);
   }
+}
+function trabalharEm(S, u, b) {
+  const d = CONSTRUCOES[b.tipo];
+  if (b.prog < 1 || b.fac !== u.fac || !UDEF[u.tipo].coleta) return false;
+  if (d.fazenda) {
+    u.ord = { t: "coletar", tile: -1, alvo: b.id, dep: false, d: 0 };
+    return true;
+  }
+  if (!d.deposito) return false;
+  const t2 = mataPerto(S.grid, b.x | 0, b.y | 0, 10);
+  if (t2 < 0) return false;
+  u.ord = { t: "coletar", tile: t2, alvo: 0, dep: false, d: 0 };
+  return true;
 }
 function virar(S, b, tipo) {
   const [q] = espiral(S, b.x, b.y, 1, classeDe(tipo));
@@ -8743,7 +8781,7 @@ function alvoGrupo(k, x, y) {
 function validoPonto(S, x, y) {
   return Number.isFinite(x) && Number.isFinite(y) && x >= 0 && y >= 0 && x < S.grid.w && y < S.grid.h;
 }
-function podeConstruir(S, tipo, x, y) {
+function podeConstruir(S, tipo, x, y, mata2 = false) {
   const d = CONSTRUCOES[tipo], g = S.grid;
   if (!d || !validoPonto(S, x, y)) return null;
   if (d.anel) return tilesCaicara(S, x, y, null).length ? [] : null;
@@ -8754,7 +8792,7 @@ function podeConstruir(S, tipo, x, y) {
   const [tw, th] = d.tam, tx0 = Math.round(x - tw / 2), ty0 = Math.round(y - th / 2);
   if (tx0 < 0 || ty0 < 0 || tx0 + tw > g.w || ty0 + th > g.h) return null;
   const tiles = tilesRet(g, tx0, ty0, tw, th);
-  for (const i of tiles) if (!passavelI(g, i) || g.occ[i] !== 0) return null;
+  for (const i of tiles) if (!passavelI(g, i) || g.occ[i] !== 0 || !mata2 && g.ter[i] === T.MATA) return null;
   if (d.costa) {
     let agua = false;
     for (let yy = ty0 - 1; yy <= ty0 + th && !agua; yy++) for (let xx = tx0 - 1; xx <= tx0 + tw; xx++)
@@ -8801,7 +8839,7 @@ function tilesCaicara(S, cx, cy, porta2) {
   return segs3.map((l) => l.filter((i) => passavelI(g, i) && g.occ[i] === 0)).filter((l) => l.length);
 }
 function lugarLivre(S, tipo, x, y) {
-  const exata = podeConstruir(S, tipo, x, y);
+  const exata = podeConstruir(S, tipo, x, y, true);
   const g = S.grid, [tw, th] = CONSTRUCOES[tipo].tam;
   const folga = (tiles) => {
     if (!tiles) return false;
@@ -8813,7 +8851,7 @@ function lugarLivre(S, tipo, x, y) {
   if (folga(exata)) return exata;
   for (let r = 1; r < 30; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
     if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-    const t2 = podeConstruir(S, tipo, x + dx, y + dy);
+    const t2 = podeConstruir(S, tipo, x + dx, y + dy, true);
     if (folga(t2)) return t2;
   }
   return null;
@@ -9049,16 +9087,21 @@ function exec(S, c, aplicar) {
       if (!d || !d.custo || c.tipo === "ocara" && J === S.jog) return false;
       if (d.unico && S.ents.some((b) => b.k === "b" && !b.del && b.fac === J && b.tipo === c.tipo)) return false;
       const us = ids3.filter((u) => UDEF[u.tipo].coleta), paga = J === S.jog;
+      const encadear = (u, b) => {
+        const a = u.ord && u.ord.t === "construir" && ent(S, u.ord.alvo);
+        if (c.fila && vivo(a) && a.prog < 1) (u.ord.prox ||= []).push(b.id);
+        else {
+          u.ord = { t: "construir", alvo: b.id };
+          soltas([u]);
+        }
+      };
       if (d.linha) {
         const segs3 = validoPonto(S, c.x, c.y) ? tilesLinha(S, c.x, c.y, c.x2 ?? c.x, c.y2 ?? c.y) : [];
         if (!segs3.length || paga && !podePagar(S, J, d.custo, segs3.length)) return false;
         if (aplicar) {
           if (paga) pagar(S, J, d.custo, segs3.length);
           const grupo = S.nextId, bs = segs3.map((t2) => criarConstrucao(S, c.tipo, J, t2, c.pronto ? 1 : 0, { grupo, gn: segs3.length }));
-          us.forEach((u) => {
-            u.ord = { t: "construir", alvo: bs[0].id };
-            soltas([u]);
-          });
+          us.forEach((u) => encadear(u, bs[0]));
         }
         return true;
       }
@@ -9098,10 +9141,7 @@ function exec(S, c, aplicar) {
         const b = criarConstrucao(S, c.tipo, J, tiles, c.pronto ? 1 : 0);
         b.grupo = b.id;
         b.gn = 1;
-        us.forEach((u) => {
-          u.ord = { t: "construir", alvo: b.id };
-          soltas([u]);
-        });
+        us.forEach((u) => encadear(u, b));
       }
       return true;
     }
@@ -9557,6 +9597,18 @@ function mover(S) {
     if (!u.alvo && (M.e ? distEnt(u.x, u.y, M.e) : d) <= M.r && (!o || o.t !== "mover")) {
       if (u.est === "movendo") u.est = "parado";
       continue;
+    }
+    if (o && !u.alvo && (o.t === "coletar" || o.t === "construir")) {
+      if (o.mk !== M.key || Math.hypot(u.x - o.ax, u.y - o.ay) > 1) {
+        o.mk = M.key;
+        o.ax = u.x;
+        o.ay = u.y;
+        o.at = S.t;
+      } else if (S.t - o.at > 8) {
+        u.ord = null;
+        u.est = "parado";
+        continue;
+      }
     }
     const d0 = UDEF[u.tipo], tr = g.ter[ti];
     let vel = (u.vf && o && o.form ? u.vf : d0.vel) / (mc || d0.passiva === "filho_da_mata" && tr === T.MATA ? 1 : custo(g, ti));
@@ -28945,6 +28997,7 @@ function setupInput(game) {
     const r = canvas.getBoundingClientRect();
     mouse.dentro = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
     mouse.minimapa = !!(e.target && e.target.closest && e.target.closest("#minimap-wrap"));
+    mouse.hud = e.target !== canvas;
     if (girando) {
       world2.rotate((e.clientX - lastX) * 6e-3);
       lastX = e.clientX;
@@ -29114,10 +29167,11 @@ function setupInput(game) {
     if (keys.has("arrowdown")) dy += 1;
     if (mouse.dentro && !mouse.minimapa && document.hasFocus()) {
       const r = canvas.getBoundingClientRect();
-      if (mouse.x - r.left < EDGE) dx -= 1;
-      else if (r.right - mouse.x < EDGE) dx += 1;
-      if (mouse.y - r.top < EDGE) dy -= 1;
-      else if (r.bottom - mouse.y < EDGE) dy += 1;
+      const E = mouse.hud ? 3 : EDGE;
+      if (mouse.x - r.left < E) dx -= 1;
+      else if (r.right - mouse.x < E) dx += 1;
+      if (mouse.y - r.top < E) dy -= 1;
+      else if (r.bottom - mouse.y < E) dy += 1;
     }
     if (dx || dy) {
       const px = PAN_TELAS * (canvas.clientHeight || 720) * dtReal;
@@ -29628,7 +29682,7 @@ var Posicionador = class {
     const S = this.game.S, g = S.grid, J = S.jog, tipo = this.tipo, d = CONSTRUCOES[tipo];
     const R8 = S.recursos[J] || {};
     const res = { ok: false, motivo: "", verdes: [], vermelhos: [], n: 1, x, y, x2, y2, centro: null, segTiles: [] };
-    const livre5 = (i) => passavelI(g, i) && g.occ[i] === 0;
+    const livre5 = (i) => passavelI(g, i) && g.occ[i] === 0 && g.ter[i] !== T.MATA;
     if (d.unico && S.ents.some((b) => b.k === "b" && !b.del && b.fac === J && b.tipo === tipo)) res.motivo = "S\xF3 pode haver uma";
     if (d.linha) {
       const segs3 = tilesLinha(S, x, y, x2 ?? x, y2 ?? y);
@@ -29665,7 +29719,7 @@ var Posicionador = class {
         (livre5(i) ? res.verdes : res.vermelhos).push(i);
       }
       const tiles = podeConstruir(S, tipo, x, y);
-      if (!tiles && !res.motivo) res.motivo = res.vermelhos.length ? "Terreno ocupado ou impass\xE1vel" : d.costa ? "Precisa ficar na beira d'\xE1gua" : "Fora do mapa";
+      if (!tiles && !res.motivo) res.motivo = res.vermelhos.length ? res.vermelhos.some((i) => g.ter[i] === T.MATA) ? "\xC1rvores no caminho \u2014 corte antes" : "Terreno ocupado ou impass\xE1vel" : d.costa ? "Precisa ficar na beira d'\xE1gua" : "Fora do mapa";
       else if (tiles && !podeMinerar(S, tipo, x, y, J) && !res.motivo) res.motivo = "Precisa ficar junto da galeria/jazida";
       if (!tiles) {
         res.vermelhos.push(...res.verdes);
@@ -29752,7 +29806,7 @@ var Posicionador = class {
       this.game.avisar && this.game.avisar(v ? v.motivo : "N\xE3o d\xE1 para construir aqui");
       return true;
     }
-    const ids3 = this.game.idsSelecionados(), cmd3 = { c: "construir", ids: ids3, tipo: this.tipo, x: v.x, y: v.y };
+    const ids3 = this.game.idsSelecionados(), cmd3 = { c: "construir", ids: ids3, tipo: this.tipo, x: v.x, y: v.y, fila: !!shift };
     if (this.linha) {
       cmd3.x2 = v.x2;
       cmd3.y2 = v.y2;
@@ -30135,7 +30189,13 @@ var Game = class {
     this._elObjs.querySelector(".obj-min").addEventListener("click", () => this._elObjs.classList.toggle("recolhido"));
     this._elEvac = el2('<div id="evacbar" class="panel hidden"><span>Evacuados</span><div class="barra"><i style="width:0%"></i></div><span class="n"></span></div>');
     this._elEscolha = el2('<div id="escolhapartida" class="hidden"></div>');
-    this._elSpeech = el2('<div id="speech" class="panel hidden"><div class="sp-ret"></div><div class="sp-txt"><div class="quem"></div><div class="texto"></div><div class="fila"></div></div></div>');
+    this._elSpeech = el2('<div id="speech" class="panel hidden" title="Clique: pr\xF3xima fala"><div class="sp-ret"></div><div class="sp-txt"><div class="quem"></div><div class="texto"></div><div class="fila"></div></div></div>');
+    this._elSpeech.addEventListener("click", (e) => {
+      if (e.target.closest(".fila")) this._falaFila.length = 0;
+      this._falaAtual = null;
+      Voz.parar();
+      this._atualizarFala(0);
+    });
     this._elBottom = el2(`<div id="bottombar">
       <div id="minimap-wrap" class="moldura-hud"><canvas id="minimap"></canvas><div class="mm-canto mm-n">N</div></div>
       <div id="selpanel" class="moldura-hud"></div>
@@ -30149,11 +30209,15 @@ var Game = class {
     this._elPausebar = el2(`<div id="pausemenu" class="screen hidden"><div class="panel moldura-P1 col pausa-box">
       <div class="sobre">${esc2(this.momento && this.momento.nome || "")}</div><h2 class="grande">Pausa</h2><div class="ornato">\u2767 \u2726 \u2767</div>
       <button class="btn primary" data-a="continuar">Continuar</button><button class="btn" data-a="salvar">Salvar partida</button>
-      <button class="btn" data-a="opcoes">Op\xE7\xF5es</button><button class="btn" data-a="desistir">Desistir</button>
+      <button class="btn" data-a="opcoes">Op\xE7\xF5es</button><button class="btn" data-a="sair">Salvar e sair</button><button class="btn" data-a="desistir">Desistir</button>
       <div class="pausa-opcoes"></div></div></div>`);
     this._elPausebar.querySelector("[data-a=continuar]").addEventListener("click", () => this.setPausado(false));
     this._elPausebar.querySelector("[data-a=salvar]").addEventListener("click", () => {
       if (Save.salvarPartida && Save.salvarPartida(serialize(this.S))) this.avisar("Partida salva");
+    });
+    this._elPausebar.querySelector("[data-a=sair]").addEventListener("click", () => {
+      if (Save.salvarPartida) Save.salvarPartida(serialize(this.S));
+      this.App.go("menu");
     });
     this._elPausebar.querySelector("[data-a=desistir]").addEventListener("click", () => {
       this.emitir({ c: "desistir" });
@@ -30458,7 +30522,7 @@ var Game = class {
         void this._elSpeech.offsetWidth;
         this._elSpeech.classList.add("entra");
       }
-      this._elSpeech.querySelector(".fila").textContent = this._falaFila.length ? `+${this._falaFila.length} na fila` : "";
+      this._elSpeech.querySelector(".fila").textContent = this._falaFila.length ? `+${this._falaFila.length} na fila \xB7 pular \u23ED` : "";
       this._elSpeech.classList.toggle("hidden", !legendas);
       if (this._falaT <= 0) this._falaAtual = null;
     } else this._elSpeech.classList.add("hidden");
