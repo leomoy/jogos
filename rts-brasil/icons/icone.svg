@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Ícone do RTS Brasil: caravela com vela da Cruz da Ordem de Cristo, estrela dourada e mar. Fundo cheio (maskable):
+       tudo que importa fica dentro do círculo central de raio ~205 (zona segura do Android). Legível em 48 px. -->
+  <defs>
+    <linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a2d17"/>
+      <stop offset="1" stop-color="#1d1209"/>
+    </linearGradient>
+    <radialGradient id="sol" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f2a93b" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#f2a93b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#ceu)"/>
+  <circle cx="256" cy="215" r="190" fill="url(#sol)"/>
+  <!-- estrela (Cruzeiro do Sul) -->
+  <path d="M368 84 l8.5 19.5 21.5 2.2 -16.2 14.4 4.7 21 -18.5 -10.8 -18.5 10.8 4.7 -21 -16.2 -14.4 21.5 -2.2z" fill="#f6c453" stroke="#b9852a" stroke-width="2" stroke-linejoin="round"/>
+  <!-- mastros -->
+  <path d="M256 300V128M340 300V196" stroke="#2c1a0c" stroke-width="8" stroke-linecap="round"/>
+  <path d="M256 128l36 8-36 12z" fill="#c8321e"/>
+  <!-- vela grande com a cruz -->
+  <path d="M190 150Q256 172 322 150L330 266Q256 288 182 266Z" fill="#f3e7c9" stroke="#b79b5c" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M245 168h22v28h28v22h-28v34h-22v-34h-28v-22h28z" fill="#c8321e"/>
+  <!-- vela da proa -->
+  <path d="M312 204Q345 214 378 204L384 268Q345 280 306 268Z" fill="#ead9b0" stroke="#a88c4f" stroke-width="3.5" stroke-linejoin="round"/>
+  <!-- casco -->
+  <path d="M112 296H396Q386 360 330 376H178Q124 360 112 296Z" fill="#7a4a22" stroke="#2c1a0c" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M112 296H396L392 314H116Z" fill="#e0a93b"/>
+  <path d="M112 270h56v26h-56z" fill="#5c3517" stroke="#2c1a0c" stroke-width="5" stroke-linejoin="round"/>
+  <!-- mar -->
+  <path d="M0 372Q43 356 85 372T171 372T256 372T341 372T427 372T512 372V512H0Z" fill="#1b6b60"/>
+  <path d="M0 404Q43 388 85 404T171 404T256 404T341 404T427 404T512 404V512H0Z" fill="#134f47"/>
+  <path d="M0 372Q43 356 85 372T171 372T256 372T341 372T427 372T512 372" fill="none" stroke="#7fd1c0" stroke-width="5" stroke-linecap="round"/>
+</svg>
