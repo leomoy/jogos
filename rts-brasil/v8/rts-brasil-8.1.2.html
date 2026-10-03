@@ -1139,7 +1139,7 @@ function resolverTipo(t2, ato) {
 var VERSION, DT, T, TERRENO, CUSTO, PASS, CUSTOC, A0, UNIDADES, ARM_F, BAI, fuzil, cav, peca, navio, P67, P5, CORPO_A_CORPO, HEROIS, Ah, ARM_EU, ARM_TP, leve, guerreiro, religioso, FUZ, oficial, civilH, FACAO, ESP, rep, FUZ7, oficial7, ARM_8, ARM_V, BAI8, inf8, mg8, mort8, snp8, veic, FUZ8, sold8, VERSOES, UDEF, baseHeroi, ATRIBUTOS, HABILIDADES, TRACOS, ITENS, TROCA, VALOR, CONSTRUCOES, CULTURAS, EUROPA, P9, RECURSOS_MAPA, COLETA, DIFICULDADE, CORES;
 var init_data = __esm({
   "js/core/data.js"() {
-    VERSION = "8.1.1";
+    VERSION = "8.1.2";
     DT = 0.05;
     T = { CAMPO: 0, MATA: 1, AREIA: 2, RASO: 3, FUNDA: 4, ROCHA: 5, MANGUE: 6, CORREDEIRA: 7, PEDRA: 8 };
     TERRENO = [
@@ -18559,8 +18559,8 @@ var World3D = class {
     const frontX = -Math.sin(this._yaw), frontZ = -Math.cos(this._yaw);
     const rightX = Math.cos(this._yaw), rightZ = -Math.sin(this._yaw);
     const dx = dxTela * scale, dy = dyTela * scale;
-    this._goal.target.x -= dx * rightX - dy * frontX;
-    this._goal.target.z -= dx * rightZ - dy * frontZ;
+    this._goal.target.x += dx * rightX - dy * frontX;
+    this._goal.target.z += dx * rightZ - dy * frontZ;
     if (this.grid) {
       this._goal.target.x = clamp(this._goal.target.x, 0, this.grid.w);
       this._goal.target.z = clamp(this._goal.target.z, 0, this.grid.h);
@@ -18599,6 +18599,13 @@ var World3D = class {
     }
     if (!_raycaster.ray.intersectPlane(_plane, _hit)) return null;
     return { x: _hit.x, y: _hit.z };
+  }
+  // raio da câmera pelo pixel (objeto compartilhado: usar na hora). input.js testa o raio contra o corpo das entidades.
+  raio(clientX, clientY) {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    _ndc.set((clientX - rect.left) / rect.width * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    _raycaster.setFromCamera(_ndc, this.camera);
+    return _raycaster.ray;
   }
   // h = altura ACIMA do chão (o chão vem de alturaEm)
   project(x, y, h = 0) {
@@ -24740,7 +24747,7 @@ init_loader();
 // js/ui/opcoes.js
 init_core();
 var KEY = "rtsbr.v8.opcoes";
-var PADRAO = { qualidade: "media", volMusica: 0.6, volEfeitos: 0.8, volVoz: 1, legendas: true, velJogo: 1 };
+var PADRAO = { qualidade: "media", volMusica: 0.6, volEfeitos: 0.8, volVoz: 1, legendas: true, velJogo: 1, panMapa: true };
 function ler() {
   try {
     return { ...PADRAO, ...JSON.parse(Save.store.getItem(KEY) || "{}") };
@@ -24780,6 +24787,7 @@ function formOpcoes(t2) {
       <label class="row"><span>Narra\xE7\xE3o em voz alta</span><input type="checkbox" id="voz"${Voz.ligado ? " checked" : ""}${Voz.disponivel ? "" : ' disabled title="Sem voz pt-BR neste navegador"'}></label></div>
     <div class="op-grupo"><div class="rotulo">Partida</div>
       <label class="row"><span>${t2("ui.legendas")}</span><input type="checkbox" data-k="legendas"${o.legendas ? " checked" : ""}></label>
+      <label class="row" title="Marcado: a seta (ou o mouse na borda) puxa o mapa nesse sentido. Desmarcado: a c\xE2mera anda nesse sentido, como nos RTS cl\xE1ssicos."><span>Setas e bordas movem o mapa</span><input type="checkbox" data-k="panMapa"${o.panMapa !== false ? " checked" : ""}></label>
       <div class="row"><span>${t2("ui.velJogo")}</span>${seg("velJogo", [[1, "1\xD7"], [2, "2\xD7"], [4, "4\xD7"]])}</div></div>`;
   d.querySelectorAll(".seg").forEach((s) => s.addEventListener("click", (e) => {
     const b = e.target.closest("button");
@@ -24789,6 +24797,7 @@ function formOpcoes(t2) {
   }));
   d.querySelectorAll("input[type=range]").forEach((i) => i.addEventListener("input", () => mudarOpcao(i.dataset.k, +i.value)));
   d.querySelector("[data-k=legendas]").addEventListener("change", (e) => mudarOpcao("legendas", e.target.checked));
+  d.querySelector("[data-k=panMapa]").addEventListener("change", (e) => mudarOpcao("panMapa", e.target.checked));
   d.querySelector("#voz").addEventListener("change", (e) => {
     Voz.ligado = e.target.checked;
   });
@@ -28662,6 +28671,7 @@ function setupInput(game) {
   let girando = false, lastX = 0, lastY = 0;
   let cursorT = 0;
   game._mouse = mouse;
+  game._entNoPonto = (x, y) => entidadeNoPonto(x, y, false);
   function ensureBox() {
     if (boxEl) return boxEl;
     boxEl = document.createElement("div");
@@ -28674,34 +28684,61 @@ function setupInput(game) {
     const out = [];
     for (const u of game.S.ents) {
       if (u.k !== "u" || u.fac !== fac2 || u.del) continue;
-      const p2 = world2.project(u.x, u.y);
-      if (p2.visible && p2.x >= r.left && p2.x <= r.right && p2.y >= r.top && p2.y <= r.bottom) out.push(u.id);
+      const dentro2 = (p2) => p2.visible && p2.x >= r.left && p2.x <= r.right && p2.y >= r.top && p2.y <= r.bottom;
+      if (dentro2(world2.project(u.x, u.y)) || dentro2(world2.project(u.x, u.y, 0.9))) out.push(u.id);
     }
     return out;
   }
   function entidadeNoPonto(clientX, clientY, somenteInimigo) {
     const p2 = world2.pick(clientX, clientY);
     if (!p2) return null;
-    const S = game.S, J = game._facJogador();
-    let best = null, bestD = 1.2;
+    const S = game.S, J = game._facJogador(), g = S.grid;
+    const ve = (e) => !e.del && (e.fac === J || visivel(S, e));
+    const bAt = (x, y) => {
+      const tx = Math.floor(x), ty = Math.floor(y);
+      if (tx < 0 || ty < 0 || tx >= g.w || ty >= g.h) return null;
+      const id = Math.abs(g.occ[ty * g.w + tx]);
+      const b = id && S.ents.find((e) => e.id === id && e.k === "b");
+      return b && ve(b) ? b : null;
+    };
+    const perto3 = [];
     for (const e of S.ents) {
-      if (e.del || e.k === "b") continue;
-      if (e.fac !== J && !visivel(S, e)) continue;
-      const d = Math.hypot(e.x - p2.x, e.y - p2.y);
-      if (d < bestD) {
-        bestD = d;
-        best = e;
+      if (e.k === "b" || !ve(e) || Math.hypot(e.x - p2.x, e.y - p2.y) > 6) continue;
+      const cl3 = UDEF[e.tipo] && UDEF[e.tipo].classe;
+      perto3.push([e, e.k === "r" ? 0.9 : ehBarco4(e) ? 1.4 : cl3 === "cav" ? 0.8 : 0.45, e.k === "r" ? 1.2 : ehBarco4(e) || cl3 === "cav" ? 2.3 : 1.75]);
+    }
+    const { origin: o, direction: d } = world2.raio(clientX, clientY);
+    const dh = Math.hypot(d.x, d.z) || 1e-6, tChao = Math.hypot(p2.x - o.x, p2.y - o.z) / dh;
+    let best = null;
+    for (let t2 = Math.max(0, tChao - 4 / Math.max(0.2, -d.y)); t2 <= tChao + 0.1 && !best; t2 += 0.15) {
+      const x = o.x + d.x * t2, z = o.z + d.z * t2, h = o.y + d.y * t2 - world2.alturaEm(x, z);
+      if (h > 4) continue;
+      let bd = Infinity;
+      for (const [e, r, alt2] of perto3) {
+        const dd = Math.hypot(e.x - x, e.y - z);
+        if (dd < r && h < alt2 && dd < bd) {
+          bd = dd;
+          best = e;
+        }
+      }
+      if (!best) {
+        const b = bAt(x, z);
+        if (b) {
+          const tam = CONSTRUCOES[b.tipo] && CONSTRUCOES[b.tipo].tam || [2, 2];
+          if (h < Math.min(4, 1 + 0.7 * Math.max(...tam))) best = b;
+        }
       }
     }
     if (!best) {
-      const g = S.grid, tx = Math.floor(p2.x), ty = Math.floor(p2.y);
-      if (tx >= 0 && ty >= 0 && tx < g.w && ty < g.h) {
-        const id = Math.abs(g.occ[ty * g.w + tx]);
-        if (id) {
-          const b = S.ents.find((e) => e.id === id && e.k === "b" && !e.del);
-          if (b && (b.fac === J || visivel(S, b))) best = b;
+      let bestD = 1.2;
+      for (const [e] of perto3) {
+        const dd = Math.hypot(e.x - p2.x, e.y - p2.y);
+        if (dd < bestD) {
+          bestD = dd;
+          best = e;
         }
       }
+      if (!best) best = bAt(p2.x, p2.y);
     }
     if (best && somenteInimigo && best.fac === J) return null;
     return best;
@@ -28765,7 +28802,8 @@ function setupInput(game) {
       return;
     }
     if (alvo2 && alvo2.k !== "r") {
-      const ids3 = shift && alvo2.fac === game._facJogador() ? [...game.selecao, alvo2.id] : [alvo2.id];
+      const somar = shift && alvo2.fac === game._facJogador();
+      const ids3 = !somar ? [alvo2.id] : game.selecao.has(alvo2.id) ? [...game.selecao].filter((id) => id !== alvo2.id) : [...game.selecao, alvo2.id];
       game.setSelecao(ids3);
     } else if (!shift) {
       game.setSelecao([]);
@@ -28851,6 +28889,7 @@ function setupInput(game) {
     mouse.y = e.clientY;
     const r = canvas.getBoundingClientRect();
     mouse.dentro = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    mouse.minimapa = !!(e.target && e.target.closest && e.target.closest("#minimap-wrap"));
     if (girando) {
       world2.rotate((e.clientX - lastX) * 6e-3);
       lastX = e.clientX;
@@ -28995,6 +29034,13 @@ function setupInput(game) {
   function onKeyUp(e) {
     keys.delete(e.key.toLowerCase());
   }
+  function onBlur() {
+    keys.clear();
+    mouse.dentro = false;
+  }
+  function onMouseOut(e) {
+    if (!e.relatedTarget) mouse.dentro = false;
+  }
   canvas.addEventListener("pointerdown", onPointerDown);
   window.addEventListener("pointermove", onPointerMove);
   window.addEventListener("pointerup", onPointerUp);
@@ -29003,13 +29049,15 @@ function setupInput(game) {
   canvas.addEventListener("wheel", onWheel, { passive: false });
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("keyup", onKeyUp);
+  window.addEventListener("blur", onBlur);
+  document.addEventListener("mouseout", onMouseOut);
   function panTick(dtReal) {
     let dx = 0, dy = 0;
     if (keys.has("arrowleft")) dx -= 1;
     if (keys.has("arrowright")) dx += 1;
     if (keys.has("arrowup")) dy -= 1;
     if (keys.has("arrowdown")) dy += 1;
-    if (mouse.dentro && document.hasFocus()) {
+    if (mouse.dentro && !mouse.minimapa && document.hasFocus()) {
       const r = canvas.getBoundingClientRect();
       if (mouse.x - r.left < EDGE) dx -= 1;
       else if (r.right - mouse.x < EDGE) dx += 1;
@@ -29018,7 +29066,8 @@ function setupInput(game) {
     }
     if (dx || dy) {
       const px = PAN_TELAS * (canvas.clientHeight || 720) * dtReal;
-      world2.pan(dx * px, dy * px);
+      const k = Save.opcoes && Save.opcoes.panMapa === false ? 1 : -1;
+      world2.pan(k * dx * px, k * dy * px);
     }
   }
   game._panTick = panTick;
@@ -29037,6 +29086,8 @@ function setupInput(game) {
       canvas.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("mouseout", onMouseOut);
       if (boxEl) boxEl.remove();
       canvas.style.cursor = "";
       game.update = origUpdate;
@@ -30763,7 +30814,11 @@ var Game = class {
   _selecionarGrupo(i) {
     const ids3 = this.grupos.get(i);
     if (!ids3 || !ids3.length) return;
+    const agora = performance.now(), dupla2 = this._grpUlt && this._grpUlt.i === i && agora - this._grpUlt.t < 500;
+    this._grpUlt = { i, t: agora };
     this.setSelecao(ids3.filter((id) => this.S.ents.some((e) => e.id === id)));
+    const es = this.entsSelecionadas();
+    if (dupla2 && es.length) this.centrarCamera(es.reduce((s, e) => s + e.x, 0) / es.length, es.reduce((s, e) => s + e.y, 0) / es.length);
   }
   definirGrupo(i) {
     this.grupos.set(i, this.idsSelecionados());
