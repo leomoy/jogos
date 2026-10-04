@@ -2,7 +2,7 @@
 // (cache-first). O build.mjs troca os marcadores abaixo (versão e listas) antes de gravar dist/web/sw.js; por isso este
 // arquivo não roda em desenvolvimento (js/pwa.js só o registra no build).
 
-const VERSAO = "0.9.6";
+const VERSAO = "0.9.7";
 const CDN = [
   "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js",
   "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.js",
