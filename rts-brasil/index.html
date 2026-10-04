@@ -1579,7 +1579,7 @@ function resolverTipo(t2, ato) {
 var VERSION, DT, T, TERRENO, CUSTO, PASS, CUSTOC, A0, UNIDADES, ARM_F, BAI, fuzil, cav, peca, navio, P67, P5, CORPO_A_CORPO, HEROIS, Ah, ARM_EU, ARM_TP, leve, guerreiro, religioso, FUZ, oficial, civilH, FACAO, ESP, rep, FUZ7, oficial7, ARM_8, ARM_V, BAI8, inf8, mg8, mort8, snp8, veic, FUZ8, sold8, VERSOES, UDEF, HEROI, baseHeroi, ATRIBUTOS, HABILIDADES, TRACOS, ITENS, TROCA, VALOR, CONSTRUCOES, CULTURAS, EUROPA, P9, RECURSOS_MAPA, COLETA, DIFICULDADE, CORES;
 var init_data = __esm({
   "js/core/data.js"() {
-    VERSION = "9.2.0";
+    VERSION = "9.2.1";
     DT = 0.05;
     T = { CAMPO: 0, MATA: 1, AREIA: 2, RASO: 3, FUNDA: 4, ROCHA: 5, MANGUE: 6, CORREDEIRA: 7, PEDRA: 8 };
     TERRENO = [
@@ -10181,7 +10181,7 @@ var init_triggers = __esm({
         const r2 = c.r * c.r;
         if (c.ponto) {
           const p2 = ponto2(S, c.ponto);
-          return !!p2 && unidades(S, c.de, (u) => (u.x - p2[0]) ** 2 + (u.y - p2[1]) ** 2 <= r2);
+          return !!p2 && unidades(S, c.de, (u) => u.est !== "rendido" && (u.x - p2[0]) ** 2 + (u.y - p2[1]) ** 2 <= r2);
         }
         return unidades(S, c.de, (u) => unidades(S, c.de2, (v) => v !== u && (u.x - v.x) ** 2 + (u.y - v.y) ** 2 <= r2));
       },
@@ -36796,8 +36796,12 @@ var Game = class {
       for (const o of pend.opcoes || []) {
         const b = el(`<button class="btn">${esc(o.letra)} \u2014 ${esc(t(o.texto || ""))}</button>`);
         b.addEventListener("click", () => {
-          this.emitir({ c: "escolher", id: pend.id, letra: o.letra });
+          if (!this.emitir({ c: "escolher", id: pend.id, letra: o.letra })) return;
           Sfx.play("clique");
+          box.querySelectorAll("button").forEach((x) => {
+            x.disabled = true;
+          });
+          this._passoUnico();
         });
         box.appendChild(b);
       }
